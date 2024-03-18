@@ -5,8 +5,9 @@ server:
   read-timeout: 60s
   idle-timeout: 60s
   allowed-origins: [ "*" ]
+  log-level: debug
 db:
-  address: "mongodb://mongodb:27017"
+  address: "mongodb://localhost:27017"
   db-name: staking-api-service
 metrics:
   host: 0.0.0.0

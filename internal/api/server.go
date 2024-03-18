@@ -22,6 +22,7 @@ func New(
 ) (*Server, error) {
 	r := chi.NewRouter()
 
+	r.Use(middlewares.CorsMiddleware(cfg))
 	r.Use(middlewares.TracingMiddleware)
 	r.Use(middlewares.LoggingMiddleware)
 
@@ -35,7 +36,7 @@ func New(
 
 	handlers, err := handlers.New(ctx, cfg)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error instantiating API handlers")
+		log.Fatal().Err(err).Msg("error while setting up handlers")
 	}
 
 	server := &Server{
