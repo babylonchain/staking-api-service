@@ -1,4 +1,4 @@
-package apierror
+package handlers
 
 import (
 	"errors"
@@ -6,6 +6,10 @@ import (
 )
 
 type ErrorCode string
+
+func (e ErrorCode) String() string {
+	return string(e)
+}
 
 // ApiError represents an error with an HTTP status code and an application-specific error code.
 type ApiError struct {

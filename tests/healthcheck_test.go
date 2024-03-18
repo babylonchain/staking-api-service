@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"testing"
 
+	testmock "github.com/babylonchain/staking-api-service/tests/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
@@ -13,7 +15,11 @@ const (
 )
 
 func TestHealthCheck(t *testing.T) {
-	server := setupTestServer(t, nil)
+	mockDB := new(testmock.DBClient)
+	mockDB.On("Ping", mock.Anything).Return(nil) // Expect successful ping
+
+	server := setupTestServer(t, &TestServerDependency{DBClient: mockDB})
+
 	defer server.Close()
 
 	url := server.URL + healthCheckPath
@@ -34,6 +40,35 @@ func TestHealthCheck(t *testing.T) {
 	responseBody := string(bodyBytes)
 
 	assert.Equal(t, "\"Server is up and running\"", responseBody, "expected response body to match")
+}
+
+// Test the db connection error case
+func TestHealthCheckDBError(t *testing.T) {
+	mockDB := new(testmock.DBClient)
+	mockDB.On("Ping", mock.Anything).Return(io.EOF) // Expect db error
+
+	server := setupTestServer(t, &TestServerDependency{DBClient: mockDB})
+
+	defer server.Close()
+
+	url := server.URL + healthCheckPath
+
+	// Make a GET request to the health check endpoint
+	resp, err := http.Get(url)
+	assert.NoError(t, err, "making GET request to health check endpoint should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 500 Internal Server Error
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode, "expected HTTP 500 Internal Server Error status")
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	// Convert the response body to a string
+	responseBody := string(bodyBytes)
+
+	assert.Equal(t, "{\"errorCode\":\"INTERNAL_SERVICE_ERROR\",\"message\":\"Internal service error\"}", responseBody, "expected response body to match")
 }
 
 func TestOptionsRequest(t *testing.T) {

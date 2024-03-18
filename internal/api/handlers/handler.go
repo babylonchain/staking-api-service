@@ -5,11 +5,12 @@ import (
 	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/config"
+	"github.com/babylonchain/staking-api-service/internal/db"
 )
 
 type Handler struct {
-	config *config.Config
-	// Other dependencies to be added here
+	config   *config.Config
+	dbclient db.DBClient
 }
 
 type Result struct {
@@ -23,11 +24,10 @@ func NewResult(data any) *Result {
 }
 
 func New(
-	ctx context.Context, cfg *config.Config,
+	ctx context.Context, cfg *config.Config, dbClient db.DBClient,
 ) (*Handler, error) {
-	// Set up the middlewares
-
 	return &Handler{
-		config: cfg,
+		config:   cfg,
+		dbclient: dbClient,
 	}, nil
 }

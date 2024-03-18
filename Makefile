@@ -41,3 +41,6 @@ stop-service:
 run-local:
 	./bin/local-startup.sh;
 	go run cmd/staking-api-service/main.go --config config/config-local.yml
+
+generate-mock-interface:
+	cd internal/db && mockery --name=DBClient --output=../../tests/mocks --outpkg=dbmock --filename=mock_db_client.go

@@ -9,12 +9,15 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/middlewares"
 	"github.com/babylonchain/staking-api-service/internal/config"
+	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
+	testmock "github.com/babylonchain/staking-api-service/tests/mocks"
 	"github.com/go-chi/chi"
 )
 
 type TestServerDependency struct {
 	ConfigOverrides *config.Config
+	DBClient        db.DBClient
 }
 
 func setupTestServer(t *testing.T, dep *TestServerDependency) *httptest.Server {
@@ -25,11 +28,20 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *httptest.Server {
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
 
-	// if dep.ConfigOverrides != nil {
-	// 	applyConfigOverrides(cfg, dep.ConfigOverrides)
-	// }
+	if dep == nil {
+		dep = &TestServerDependency{
+			DBClient: new(testmock.DBClient),
+		}
+	}
+	if dep.DBClient == nil {
+		dep.DBClient = new(testmock.DBClient)
+	}
 
-	apiServer, err := api.New(context.Background(), cfg)
+	if dep.ConfigOverrides != nil {
+		applyConfigOverrides(cfg, dep.ConfigOverrides)
+	}
+
+	apiServer, err := api.New(context.Background(), cfg, dep.DBClient)
 	if err != nil {
 		t.Fatalf("Failed to initialize API server: %v", err)
 	}
