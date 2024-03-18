@@ -3,7 +3,7 @@ set -euo pipefail
 set -x
 
 BINARY=${BINARY:-/bin/staking-api-service}
-CONFIG=${CONFIG:-/home/staking-service/config.yml}
+CONFIG=${CONFIG:-/home/staking-api-service/config.yml}
 
 if ! [ -f "${BINARY}" ]; then
 	echo "The binary $(basename "${BINARY}") cannot be found."

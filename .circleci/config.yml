@@ -35,7 +35,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            make test
+            make tests
 
   build_docker:
     machine:

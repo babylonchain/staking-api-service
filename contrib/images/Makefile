@@ -1,8 +1,10 @@
 DOCKER = $(shell which docker)
 
-babylon-api:
-	$(DOCKER) build --secret id=sshKey,src=${BBN_PRIV_DEPLOY_KEY} --tag babylonchain/babylon-api -f api-server/Dockerfile \
+.PHONY: staking-api-service staking-api-service-rmi
+
+staking-api-service:
+	$(DOCKER) build --tag babylonchain/staking-api-service -f staking-api-service/Dockerfile \
 				$(shell git rev-parse --show-toplevel)
 
-babylon-api-rmi:
-	$(DOCKER) rmi babylonchain/babylon-api 2>/dev/null; true
+staking-api-service-rmi:
+	$(DOCKER) rmi babylonchain/staking-api-service 2>/dev/null; true

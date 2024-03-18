@@ -27,7 +27,7 @@ $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
-.PHONY: build install
+.PHONY: build install tests
 
 build-docker:
 	$(MAKE) BBN_PRIV_DEPLOY_KEY=${BBN_PRIV_DEPLOY_KEY} -C contrib/images staking-api-service
@@ -44,3 +44,6 @@ run-local:
 
 generate-mock-interface:
 	cd internal/db && mockery --name=DBClient --output=../../tests/mocks --outpkg=dbmock --filename=mock_db_client.go
+
+tests:
+	go test -v -cover ./...
