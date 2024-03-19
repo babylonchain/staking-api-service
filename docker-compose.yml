@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  staking-api-service:
+    image: babylonchain/staking-api-service:latest
+    container_name: staking-api-service
+    ports:
+      - "80:8090"
+    environment:
+      - CONFIG=/home/staking-api-service/config.yml
+    volumes:
+      - ./config/config-docker.yml:/home/staking-api-service/config.yml:Z
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    hostname: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./bin/init-mongo.sh:/init-mongo.sh
+    entrypoint: [ "/init-mongo.sh" ]

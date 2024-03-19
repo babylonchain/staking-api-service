@@ -1,0 +1,97 @@
+package tests
+
+import (
+	"io"
+	"net/http"
+	"testing"
+
+	testmock "github.com/babylonchain/staking-api-service/tests/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+const (
+	healthCheckPath = "/healthcheck"
+)
+
+func TestHealthCheck(t *testing.T) {
+	mockDB := new(testmock.DBClient)
+	mockDB.On("Ping", mock.Anything).Return(nil) // Expect successful ping
+
+	server := setupTestServer(t, &TestServerDependency{DBClient: mockDB})
+
+	defer server.Close()
+
+	url := server.URL + healthCheckPath
+
+	// Make a GET request to the health check endpoint
+	resp, err := http.Get(url)
+	assert.NoError(t, err, "making GET request to health check endpoint should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 200 OK
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	// Convert the response body to a string
+	responseBody := string(bodyBytes)
+
+	assert.Equal(t, "\"Server is up and running\"", responseBody, "expected response body to match")
+}
+
+// Test the db connection error case
+func TestHealthCheckDBError(t *testing.T) {
+	mockDB := new(testmock.DBClient)
+	mockDB.On("Ping", mock.Anything).Return(io.EOF) // Expect db error
+
+	server := setupTestServer(t, &TestServerDependency{DBClient: mockDB})
+
+	defer server.Close()
+
+	url := server.URL + healthCheckPath
+
+	// Make a GET request to the health check endpoint
+	resp, err := http.Get(url)
+	assert.NoError(t, err, "making GET request to health check endpoint should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 500 Internal Server Error
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode, "expected HTTP 500 Internal Server Error status")
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	// Convert the response body to a string
+	responseBody := string(bodyBytes)
+
+	assert.Equal(t, "{\"errorCode\":\"INTERNAL_SERVICE_ERROR\",\"message\":\"Internal service error\"}", responseBody, "expected response body to match")
+}
+
+func TestOptionsRequest(t *testing.T) {
+	server := setupTestServer(t, nil)
+	defer server.Close()
+
+	url := server.URL + healthCheckPath
+
+	// Make a OPTION request to the health check endpoint
+	client := &http.Client{}
+	req, err := http.NewRequest("OPTIONS", url, nil)
+	assert.NoError(t, err, "making OPTION request to health check endpoint should not fail")
+	req.Header.Add("Origin", "https://dashboard.testnet3.babylonchain.io")
+	req.Header.Add("Access-Control-Request-Headers", "Content-Type")
+	req.Header.Add("Access-Control-Request-Method", "GET")
+
+	// Send the request
+	resp, err := client.Do(req)
+	assert.NoError(t, err, "making OPTION request to polygon address check endpoint should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 204
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode, "expected HTTP 204 OK status")
+	assert.Equal(t, "*", resp.Header.Get("Access-Control-Allow-Origin"), "expected Access-Control-Allow-Origin to be *")
+	assert.Equal(t, "GET", resp.Header.Get("Access-Control-Allow-Methods"), "expected Access-Control-Allow-Methods to be GET")
+}
