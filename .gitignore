@@ -219,3 +219,5 @@ output/
 .env
 
 tests/__debug*
+
+rabbitmq_data

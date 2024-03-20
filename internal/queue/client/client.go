@@ -1,5 +1,7 @@
 package client
 
+import "context"
+
 type QueueMessage struct {
 	Body    string
 	Receipt string
@@ -7,11 +9,13 @@ type QueueMessage struct {
 
 // A common interface for queue clients regardless if it's a SQS, RabbitMQ, etc.
 type QueueClient interface {
-	SendMessage(messageBody string) error
-	ReceiveMessages() ([]QueueMessage, error)
+	SendMessage(ctx context.Context, messageBody string) error
+	ReceiveMessages() (<-chan QueueMessage, error)
 	DeleteMessage(receipt string) error
+	Stop()
+	GetQueueName() string
 }
 
-func NewQueueClient(queueURL string, region string) QueueClient {
-	return NewSQSClient(queueURL, region)
+func NewQueueClient(queueURL, user, pass, queueName string) (QueueClient, error) {
+	return NewRabbitMqClient(queueURL, user, pass, queueName)
 }

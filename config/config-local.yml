@@ -10,8 +10,11 @@ db:
   address: "mongodb://localhost:27017"
   db-name: staking-api-service
 queue:
-  region: "local"
-  active_staking_queue_url: "http://localhost:9324/queue/active-staking-queue"
+  queue_user: user # can be replaced by values in .env file
+  queue_password: password
+  url: "http://localhost:5672/"
+  processing_timeout: 5 # 5 second
+  active_staking_queue_name: "active_staking"
 metrics:
   host: 0.0.0.0
   port: 2112

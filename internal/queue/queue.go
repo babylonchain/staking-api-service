@@ -1,70 +1,77 @@
 package queue
 
 import (
+	"context"
+	"time"
+
 	"github.com/babylonchain/staking-api-service/internal/config"
-	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/queue/client"
 	"github.com/babylonchain/staking-api-service/internal/queue/handlers"
+	"github.com/babylonchain/staking-api-service/internal/services"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-type MessageHandler func(messageBody string) error
+type MessageHandler func(ctx context.Context, messageBody string) error
 
 type Queues struct {
 	ActiveStakingQueueClient client.QueueClient
 	Handlers                 *handlers.QueueHandler
-	isRunning                bool
+	processingTimeout        time.Duration
 }
 
-func New(cfg *config.QueueConfig, dbClient *db.DBClient) *Queues {
-	activeStakingQueueClient := client.NewQueueClient(cfg.ActiveStakingQueueUrl, cfg.Region)
-	handlers := handlers.NewQueueHandler(dbClient)
+func New(cfg config.QueueConfig, service *services.Services) *Queues {
+	activeStakingQueueClient, err := client.NewQueueClient(
+		cfg.Url, cfg.QueueUser, cfg.QueuePassword, cfg.ActiveStakingQueueName,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while creating ActiveStakingQueueClient")
+	}
+	handlers := handlers.NewQueueHandler(service)
 	return &Queues{
 		ActiveStakingQueueClient: activeStakingQueueClient,
 		Handlers:                 handlers,
+		processingTimeout:        time.Duration(cfg.QueueProcessingTimeout) * time.Second,
 	}
 }
 
 // Start all message processing
 func (q *Queues) StartReceivingMessages() {
-	q.isRunning = true
-	q.processingActiveStakingTransactions()
-	// TODO: Add more queues here
+	// start processing messages from the active staking queue
+	startQueueMessageProcessing(q.ActiveStakingQueueClient, q.Handlers.ActiveStakingHandler, log.Logger, q.processingTimeout)
+	// ...add more queues here
 }
 
 // Turn off all message processing
 func (q *Queues) StopReceivingMessages() {
-	q.isRunning = false
+	q.ActiveStakingQueueClient.Stop()
 }
 
-func (q *Queues) processingActiveStakingTransactions() {
+func startQueueMessageProcessing(
+	queueClient client.QueueClient, handler MessageHandler,
+	logger zerolog.Logger, timeout time.Duration,
+) {
+	messagesChan, err := queueClient.ReceiveMessages()
+	if err != nil {
+		logger.Fatal().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error setting up message channel from queue")
+	}
+
 	go func() {
-		for q.isRunning {
-			// TODO: Manually create a ctx so that we can link all the spans to the same trace in the log
-			messages, err := q.ActiveStakingQueueClient.ReceiveMessages()
+		for message := range messagesChan {
+			// For each message, create a new context with a deadline or timeout
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			err := handler(ctx, message.Body)
 			if err != nil {
-				log.Err(err).Msg("error while receiving messages from ActiveStakingQueue")
-				continue
-			}
-			if len(messages) == 0 {
-				// No messages received, hence continue the next iteration
+				logger.Error().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error while processing message from queue")
+				cancel()
 				continue
 			}
 
-			// By default, we will only have a single message in the output.
-			// However, we are iterating over the messages to handle the case
-			for _, message := range messages {
-				err = q.Handlers.ActiveStakingHandler(message.Body)
-				if err != nil {
-					log.Error().Err(err).Msg("error while processing message from ActiveStakingQueue")
-					continue
-				}
-
-				delErr := q.ActiveStakingQueueClient.DeleteMessage(message.Receipt)
-				if delErr != nil {
-					log.Error().Err(delErr).Msg("error while deleting message from ActiveStakingQueue")
-				}
+			delErr := queueClient.DeleteMessage(message.Receipt)
+			if delErr != nil {
+				logger.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).Msg("error while deleting message from queue")
 			}
+			cancel()
 		}
 	}()
 }

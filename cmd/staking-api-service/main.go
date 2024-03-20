@@ -8,6 +8,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
+	"github.com/babylonchain/staking-api-service/internal/queue"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -50,4 +51,8 @@ func main() {
 	if err = apiServer.Start(); err != nil {
 		log.Fatal().Err(err).Msg("error while starting staking api service")
 	}
+
+	// Start the event queue processing
+	queues := queue.New(cfg.Queue, services)
+	queues.StartReceivingMessages()
 }

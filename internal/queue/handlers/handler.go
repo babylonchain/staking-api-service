@@ -1,17 +1,15 @@
 package handlers
 
-import (
-	"github.com/babylonchain/staking-api-service/internal/db"
-)
+import "github.com/babylonchain/staking-api-service/internal/services"
 
 type QueueHandler struct {
-	DBClient *db.DBClient
+	Services *services.Services
 }
 
 type MessageHandler func(messageBody string) error
 
-func NewQueueHandler(dbClient *db.DBClient) *QueueHandler {
+func NewQueueHandler(services *services.Services) *QueueHandler {
 	return &QueueHandler{
-		DBClient: dbClient,
+		Services: services,
 	}
 }
