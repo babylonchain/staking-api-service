@@ -15,11 +15,7 @@ const (
 )
 
 func TestHealthCheck(t *testing.T) {
-	mockDB := new(testmock.DBClient)
-	mockDB.On("Ping", mock.Anything).Return(nil) // Expect successful ping
-
-	server := setupTestServer(t, &TestServerDependency{DBClient: mockDB})
-
+	server := setupTestServer(t, nil)
 	defer server.Close()
 
 	url := server.URL + healthCheckPath
@@ -47,7 +43,7 @@ func TestHealthCheckDBError(t *testing.T) {
 	mockDB := new(testmock.DBClient)
 	mockDB.On("Ping", mock.Anything).Return(io.EOF) // Expect db error
 
-	server := setupTestServer(t, &TestServerDependency{DBClient: mockDB})
+	server := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
 
 	defer server.Close()
 

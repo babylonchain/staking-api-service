@@ -21,7 +21,7 @@ type Queues struct {
 
 func New(cfg config.QueueConfig, service *services.Services) *Queues {
 	activeStakingQueueClient, err := client.NewQueueClient(
-		cfg.Url, cfg.QueueUser, cfg.QueuePassword, cfg.ActiveStakingQueueName,
+		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ActiveStakingQueueName,
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while creating ActiveStakingQueueClient")
@@ -71,5 +71,6 @@ func startQueueMessageProcessing(
 			}
 			cancel()
 		}
+		log.Info().Str("queueName", queueClient.GetQueueName()).Msg("stopped receiving messages from queue")
 	}()
 }

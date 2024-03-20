@@ -54,5 +54,4 @@ func main() {
 	if err = apiServer.Start(); err != nil {
 		log.Fatal().Err(err).Msg("error while starting staking api service")
 	}
-
 }
