@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Server  ServerConfig  `mapstructure:"server"`
 	Db      DbConfig      `mapstructure:"db"`
+	Queue   QueueConfig   `mapstructure:"queue"`
 	Metrics MetricsConfig `mapstructure:"metrics"`
 }
 
@@ -24,6 +25,10 @@ func (cfg *Config) Validate() error {
 	}
 
 	if err := cfg.Metrics.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.Queue.Validate(); err != nil {
 		return err
 	}
 

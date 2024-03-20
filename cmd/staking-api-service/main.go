@@ -7,8 +7,8 @@ import (
 	"github.com/babylonchain/staking-api-service/cmd/staking-api-service/cli"
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/config"
-	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
+	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 )
@@ -38,12 +38,12 @@ func main() {
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
 
-	db, err := db.New(ctx, cfg.Db.DbName, cfg.Db.Address)
+	services, err := services.New(ctx, cfg)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error while creating db client")
+		log.Fatal().Err(err).Msg("error while setting up staking services layer")
 	}
 
-	apiServer, err := api.New(ctx, cfg, db)
+	apiServer, err := api.New(ctx, cfg, services)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up staking api service")
 	}

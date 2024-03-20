@@ -11,6 +11,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
+	"github.com/babylonchain/staking-api-service/internal/services"
 	testmock "github.com/babylonchain/staking-api-service/tests/mocks"
 	"github.com/go-chi/chi"
 )
@@ -41,7 +42,13 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *httptest.Server {
 		applyConfigOverrides(cfg, dep.ConfigOverrides)
 	}
 
-	apiServer, err := api.New(context.Background(), cfg, dep.DBClient)
+	services, err := services.New(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("Failed to initialize services: %v", err)
+	}
+	services.DbClient = dep.DBClient
+
+	apiServer, err := api.New(context.Background(), cfg, services)
 	if err != nil {
 		t.Fatalf("Failed to initialize API server: %v", err)
 	}

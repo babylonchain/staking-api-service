@@ -9,6 +9,9 @@ server:
 db:
   address: "mongodb://localhost:27017"
   db-name: staking-api-service
+queue:
+  region: "local"
+  active_staking_queue_url: "http://localhost:9324/queue/active-staking-queue"
 metrics:
   host: 0.0.0.0
   port: 2112
