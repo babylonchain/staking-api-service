@@ -2,7 +2,10 @@ module github.com/babylonchain/staking-api-service
 
 go 1.21.6
 
-require github.com/spf13/viper v1.18.2
+require (
+	github.com/rabbitmq/amqp091-go v1.9.0
+	github.com/spf13/viper v1.18.2
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -29,7 +32,6 @@ require (
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-chi/chi v1.5.5
-	github.com/go-chi/cors v1.2.1
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/joho/godotenv v1.5.1
@@ -40,7 +42,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/prometheus/client_golang v1.19.0
 	github.com/rs/cors v1.10.1
-	github.com/rs/zerolog v1.32.0 // indirect
+	github.com/rs/zerolog v1.32.0
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect

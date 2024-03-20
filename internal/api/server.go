@@ -8,7 +8,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
 	"github.com/babylonchain/staking-api-service/internal/api/middlewares"
 	"github.com/babylonchain/staking-api-service/internal/config"
-	"github.com/babylonchain/staking-api-service/internal/db"
+	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/go-chi/chi"
 	"github.com/rs/zerolog/log"
 )
@@ -19,7 +19,7 @@ type Server struct {
 }
 
 func New(
-	ctx context.Context, cfg *config.Config, dbClient db.DBClient,
+	ctx context.Context, cfg *config.Config, services *services.Services,
 ) (*Server, error) {
 	r := chi.NewRouter()
 
@@ -35,7 +35,7 @@ func New(
 		Handler:      r,
 	}
 
-	handlers, err := handlers.New(ctx, cfg, dbClient)
+	handlers, err := handlers.New(ctx, cfg, services)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up handlers")
 	}

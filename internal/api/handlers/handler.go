@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/config"
-	"github.com/babylonchain/staking-api-service/internal/db"
+	"github.com/babylonchain/staking-api-service/internal/services"
 )
 
 type Handler struct {
 	config   *config.Config
-	dbclient db.DBClient
+	services *services.Services
 }
 
 type Result struct {
@@ -24,10 +24,10 @@ func NewResult(data any) *Result {
 }
 
 func New(
-	ctx context.Context, cfg *config.Config, dbClient db.DBClient,
+	ctx context.Context, cfg *config.Config, services *services.Services,
 ) (*Handler, error) {
 	return &Handler{
 		config:   cfg,
-		dbclient: dbClient,
+		services: services,
 	}, nil
 }
