@@ -8,7 +8,6 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/queue/client"
 	"github.com/babylonchain/staking-api-service/internal/queue/handlers"
 	"github.com/babylonchain/staking-api-service/internal/services"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -38,7 +37,7 @@ func New(cfg config.QueueConfig, service *services.Services) *Queues {
 // Start all message processing
 func (q *Queues) StartReceivingMessages() {
 	// start processing messages from the active staking queue
-	startQueueMessageProcessing(q.ActiveStakingQueueClient, q.Handlers.ActiveStakingHandler, log.Logger, q.processingTimeout)
+	startQueueMessageProcessing(q.ActiveStakingQueueClient, q.Handlers.ActiveStakingHandler, q.processingTimeout)
 	// ...add more queues here
 }
 
@@ -48,12 +47,11 @@ func (q *Queues) StopReceivingMessages() {
 }
 
 func startQueueMessageProcessing(
-	queueClient client.QueueClient, handler MessageHandler,
-	logger zerolog.Logger, timeout time.Duration,
-) {
+	queueClient client.QueueClient, handler MessageHandler, timeout time.Duration) {
 	messagesChan, err := queueClient.ReceiveMessages()
+	log.Info().Str("queueName", queueClient.GetQueueName()).Msg("start receiving messages from queue")
 	if err != nil {
-		logger.Fatal().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error setting up message channel from queue")
+		log.Fatal().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error setting up message channel from queue")
 	}
 
 	go func() {
@@ -62,14 +60,14 @@ func startQueueMessageProcessing(
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			err := handler(ctx, message.Body)
 			if err != nil {
-				logger.Error().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error while processing message from queue")
+				log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error while processing message from queue")
 				cancel()
 				continue
 			}
 
 			delErr := queueClient.DeleteMessage(message.Receipt)
 			if delErr != nil {
-				logger.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).Msg("error while deleting message from queue")
+				log.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).Msg("error while deleting message from queue")
 			}
 			cancel()
 		}
