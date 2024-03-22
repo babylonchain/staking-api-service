@@ -2,6 +2,7 @@ package tests
 
 import (
 	context "context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http/httptest"
@@ -26,10 +27,10 @@ import (
 type TestServerDependency struct {
 	ConfigOverrides        *config.Config
 	MockDbClient           db.DBClient
-	PreInjectEventsHandler func(conn *amqp091.Connection) error
+	PreInjectEventsHandler func(queueClient client.QueueClient) error
 }
 
-func setupTestServer(t *testing.T, dep *TestServerDependency) *httptest.Server {
+func setupTestServer(t *testing.T, dep *TestServerDependency) (*httptest.Server, *queue.Queues) {
 	cfg, err := config.New("./config-test.yml")
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
@@ -64,21 +65,15 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *httptest.Server {
 	r.Use(middlewares.CorsMiddleware(cfg))
 	apiServer.SetupRoutes(r)
 
-	// Set a default preInjectEventsHandler which does nothing
-	preInjectEventsHandler := func(conn *amqp091.Connection) error {
-		return nil
+	queues, err := setUpTestQueue(cfg.Queue, services)
+	if err != nil {
+		t.Fatalf("Failed to setup test queue: %v", err)
 	}
-
-	if dep != nil && dep.PreInjectEventsHandler != nil {
-		preInjectEventsHandler = dep.PreInjectEventsHandler
-	}
-
-	setUpTestQueue(cfg.Queue, services, preInjectEventsHandler)
 
 	// Create an httptest server
 	server := httptest.NewServer(r)
 
-	return server
+	return server, queues
 }
 
 // Generic function to apply configuration overrides
@@ -132,11 +127,12 @@ func setupTestDB(cfg config.Config) *mongo.Client {
 	return client
 }
 
-func setUpTestQueue(cfg config.QueueConfig, service *services.Services, preInjectEventsHandler func(conn *amqp091.Connection) error) *queue.Queues {
+func setUpTestQueue(cfg config.QueueConfig, service *services.Services) (*queue.Queues, error) {
 	amqpURI := fmt.Sprintf("amqp://%s:%s@%s", cfg.QueueUser, cfg.QueuePassword, cfg.Url)
 	conn, err := amqp091.Dial(amqpURI)
 	if err != nil {
 		log.Fatal("failed to connect to RabbitMQ in test: ", err)
+		return nil, err
 	}
 	defer conn.Close()
 	purgeQueues(conn, []string{
@@ -145,15 +141,17 @@ func setUpTestQueue(cfg config.QueueConfig, service *services.Services, preInjec
 		client.WithdrawStakingQueueName,
 		client.ExpiredStakingQueueName,
 	})
-	err = preInjectEventsHandler(conn)
+
 	if err != nil {
 		log.Fatal("failed to inject events in test: ", err)
+		return nil, err
 	}
 
 	// Start the actual queue processing in our codebase
 	queues := queue.New(cfg, service)
 	queues.StartReceivingMessages()
-	return queues
+
+	return queues, nil
 }
 
 // purgeQueues purges all messages from the given list of queues.
@@ -171,5 +169,20 @@ func purgeQueues(conn *amqp091.Connection, queues []string) error {
 		}
 	}
 
+	return nil
+}
+
+func sendTestMessage[T any](client client.QueueClient, data []T) error {
+	for _, d := range data {
+		jsonBytes, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+		messageBody := string(jsonBytes)
+		err = client.SendMessage(context.TODO(), messageBody)
+		if err != nil {
+			return fmt.Errorf("failed to publish a message to queue %s: %w", client.GetQueueName(), err)
+		}
+	}
 	return nil
 }
