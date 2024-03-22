@@ -140,7 +140,10 @@ func setUpTestQueue(cfg config.QueueConfig, service *services.Services, preInjec
 	}
 	defer conn.Close()
 	purgeQueues(conn, []string{
-		client.ActiveStakingQueueName, client.UnbondStakingQueueName, client.WithdrawStakingQueueName,
+		client.ActiveStakingQueueName,
+		client.UnbondingStakingQueueName,
+		client.WithdrawStakingQueueName,
+		client.ExpiredStakingQueueName,
 	})
 	err = preInjectEventsHandler(conn)
 	if err != nil {
