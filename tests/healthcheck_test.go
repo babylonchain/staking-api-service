@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -32,10 +33,13 @@ func TestHealthCheck(t *testing.T) {
 	bodyBytes, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err, "reading response body should not fail")
 
-	// Convert the response body to a string
-	responseBody := string(bodyBytes)
+	var responseBody map[string]string
+	err = json.Unmarshal(bodyBytes, &responseBody)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
 
-	assert.Equal(t, "\"Server is up and running\"", responseBody, "expected response body to match")
+	// Check that the response body is as expected
+
+	assert.Equal(t, "Server is up and running", responseBody["data"], "expected response body to match")
 }
 
 // Test the db connection error case

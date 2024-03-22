@@ -1,4 +1,4 @@
-package handlers
+package types
 
 import (
 	"errors"
@@ -11,16 +11,6 @@ func (e ErrorCode) String() string {
 	return string(e)
 }
 
-// ApiError represents an error with an HTTP status code and an application-specific error code.
-type ApiError struct {
-	Err        error
-	StatusCode int
-	ErrorCode  ErrorCode
-}
-
-const UninitializedStatusCode = 0
-
-// We define all API errors here. Note, those error types will be returned in the response for FE
 const (
 	// 5XX
 	InternalServiceError ErrorCode = "INTERNAL_SERVICE_ERROR"
@@ -29,33 +19,42 @@ const (
 	BadRequest           ErrorCode = "BAD_REQUEST"
 )
 
-func (e *ApiError) Error() string {
+// ApiError represents an error with an HTTP status code and an application-specific error code.
+type Error struct {
+	Err        error
+	StatusCode int
+	ErrorCode  ErrorCode
+}
+
+const UninitializedStatusCode = 0
+
+func (e *Error) Error() string {
 	return e.Err.Error()
 }
 
 // NewError creates a new ApiError with the provided status code, error code, and underlying error.
 // If the status code is not provided (0), it defaults to http.StatusInternalServerError(500).
 // If the error code is empty, it defaults to INTERNAL_SERVICE_ERROR.
-func NewError(statusCode int, errorCode ErrorCode, err error) *ApiError {
+func NewError(statusCode int, errorCode ErrorCode, err error) *Error {
 	if statusCode == UninitializedStatusCode {
 		statusCode = http.StatusInternalServerError
 	}
 	if errorCode == "" {
 		errorCode = InternalServiceError
 	}
-	return &ApiError{
+	return &Error{
 		StatusCode: statusCode,
 		ErrorCode:  errorCode,
 		Err:        err,
 	}
 }
 
-func NewErrorWithMsg(statusCode int, errorCode ErrorCode, msg string) *ApiError {
+func NewErrorWithMsg(statusCode int, errorCode ErrorCode, msg string) *Error {
 	return NewError(statusCode, errorCode, errors.New(msg))
 }
 
-func NewInternalServiceError(err error) *ApiError {
-	return &ApiError{
+func NewInternalServiceError(err error) *Error {
+	return &Error{
 		StatusCode: http.StatusInternalServerError,
 		ErrorCode:  InternalServiceError,
 		Err:        err,
