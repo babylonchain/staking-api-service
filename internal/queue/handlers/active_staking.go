@@ -2,14 +2,44 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 
+	queueClient "github.com/babylonchain/staking-api-service/internal/queue/client"
 	"github.com/rs/zerolog/log"
 )
 
 func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody string) error {
-	log.Info().Msgf("Received message from active staking queue: %s", messageBody)
+	// Parse the message body into ActiveStakingEvent
+	var activeStakingEvent queueClient.ActiveStakingEvent
+	err := json.Unmarshal([]byte(messageBody), &activeStakingEvent)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal the message body into ActiveStakingEvent")
+		return err
+	}
 
-	// TODO: implement the business logic for processing the message from the active staking queue
-	h.Services.DoHealthCheck(ctx)
+	err = h.Services.SaveActiveStakingDelegation(
+		ctx, activeStakingEvent.StakingTxHashHex, activeStakingEvent.StakerPkHex,
+		activeStakingEvent.FinalityProviderPkHex, activeStakingEvent.StakingValue,
+		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingTimeLock,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = h.Services.ProcessStakingStatsCalculation(ctx, activeStakingEvent)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to process staking stats calculation")
+		return err
+	}
+
+	err = h.Services.ProcessExpireCheck(
+		ctx, activeStakingEvent.StakingTxHashHex,
+		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingTimeLock,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to process expire check")
+		return err
+	}
+
 	return nil
 }

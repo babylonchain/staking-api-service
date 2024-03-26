@@ -8,6 +8,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
+	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 type ErrorResponse struct {
@@ -17,7 +18,7 @@ type ErrorResponse struct {
 
 func newInternalServiceError() *ErrorResponse {
 	return &ErrorResponse{
-		ErrorCode: handlers.InternalServiceError.String(),
+		ErrorCode: types.InternalServiceError.String(),
 		Message:   "Internal service error",
 	}
 }
@@ -26,7 +27,7 @@ func (e *ErrorResponse) Error() string {
 	return e.Message
 }
 
-func registerHandler(handlerFunc func(*http.Request) (*handlers.Result, *handlers.ApiError)) func(http.ResponseWriter, *http.Request) {
+func registerHandler(handlerFunc func(*http.Request) (*handlers.Result, *types.Error)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Set up metrics recording for the endpoint
 		timer := metrics.StartHttpRequestDurationTimer(r.URL.Path)

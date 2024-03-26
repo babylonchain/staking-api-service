@@ -16,29 +16,131 @@ const (
 
 type EventType int
 
+type EventMessage interface {
+	GetEventType() EventType
+	GetStakingTxHashHex() string
+}
+
 type ActiveStakingEvent struct {
 	EventType             EventType `json:"event_type"` // always 1. ActiveStakingEventType
-	StakingTxHex          string    `json:"staking_tx_hex"`
+	StakingTxHashHex      string    `json:"staking_tx_hash_hex"`
 	StakerPkHex           string    `json:"staker_pk_hex"`
 	FinalityProviderPkHex string    `json:"finality_provider_pk_hex"`
 	StakingValue          uint64    `json:"staking_value"`
-	StakingStartkHeight   uint64    `json:"staking_start_height"`
-	StakingTimeLock       uint16    `json:"staking_timelock"`
+	StakingStartHeight    uint64    `json:"staking_start_height"`
+	StakingStartTimestamp string    `json:"staking_start_timestamp"`
+	StakingTimeLock       uint64    `json:"staking_timelock"`
+	StakingOutputIndex    uint64    `json:"staking_output_index"`
+	StakingTxHex          string    `json:"staking_tx_hex"`
+}
+
+func (e ActiveStakingEvent) GetEventType() EventType {
+	return ActiveStakingEventType
+}
+
+func (e ActiveStakingEvent) GetStakingTxHashHex() string {
+	return e.StakingTxHashHex
+}
+
+func NewActiveStakingEvent(
+	stakingTxHashHex string,
+	stakerPkHex string,
+	finalityProviderPkHex string,
+	stakingValue uint64,
+	stakingStartHeight uint64,
+	stakingStartTimestamp string,
+	stakingTimeLock uint64,
+	stakingOutputIndex uint64,
+	stakingTxHex string,
+) ActiveStakingEvent {
+	return ActiveStakingEvent{
+		EventType:             ActiveStakingEventType,
+		StakingTxHashHex:      stakingTxHashHex,
+		StakerPkHex:           stakerPkHex,
+		FinalityProviderPkHex: finalityProviderPkHex,
+		StakingValue:          stakingValue,
+		StakingStartHeight:    stakingStartHeight,
+		StakingStartTimestamp: stakingStartTimestamp,
+		StakingTimeLock:       stakingTimeLock,
+		StakingOutputIndex:    stakingOutputIndex,
+		StakingTxHex:          stakingTxHex,
+	}
 }
 
 type UnbondingStakingEvent struct {
-	EventType            EventType `json:"event_type"` // always 2. UnbondingStakingEventType
-	StakingTxHash        string    `json:"staking_tx_hash"`
-	UnbondingStartHeight uint64    `json:"unbonding_start_height"`
-	UnbondingTimeLock    uint16    `json:"unbonding_timelock"`
+	EventType               EventType `json:"event_type"` // always 2. UnbondingStakingEventType
+	StakingTxHashHex        string    `json:"staking_tx_hash_hex"`
+	UnbondingStartHeight    uint64    `json:"unbonding_start_height"`
+	UnbondingStartTimestamp string    `json:"unbonding_start_timestamp"`
+	UnbondingTimeLock       uint64    `json:"unbonding_timelock"`
+	UnbondingOutputIndex    uint64    `json:"unbonding_output_index"`
+	UnbondingTxHex          string    `json:"unbonding_tx_hex"`
+	UnbondingTxHashHex      string    `json:"unbonding_tx_hash_hex"`
+}
+
+func (e UnbondingStakingEvent) GetEventType() EventType {
+	return UnbondingStakingEventType
+}
+
+func (e UnbondingStakingEvent) GetStakingTxHashHex() string {
+	return e.StakingTxHashHex
+}
+
+func NewUnbondingStakingEvent(
+	stakingTxHashHex string,
+	unbondingStartHeight uint64,
+	unbondingStartTimestamp string,
+	unbondingTimeLock uint64,
+	unbondingOutputIndex uint64,
+	unbondingTxHex string,
+) UnbondingStakingEvent {
+	return UnbondingStakingEvent{
+		EventType:               UnbondingStakingEventType,
+		StakingTxHashHex:        stakingTxHashHex,
+		UnbondingStartHeight:    unbondingStartHeight,
+		UnbondingStartTimestamp: unbondingStartTimestamp,
+		UnbondingTimeLock:       unbondingTimeLock,
+		UnbondingOutputIndex:    unbondingOutputIndex,
+		UnbondingTxHex:          unbondingTxHex,
+	}
 }
 
 type WithdrawStakingEvent struct {
-	EventType     EventType `json:"event_type"` // always 3. WithdrawStakingEventType
-	StakingTxHash string    `json:"staking_tx_hash"`
+	EventType        EventType `json:"event_type"` // always 3. WithdrawStakingEventType
+	StakingTxHashHex string    `json:"staking_tx_hash_hex"`
+}
+
+func (e WithdrawStakingEvent) GetEventType() EventType {
+	return WithdrawStakingEventType
+}
+
+func (e WithdrawStakingEvent) GetStakingTxHashHex() string {
+	return e.StakingTxHashHex
+}
+
+func NewWithdrawStakingEvent(stakingTxHashHex string) WithdrawStakingEvent {
+	return WithdrawStakingEvent{
+		EventType:        WithdrawStakingEventType,
+		StakingTxHashHex: stakingTxHashHex,
+	}
 }
 
 type ExpiredStakingEvent struct {
-	EventType     EventType `json:"event_type"` // always 4. ExpiredStakingEventType
-	StakingTxHash string    `json:"staking_tx_hash"`
+	EventType        EventType `json:"event_type"` // always 4. ExpiredStakingEventType
+	StakingTxHashHex string    `json:"staking_tx_hash_hex"`
+}
+
+func (e ExpiredStakingEvent) GetEventType() EventType {
+	return ExpiredStakingEventType
+}
+
+func (e ExpiredStakingEvent) GetStakingTxHash() string {
+	return e.StakingTxHashHex
+}
+
+func NewExpiredStakingEvent(stakingTxHashHex string) ExpiredStakingEvent {
+	return ExpiredStakingEvent{
+		EventType:        ExpiredStakingEventType,
+		StakingTxHashHex: stakingTxHashHex,
+	}
 }

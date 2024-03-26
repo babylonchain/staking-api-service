@@ -61,14 +61,18 @@ func startQueueMessageProcessing(
 			err := handler(ctx, message.Body)
 			if err != nil {
 				log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error while processing message from queue")
+				// TODO: Add metrics for failed message processing
 				cancel()
 				continue
 			}
 
 			delErr := queueClient.DeleteMessage(message.Receipt)
 			if delErr != nil {
+				// TODO: Add metrics for failed message deletion
 				log.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).Msg("error while deleting message from queue")
 			}
+
+			// TODO: Add metrics for successful message processing
 			cancel()
 		}
 		log.Info().Str("queueName", queueClient.GetQueueName()).Msg("stopped receiving messages from queue")

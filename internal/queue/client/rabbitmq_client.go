@@ -41,6 +41,11 @@ func NewRabbitMqClient(queueURL, user, pass, queueName string) (*RabbitMqClient,
 		return nil, err
 	}
 
+	err = ch.Confirm(false)
+	if err != nil {
+		return nil, err
+	}
+
 	return &RabbitMqClient{
 		connection: conn,
 		channel:    ch,
@@ -94,6 +99,7 @@ func (c *RabbitMqClient) DeleteMessage(deliveryTag string) error {
 	return c.channel.Ack(deliveryTagInt, false)
 }
 
+// SendMessage sends a message to the queue. the ctx is used to control the timeout of the operation.
 func (c *RabbitMqClient) SendMessage(ctx context.Context, messageBody string) error {
 	// Ensure the channel is open
 	if c.channel == nil {
@@ -105,11 +111,12 @@ func (c *RabbitMqClient) SendMessage(ctx context.Context, messageBody string) er
 		ctx,
 		"",          // exchange: Use the default exchange
 		c.queueName, // routing key: The queue name
-		false,       // mandatory: true indicates the server must route the message to a queue, otherwise error
+		true,        // mandatory: true indicates the server must route the message to a queue, otherwise error
 		false,       // immediate: false indicates the server may wait to send the message until a consumer is available
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(messageBody),
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "text/plain",
+			Body:         []byte(messageBody),
 		},
 	)
 
@@ -118,6 +125,13 @@ func (c *RabbitMqClient) SendMessage(ctx context.Context, messageBody string) er
 	}
 
 	if confirmation == nil {
+		return fmt.Errorf("message not confirmed when publishing into queue %s", c.queueName)
+	}
+	confirmed, err := confirmation.WaitContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to confirm message when publishing into queue %s: %w", c.queueName, err)
+	}
+	if !confirmed {
 		return fmt.Errorf("message not confirmed when publishing into queue %s", c.queueName)
 	}
 
