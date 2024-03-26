@@ -39,12 +39,13 @@ func (s *Services) DoHealthCheck(ctx context.Context) error {
 }
 
 // SaveActiveStakingDelegation saves the active staking delegation to the database.
-func (s *Services) SaveActiveStakingDelegation(ctx context.Context, activeStakingEvent queue.ActiveStakingEvent) error {
+func (s *Services) SaveActiveStakingDelegation(
+	ctx context.Context, txHashHex string, stakerPkHex string,
+	finalityProviderPkHex string, value uint64, startHeight uint64, timeLock uint64,
+) error {
 	err := s.DbClient.SaveActiveStakingDelegation(
 		ctx,
-		activeStakingEvent.StakingTxHex, activeStakingEvent.StakerPkHex,
-		activeStakingEvent.FinalityProviderPkHex, activeStakingEvent.StakingValue,
-		activeStakingEvent.StakingStartkHeight, activeStakingEvent.StakingTimeLock,
+		txHashHex, stakerPkHex, finalityProviderPkHex, value, startHeight, timeLock,
 	)
 	if err != nil {
 		if ok := db.IsDuplicateKeyError(err); ok {
@@ -60,7 +61,7 @@ func (s *Services) SaveActiveStakingDelegation(ctx context.Context, activeStakin
 
 // ProcessExpireCheck checks if the staking delegation has expired and updates the database.
 // This method tolerate duplicated calls.
-func (s *Services) ProcessExpireCheck(ctx context.Context, stakingTxHex string, startHeight, timelock uint64) error {
+func (s *Services) ProcessExpireCheck(ctx context.Context, stakingTxHashHex string, startHeight, timelock uint64) error {
 	// TODO: To be implemented
 	return nil
 }
@@ -89,7 +90,7 @@ func (s *Services) DelegationsByStakerPk(ctx context.Context, stakerPk string, p
 }
 
 type DelegationPublic struct {
-	StakingTxHex          string `json:"staking_tx_hex"`
+	StakingTxHashHex      string `json:"staking_tx_hash_hex"`
 	StakerPkHex           string `json:"staker_pk_hex"`
 	FinalityProviderPkHex string `json:"finality_provider_pk_hex"`
 	StakingValue          uint64 `json:"staking_value"`
@@ -99,11 +100,11 @@ type DelegationPublic struct {
 
 func fromDelegationDocument(d model.DelegationDocument) DelegationPublic {
 	return DelegationPublic{
-		StakingTxHex:          d.StakingTxHex,
+		StakingTxHashHex:      d.StakingTxHashHex,
 		FinalityProviderPkHex: d.FinalityProviderPkHex,
 		StakerPkHex:           d.StakerPkHex,
 		StakingValue:          d.StakingValue,
-		TimeLockExpireHeight:  d.StakingStartkHeight + d.StakingTimeLock,
+		TimeLockExpireHeight:  d.StakingStartHeight + d.StakingTimeLock,
 		State:                 d.State.ToString(),
 	}
 }

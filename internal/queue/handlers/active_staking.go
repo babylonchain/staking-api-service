@@ -17,21 +17,27 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		return err
 	}
 
-	err = h.Services.SaveActiveStakingDelegation(ctx, activeStakingEvent)
+	err = h.Services.SaveActiveStakingDelegation(
+		ctx, activeStakingEvent.StakingTxHashHex, activeStakingEvent.StakerPkHex,
+		activeStakingEvent.FinalityProviderPkHex, activeStakingEvent.StakingValue,
+		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingTimeLock,
+	)
 	if err != nil {
 		return err
 	}
 
 	err = h.Services.ProcessStakingStatsCalculation(ctx, activeStakingEvent)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to process staking stats calculation")
 		return err
 	}
 
 	err = h.Services.ProcessExpireCheck(
-		ctx, activeStakingEvent.StakingTxHex,
-		activeStakingEvent.StakingStartkHeight, activeStakingEvent.StakingTimeLock,
+		ctx, activeStakingEvent.StakingTxHashHex,
+		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingTimeLock,
 	)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to process expire check")
 		return err
 	}
 

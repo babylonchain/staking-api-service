@@ -32,6 +32,7 @@ func NewResultWithPagination[T any](data T, pageToken string) *Result {
 	res := &PublicResponse[T]{Data: data, Pagination: &paginationResponse{NextKey: pageToken}}
 	return &Result{Data: res, Status: http.StatusOK}
 }
+
 func NewResult[T any](data T) *Result {
 	res := &PublicResponse[T]{Data: data}
 	return &Result{Data: res, Status: http.StatusOK}

@@ -22,17 +22,18 @@ func (s DelegationState) ToString() string {
 }
 
 type DelegationDocument struct {
-	StakingTxHex          string          `bson:"_id"` // Primary key
+	StakingTxHashHex      string          `bson:"_id"` // Primary key
 	StakerPkHex           string          `bson:"staker_pk_hex"`
 	FinalityProviderPkHex string          `bson:"finality_provider_pk_hex"`
 	StakingValue          uint64          `bson:"staking_value"`
-	StakingStartkHeight   uint64          `bson:"staking_start_height"`
+	StakingStartHeight    uint64          `bson:"staking_start_height"`
 	StakingTimeLock       uint64          `bson:"staking_timelock"`
 	State                 DelegationState `bson:"state"`
 }
 
 type DelegationByStakerPagination struct {
-	StakingStartkHeight uint64 `json:"staking_start_height"`
+	StakingTxHashHex   string `json:"staking_tx_hash_hex"`
+	StakingStartHeight uint64 `json:"staking_start_height"`
 }
 
 func DecodeDelegationByStakerPaginationToken(token string) (*DelegationByStakerPagination, error) {
@@ -58,7 +59,8 @@ func (d *DelegationByStakerPagination) GetPaginationToken() (string, error) {
 
 func BuildDelegationByStakerPaginationToken(d DelegationDocument) (string, error) {
 	page := &DelegationByStakerPagination{
-		StakingStartkHeight: d.StakingStartkHeight,
+		StakingTxHashHex:   d.StakingTxHashHex,
+		StakingStartHeight: d.StakingStartHeight,
 	}
 	token, err := page.GetPaginationToken()
 	if err != nil {

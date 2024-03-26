@@ -50,11 +50,11 @@ func (db *Database) SaveActiveStakingDelegation(
 ) error {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 	document := model.DelegationDocument{
-		StakingTxHex:          stakingTxHashHex, // Primary key of db collection
+		StakingTxHashHex:      stakingTxHashHex, // Primary key of db collection
 		StakerPkHex:           stakerPhHex,
 		FinalityProviderPkHex: finalityProviderPkHex,
 		StakingValue:          amount,
-		StakingStartkHeight:   startHeight,
+		StakingStartHeight:    startHeight,
 		StakingTimeLock:       timelock,
 		State:                 model.Active,
 	}
@@ -77,8 +77,7 @@ func (db *Database) SaveActiveStakingDelegation(
 	return nil
 }
 
-func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk string, paginationToken string) (DbResultMap[model.DelegationDocument], error) {
-	var resultMap DbResultMap[model.DelegationDocument]
+func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk string, paginationToken string) (*DbResultMap[model.DelegationDocument], error) {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 
 	filter := bson.M{"staker_pk_hex": stakerPk}
@@ -89,42 +88,49 @@ func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 	if paginationToken != "" {
 		decodedToken, err := model.DecodeDelegationByStakerPaginationToken(paginationToken)
 		if err != nil {
-			return DbResultMap[model.DelegationDocument]{}, &InvalidPaginationTokenError{
+			return nil, &InvalidPaginationTokenError{
 				Message: "Invalid pagination token",
 			}
 		}
-		lastSeenHeight := decodedToken.StakingStartkHeight
-		filter["staking_start_height"] = bson.M{"$lt": lastSeenHeight}
+		filter = bson.M{
+			"$or": []bson.M{
+				{"staking_start_height": bson.M{"$lt": decodedToken.StakingStartHeight}},
+				{"staking_start_height": decodedToken.StakingStartHeight, "_id": bson.M{"$gt": decodedToken.StakingTxHashHex}},
+			},
+		}
 	}
 
 	cursor, err := client.Find(ctx, filter, options)
 	if err != nil {
-		return resultMap, err
+		return nil, err
 	}
 	defer cursor.Close(ctx)
 
 	var delegations []model.DelegationDocument
 	if err = cursor.All(ctx, &delegations); err != nil {
-		return resultMap, err
+		return nil, err
 	}
 
 	return toResultMapWithPaginationToken(delegations, model.BuildDelegationByStakerPaginationToken)
 }
 
-func toResultMapWithPaginationToken[T any](result []T, paginationKeyBuilder func(T) (string, error)) (DbResultMap[T], error) {
+// This function is used to build the result map with pagination token
+// It will return the result map with pagination token if the result length is equal to the fetch limit
+// Otherwise it will return the result map without pagination token. i.e pagination token will be empty string
+func toResultMapWithPaginationToken[T any](result []T, paginationKeyBuilder func(T) (string, error)) (*DbResultMap[T], error) {
 	if len(result) > 0 && len(result) == FetchLimit {
 		paginationToken, err := paginationKeyBuilder(result[len(result)-1])
 		if err != nil {
-			return DbResultMap[T]{}, err
+			return nil, err
 		}
-		return DbResultMap[T]{
+		return &DbResultMap[T]{
 			Data:            result,
 			PaginationToken: paginationToken,
 		}, nil
 
 	}
 
-	return DbResultMap[T]{
+	return &DbResultMap[T]{
 		Data:            result,
 		PaginationToken: "",
 	}, nil

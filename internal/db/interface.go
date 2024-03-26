@@ -15,5 +15,5 @@ type DBClient interface {
 	) error
 	FindDelegationsByStakerPk(
 		ctx context.Context, stakerPk string, paginationToken string,
-	) (DbResultMap[model.DelegationDocument], error)
+	) (*DbResultMap[model.DelegationDocument], error)
 }

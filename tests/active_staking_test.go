@@ -25,7 +25,7 @@ func TestActiveStaking(t *testing.T) {
 	defer server.Close()
 	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
 
-	// Wait for 10 seconds to make sure the message is processed
+	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
 	// Test the API
 	url := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
@@ -55,7 +55,7 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	defer server.Close()
 	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
 
-	// Wait for 10 seconds to make sure the message is processed
+	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
 	// Test the API
 	url := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
@@ -85,12 +85,15 @@ func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []client.Active
 	for i := 0; i < numOfEvenet; i++ {
 		activeStakingEvent := client.ActiveStakingEvent{
 			EventType:             client.ActiveStakingEventType,
-			StakingTxHex:          "0x1234567890abcdef" + fmt.Sprint(i),
+			StakingTxHashHex:      "0x1234567890abcdef" + fmt.Sprint(i),
 			StakerPkHex:           stakerHash,
 			FinalityProviderPkHex: "0xabcdef1234567890" + fmt.Sprint(i),
 			StakingValue:          1 + uint64(i),
-			StakingStartkHeight:   100 + uint64(i),
+			StakingStartHeight:    100 + uint64(i),
+			StakingStartTimestamp: time.Now().String(),
 			StakingTimeLock:       200 + uint64(i),
+			StakingOutputIndex:    1 + uint64(i),
+			StakingTxHex:          "0xabcdef1234567890" + fmt.Sprint(i),
 		}
 		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
 	}
