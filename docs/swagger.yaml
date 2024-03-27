@@ -1,0 +1,76 @@
+definitions:
+  github_com_babylonchain_staking-api-service_internal_types.Error:
+    properties:
+      err: {}
+      errorCode:
+        $ref: '#/definitions/types.ErrorCode'
+      statusCode:
+        type: integer
+    type: object
+  handlers.PublicResponse-array_services_DelegationPublic:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/services.DelegationPublic'
+        type: array
+      pagination:
+        $ref: '#/definitions/handlers.paginationResponse'
+    type: object
+  handlers.paginationResponse:
+    properties:
+      next_key:
+        type: string
+    type: object
+  services.DelegationPublic:
+    properties:
+      finality_provider_pk_hex:
+        type: string
+      staker_pk_hex:
+        type: string
+      staking_tx_hash_hex:
+        type: string
+      staking_value:
+        type: integer
+      state:
+        type: string
+      time_lock_expire:
+        type: integer
+    type: object
+  types.ErrorCode:
+    enum:
+    - INTERNAL_SERVICE_ERROR
+    - VALIDATION_ERROR
+    - NOT_FOUND
+    - BAD_REQUEST
+    type: string
+    x-enum-varnames:
+    - InternalServiceError
+    - ValidationError
+    - NotFound
+    - BadRequest
+info:
+  contact: {}
+paths:
+  /staker/delegations:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves delegations for a given staker
+      parameters:
+      - description: Staker BTC Public Key
+        in: query
+        name: staker_btc_pk
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of delegations and pagination token
+          schema:
+            $ref: '#/definitions/handlers.PublicResponse-array_services_DelegationPublic'
+        "400":
+          description: 'Error: Bad Request'
+          schema:
+            $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
+swagger: "2.0"
