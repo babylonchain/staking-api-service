@@ -28,3 +28,18 @@ func IsInvalidPaginationTokenError(err error) bool {
 	_, ok := err.(*InvalidPaginationTokenError)
 	return ok
 }
+
+// Not found Error
+type NotFoundError struct {
+	Key     string
+	Message string
+}
+
+func (e *NotFoundError) Error() string {
+	return e.Message
+}
+
+func IsNotFoundError(err error) bool {
+	_, ok := err.(*NotFoundError)
+	return ok
+}

@@ -37,6 +37,78 @@
                     }
                 }
             }
+        },
+        "/v1/unbonding": {
+            "post": {
+                "description": "Unbonds a delegation by processing the provided transaction details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "unbonding"
+                ],
+                "summary": "Unbond delegation",
+                "parameters": [
+                    {
+                        "description": "Unbonding Request Payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UnbondDelegationRequestPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Request accepted and will be processed asynchronously"
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/unbonding/eligibility": {
+            "get": {
+                "description": "Checks if a delegation identified by its staking transaction hash is eligible for unbonding.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "unbonding"
+                ],
+                "summary": "Check unbonding eligibility",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Staking Transaction Hash Hex",
+                        "name": "staking_tx_hash_hex",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The delegation is eligible for unbonding"
+                    },
+                    "400": {
+                        "description": "Missing or invalid 'staking_tx_hash_hex' query parameter",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -63,6 +135,23 @@
                 },
                 "pagination": {
                     "$ref": "#/definitions/handlers.paginationResponse"
+                }
+            }
+        },
+        "handlers.UnbondDelegationRequestPayload": {
+            "type": "object",
+            "properties": {
+                "staker_signed_signature_hex": {
+                    "type": "string"
+                },
+                "staking_tx_hash_hex": {
+                    "type": "string"
+                },
+                "unbonding_tx_hash_hex": {
+                    "type": "string"
+                },
+                "unbonding_tx_hex": {
+                    "type": "string"
                 }
             }
         },
@@ -103,13 +192,15 @@
                 "INTERNAL_SERVICE_ERROR",
                 "VALIDATION_ERROR",
                 "NOT_FOUND",
-                "BAD_REQUEST"
+                "BAD_REQUEST",
+                "FORBIDDEN"
             ],
             "x-enum-varnames": [
                 "InternalServiceError",
                 "ValidationError",
                 "NotFound",
-                "BadRequest"
+                "BadRequest",
+                "Forbidden"
             ]
         }
     }

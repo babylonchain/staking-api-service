@@ -3,32 +3,20 @@ package model
 import (
 	"encoding/base64"
 	"encoding/json"
+
+	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 const DelegationCollection = "delegations"
 
-type DelegationState string
-
-const (
-	Active             DelegationState = "active"
-	UnbondingRequested DelegationState = "unbonding_requested"
-	Unbonding          DelegationState = "unbonding"
-	Unbonded           DelegationState = "unbonded"
-	Withdrawn          DelegationState = "withdrawn"
-)
-
-func (s DelegationState) ToString() string {
-	return string(s)
-}
-
 type DelegationDocument struct {
-	StakingTxHashHex      string          `bson:"_id"` // Primary key
-	StakerPkHex           string          `bson:"staker_pk_hex"`
-	FinalityProviderPkHex string          `bson:"finality_provider_pk_hex"`
-	StakingValue          uint64          `bson:"staking_value"`
-	StakingStartHeight    uint64          `bson:"staking_start_height"`
-	StakingTimeLock       uint64          `bson:"staking_timelock"`
-	State                 DelegationState `bson:"state"`
+	StakingTxHashHex      string                `bson:"_id"` // Primary key
+	StakerPkHex           string                `bson:"staker_pk_hex"`
+	FinalityProviderPkHex string                `bson:"finality_provider_pk_hex"`
+	StakingValue          uint64                `bson:"staking_value"`
+	StakingStartHeight    uint64                `bson:"staking_start_height"`
+	StakingTimeLock       uint64                `bson:"staking_timelock"`
+	State                 types.DelegationState `bson:"state"`
 }
 
 type DelegationByStakerPagination struct {

@@ -16,4 +16,10 @@ type DBClient interface {
 	FindDelegationsByStakerPk(
 		ctx context.Context, stakerPk string, paginationToken string,
 	) (*DbResultMap[model.DelegationDocument], error)
+
+	SaveUnbondingTx(
+		ctx context.Context, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex string,
+	) error
+
+	FindDelegationByTxHashHex(ctx context.Context, txHashHex string) (*model.DelegationDocument, error)
 }

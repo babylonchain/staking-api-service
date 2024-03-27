@@ -17,9 +17,10 @@ const (
 	ValidationError      ErrorCode = "VALIDATION_ERROR"
 	NotFound             ErrorCode = "NOT_FOUND"
 	BadRequest           ErrorCode = "BAD_REQUEST"
+	Forbidden            ErrorCode = "FORBIDDEN"
 )
 
-// ApiError represents an error with an HTTP status code and an application-specific error code.
+// Error represents an error with an HTTP status code and an application-specific error code.
 type Error struct {
 	Err        error
 	StatusCode int
@@ -32,7 +33,7 @@ func (e *Error) Error() string {
 	return e.Err.Error()
 }
 
-// NewError creates a new ApiError with the provided status code, error code, and underlying error.
+// NewError creates a new Error with the provided status code, error code, and underlying error.
 // If the status code is not provided (0), it defaults to http.StatusInternalServerError(500).
 // If the error code is empty, it defaults to INTERNAL_SERVICE_ERROR.
 func NewError(statusCode int, errorCode ErrorCode, err error) *Error {

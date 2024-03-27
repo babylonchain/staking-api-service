@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
@@ -26,5 +25,5 @@ func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.E
 		return nil, err
 	}
 
-	return NewResultWithPagination[[]services.DelegationPublic](delegations, paginationToken), nil
+	return NewResultWithPagination(delegations, paginationToken), nil
 }

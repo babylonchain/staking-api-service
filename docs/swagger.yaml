@@ -16,6 +16,17 @@ definitions:
       pagination:
         $ref: '#/definitions/handlers.paginationResponse'
     type: object
+  handlers.UnbondDelegationRequestPayload:
+    properties:
+      staker_signed_signature_hex:
+        type: string
+      staking_tx_hash_hex:
+        type: string
+      unbonding_tx_hash_hex:
+        type: string
+      unbonding_tx_hex:
+        type: string
+    type: object
   handlers.paginationResponse:
     properties:
       next_key:
@@ -42,12 +53,14 @@ definitions:
     - VALIDATION_ERROR
     - NOT_FOUND
     - BAD_REQUEST
+    - FORBIDDEN
     type: string
     x-enum-varnames:
     - InternalServiceError
     - ValidationError
     - NotFound
     - BadRequest
+    - Forbidden
 info:
   contact: {}
 paths:
@@ -73,4 +86,52 @@ paths:
           description: 'Error: Bad Request'
           schema:
             $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
+  /v1/unbonding:
+    post:
+      consumes:
+      - application/json
+      description: Unbonds a delegation by processing the provided transaction details.
+      parameters:
+      - description: Unbonding Request Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UnbondDelegationRequestPayload'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Request accepted and will be processed asynchronously
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
+      summary: Unbond delegation
+      tags:
+      - unbonding
+  /v1/unbonding/eligibility:
+    get:
+      consumes:
+      - application/json
+      description: Checks if a delegation identified by its staking transaction hash
+        is eligible for unbonding.
+      parameters:
+      - description: Staking Transaction Hash Hex
+        in: query
+        name: staking_tx_hash_hex
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The delegation is eligible for unbonding
+        "400":
+          description: Missing or invalid 'staking_tx_hash_hex' query parameter
+          schema:
+            $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
+      summary: Check unbonding eligibility
+      tags:
+      - unbonding
 swagger: "2.0"

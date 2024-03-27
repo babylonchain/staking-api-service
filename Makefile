@@ -40,6 +40,7 @@ stop-service:
 	
 run-local:
 	./bin/local-startup.sh;
+	sleep 5;
 	go run cmd/staking-api-service/main.go --config config/config-local.yml
 
 generate-mock-interface:
