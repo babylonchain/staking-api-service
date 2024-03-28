@@ -12,7 +12,7 @@ type QueueClient interface {
 	SendMessage(ctx context.Context, messageBody string) error
 	ReceiveMessages() (<-chan QueueMessage, error)
 	DeleteMessage(receipt string) error
-	Stop()
+	Stop() error
 	GetQueueName() string
 }
 

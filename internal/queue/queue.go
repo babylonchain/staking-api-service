@@ -43,7 +43,10 @@ func (q *Queues) StartReceivingMessages() {
 
 // Turn off all message processing
 func (q *Queues) StopReceivingMessages() {
-	q.ActiveStakingQueueClient.Stop()
+	err := q.ActiveStakingQueueClient.Stop()
+	if err != nil {
+		log.Error().Err(err).Str("queueName", q.ActiveStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+	}
 }
 
 func startQueueMessageProcessing(
