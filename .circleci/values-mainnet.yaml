@@ -1,0 +1,100 @@
+nodeSelector:
+  workload: "webservices"
+namespace: staking-api-service
+name: staking-api-service
+deployment:
+  image: 490721144737.dkr.ecr.us-east-1.amazonaws.com/staking-api-service
+  version: REPLACEME
+  replicas: 2
+  ports:
+    - protocol: TCP
+      containerPort: 8080
+      name: staking-api
+    - protocol: TCP
+      containerPort: 2112
+      name: prom
+  env:
+    - name: CONFIG
+      value: /home/staking-api-service/config.yml
+    - name: RABBITMQ_DEFAULT_USER
+      valueFrom:
+        secretKeyRef:
+          name: staking-api-service
+          key: rabbitmqUsername
+    - name: RABBITMQ_DEFAULT_PASS
+      valueFrom:
+        secretKeyRef:
+          name: staking-api-service
+          key: rabbitmqPassword
+  volumeMounts:
+    - name: staking-api-service
+      subPath: config.yml
+      mountPath: /home/staking-api-service/config.yml
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "2112"
+    prometheus.io/scheme: http
+    prometheus.io/scrape: "true"
+    configmap.reloader.stakater.com/reload: "staking-api-service"
+service:
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: staking-api
+      name: staking-api
+    - protocol: TCP
+      port: 2112
+      targetPort: prom
+      name: prom
+ingress:
+  enabled: true
+  groupName: "mainnet-internal"
+  tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/2c6cb5ad-8899-4871-9206-ea8e978aebae
+  scheme: "internal"
+  hosts:
+    - host: staking-api.mainnet.babylonchain.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ssl-redirect
+                port:
+                  name: use-annotation
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: staking-api-service
+                port:
+                  name: staking-api
+externalDns:
+  fqdn: staking-api.mainnet.babylonchain.io
+  ttl: 60
+encryptedConfig:
+  rabbitmqPassword: AgArMssX0ci2zFS5hX+8NPzihVDbh5wP+b9udpN2ZT2cRfmj5CkkdyDQSIdo34YtAIwEbE9SfKCQuLvD1lyi1WeWYHx+EIXJv2fWY2uYCTkFr5OUQHa9zf5xc7EI2ZEwuOIXQ1sg1hXWD4iRdcVoSrYUTqj3LBRES3vKJQoDiaQuCGgdixSVQcpM9IaPBM7E0aHuBGzCFOauYYjcKnjrx0UF6s+3DToPdwYGq8fE8pYHuZqyYgF001d/mpmrsaY+ivYuRGW80NEV8EC8z5s+oiZc4c6R0S3S6LxSgZeppIRjTZm0gADnoh6gR9RhOmIhvrPEJz1P5MIwq+nTE4tSGEdaS+WRExh6ALC/rM3JH+IxtITzHbDCKM7Mj2Mbz7GcdBVIA9xyYcpc88okpnaEON98WR2sGB4B4pglCHMSuxMuYL2ztdyeLmIA5AkMah5a77byL0h2POwF74tGw3EyD8MnmSq6G3z/LsPnd2zFviMlR9MyMEtlzwbuQWiLS2eTdvSY7tpyilmbia2FjRSOAgY77Orevey7HCO6KA2XlHox+Rhj9aXbljuPhgObMzNTgeckArE/ajFo4zmlV+CldZbede5bsRO8Jrl/amZZTDl/0qTV8GBqz1AM7snLVOOElsz/Ie5DRIR645H5+ROJArhil4kZizOhwHdWttNT8HjJ/BH/Cgrei8+QQQd3L4l1JBv24/X5HD1zdeCkoHFxTKe1ATj7uOSqMwNlKJzaMSjwSg==
+  rabbitmqUsername: AgCcHqsBFHlzWZgmJnrigYINJv0g5ukrNDqqhYmhI4pD7CrmqiHrT0U4Yfb0aIJXJOBwp7cTeI7SIV5+RUUDIkRkKQiHLdpnt+zOlAzU8+oyETwrK/pYOAVVqVfcKIaLpAj+SdxztdM18AJW6npbfFN6gr2i2leWVIVlun06xmXysvwNhDBg0NT+r22c+21fi3B6z1zXWmLTHDtM+sa5GwTQL7J6FteIjalJsEsEJm/ckU/ugcULlx2/0lEONieD9fyid+yuCn36ECoWGSd98qWYYwazyQh3srz0D9CPjhQUI6h5orJckDqJB//fbm+CiBnLHAT9pmU05raUBb4LsaQWukXYtKrBdbmZJMbfUk2bz1lYUAtZEJvv0qPy/n9Pq4P2BvDrNjj5Hq5pHDjKaNC6h7hXWCAyStE5JwxIyQqLoXpFRsWzpuVWCZR1/D6WcKstTzMsIVXappwRARY6pWJTJBGEAjgXCJKg6sOYAnWUHG2GcBXFdhIE7s7M2d0unYNZ+JVsoDjDAIYZM0QWcnANW7FnXVdiophmHgYfAfX0UWIBHOkBfXM6bbCUzV0JaBJHFMNeEew513FuCldMenpWsw9SA/WY3cBifGDR6P0nMRnTvv0LBmpHnlcDWzSc4Z3fBb++WiKkINDglV+fzxn8eEcSJSCUHV52KtG2Nwnhh1z9IqKJnlpd7JrGb20uMCvah9+LcaU4OA==
+purgeCloudflareCache:
+  enabled: false
+configFiles:
+  config.yml: |
+    server:
+      host: 0.0.0.0
+      port: 8090
+      write-timeout: 60s
+      read-timeout: 60s
+      idle-timeout: 60s
+      allowed-origins: [ "*" ]
+    db:
+      address: mongodb://mongodb-headless.mongodb-staking-api:27017
+      db-name: staking-api-service
+    queue:
+      queue_user: PLACEHOLDER
+      queue_password: PLACEHOLDER
+      url: "rabbitmq-headless.rabbitmq:5672"
+      processing_timeout: 5 # 5 second
+    metrics:
+      host: 0.0.0.0
+      port: 2112
