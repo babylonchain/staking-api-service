@@ -16,16 +16,6 @@ deployment:
   env:
     - name: CONFIG
       value: /home/staking-api-service/config.yml
-    - name: RABBITMQ_DEFAULT_USER
-      valueFrom:
-        secretKeyRef:
-          name: staking-api-service
-          key: rabbitmqUsername
-    - name: RABBITMQ_DEFAULT_PASS
-      valueFrom:
-        secretKeyRef:
-          name: staking-api-service
-          key: rabbitmqPassword
   volumeMounts:
     - name: staking-api-service
       subPath: config.yml
@@ -73,9 +63,6 @@ ingress:
 externalDns:
   fqdn: staking-api.mainnet.babylonchain.io
   ttl: 60
-encryptedConfig:
-  rabbitmqPassword: AgArMssX0ci2zFS5hX+8NPzihVDbh5wP+b9udpN2ZT2cRfmj5CkkdyDQSIdo34YtAIwEbE9SfKCQuLvD1lyi1WeWYHx+EIXJv2fWY2uYCTkFr5OUQHa9zf5xc7EI2ZEwuOIXQ1sg1hXWD4iRdcVoSrYUTqj3LBRES3vKJQoDiaQuCGgdixSVQcpM9IaPBM7E0aHuBGzCFOauYYjcKnjrx0UF6s+3DToPdwYGq8fE8pYHuZqyYgF001d/mpmrsaY+ivYuRGW80NEV8EC8z5s+oiZc4c6R0S3S6LxSgZeppIRjTZm0gADnoh6gR9RhOmIhvrPEJz1P5MIwq+nTE4tSGEdaS+WRExh6ALC/rM3JH+IxtITzHbDCKM7Mj2Mbz7GcdBVIA9xyYcpc88okpnaEON98WR2sGB4B4pglCHMSuxMuYL2ztdyeLmIA5AkMah5a77byL0h2POwF74tGw3EyD8MnmSq6G3z/LsPnd2zFviMlR9MyMEtlzwbuQWiLS2eTdvSY7tpyilmbia2FjRSOAgY77Orevey7HCO6KA2XlHox+Rhj9aXbljuPhgObMzNTgeckArE/ajFo4zmlV+CldZbede5bsRO8Jrl/amZZTDl/0qTV8GBqz1AM7snLVOOElsz/Ie5DRIR645H5+ROJArhil4kZizOhwHdWttNT8HjJ/BH/Cgrei8+QQQd3L4l1JBv24/X5HD1zdeCkoHFxTKe1ATj7uOSqMwNlKJzaMSjwSg==
-  rabbitmqUsername: AgCcHqsBFHlzWZgmJnrigYINJv0g5ukrNDqqhYmhI4pD7CrmqiHrT0U4Yfb0aIJXJOBwp7cTeI7SIV5+RUUDIkRkKQiHLdpnt+zOlAzU8+oyETwrK/pYOAVVqVfcKIaLpAj+SdxztdM18AJW6npbfFN6gr2i2leWVIVlun06xmXysvwNhDBg0NT+r22c+21fi3B6z1zXWmLTHDtM+sa5GwTQL7J6FteIjalJsEsEJm/ckU/ugcULlx2/0lEONieD9fyid+yuCn36ECoWGSd98qWYYwazyQh3srz0D9CPjhQUI6h5orJckDqJB//fbm+CiBnLHAT9pmU05raUBb4LsaQWukXYtKrBdbmZJMbfUk2bz1lYUAtZEJvv0qPy/n9Pq4P2BvDrNjj5Hq5pHDjKaNC6h7hXWCAyStE5JwxIyQqLoXpFRsWzpuVWCZR1/D6WcKstTzMsIVXappwRARY6pWJTJBGEAjgXCJKg6sOYAnWUHG2GcBXFdhIE7s7M2d0unYNZ+JVsoDjDAIYZM0QWcnANW7FnXVdiophmHgYfAfX0UWIBHOkBfXM6bbCUzV0JaBJHFMNeEew513FuCldMenpWsw9SA/WY3cBifGDR6P0nMRnTvv0LBmpHnlcDWzSc4Z3fBb++WiKkINDglV+fzxn8eEcSJSCUHV52KtG2Nwnhh1z9IqKJnlpd7JrGb20uMCvah9+LcaU4OA==
 purgeCloudflareCache:
   enabled: false
 configFiles:
@@ -91,8 +78,8 @@ configFiles:
       address: mongodb://mongodb-headless.mongodb-staking-api:27017
       db-name: staking-api-service
     queue:
-      queue_user: PLACEHOLDER
-      queue_password: PLACEHOLDER
+      queue_user: USER
+      queue_password: PASSWORD
       url: "rabbitmq-headless.rabbitmq:5672"
       processing_timeout: 5 # 5 second
     metrics:

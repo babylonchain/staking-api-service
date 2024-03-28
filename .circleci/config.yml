@@ -99,6 +99,12 @@ jobs:
           kubeconfig: MAINNET_KUBECONFIG
       - helm/install-helm-client
       - run:
+          name: Fetch and replace RabbitMQ credentials from CircleCi env vars
+          command: |
+            HELM_VALUES=/home/circleci/project/.circleci/values-mainnet.yaml
+            sed -i "s/USER/$RABBITMQ_USER/g" $HELM_VALUES
+            sed -i "s/PASSWORD/$RABBITMQ_PASSWORD/g" $HELM_VALUES
+      - run:
           name: Perform a dry run of the new release
           command: |
             helm upgrade --install --debug --dry-run \
