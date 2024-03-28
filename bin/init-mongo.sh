@@ -16,6 +16,7 @@ sleep 5
 mongosh --eval "
 db = db.getSiblingDB('staking-api-service');
 db.unbonding_queue.createIndex({'unbonding_tx_hash_hex': 1}, {unique: true});
+db.timelock_queue.createIndex({'expire_height': 1}, {unique: false});
 db.delegations.createIndex({'staker_pk_hex': 1, 'staking_start_height': -1}, {unique: false});
 "
 
