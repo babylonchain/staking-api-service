@@ -112,6 +112,24 @@ func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHa
 	return r0
 }
 
+// SaveTimeLockExpireCheck provides a mock function with given fields: ctx, stakingTxHashHex, expireHeight
+func (_m *DBClient) SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64) error {
+	ret := _m.Called(ctx, stakingTxHashHex, expireHeight)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveTimeLockExpireCheck")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, expireHeight)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SaveUnbondingTx provides a mock function with given fields: ctx, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex
 func (_m *DBClient) SaveUnbondingTx(ctx context.Context, stakingTxHashHex string, unbondingTxHashHex string, txHex string, signatureHex string) error {
 	ret := _m.Called(ctx, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex)
