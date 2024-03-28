@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http/httptest"
 	"reflect"
 	"testing"
@@ -190,20 +191,57 @@ func sendTestMessage[T any](client client.QueueClient, data []T) error {
 
 func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []client.ActiveStakingEvent {
 	var activeStakingEvents []client.ActiveStakingEvent
+
+	// To be replaced with https://github.com/babylonchain/staking-api-service/issues/21
+	rand.New(rand.NewSource(time.Now().Unix()))
+
 	for i := 0; i < numOfEvenet; i++ {
 		activeStakingEvent := client.ActiveStakingEvent{
 			EventType:             client.ActiveStakingEventType,
 			StakingTxHashHex:      "0x1234567890abcdef" + fmt.Sprint(i),
 			StakerPkHex:           stakerHash,
 			FinalityProviderPkHex: "0xabcdef1234567890" + fmt.Sprint(i),
-			StakingValue:          1 + uint64(i),
-			StakingStartHeight:    100 + uint64(i),
+			StakingValue:          uint64(rand.Intn(1000)),
+			StakingStartHeight:    uint64(rand.Intn(200)),
 			StakingStartTimestamp: time.Now().String(),
-			StakingTimeLock:       200 + uint64(i),
-			StakingOutputIndex:    1 + uint64(i),
+			StakingTimeLock:       uint64(rand.Intn(100)),
+			StakingOutputIndex:    uint64(rand.Intn(100)),
 			StakingTxHex:          "0xabcdef1234567890" + fmt.Sprint(i),
 		}
 		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
 	}
 	return activeStakingEvents
+}
+
+// Inspect the items in the real database
+func inspectDbDocuments[T any](t *testing.T, collectionName string) ([]T, error) {
+	cfg, err := config.New("./config-test.yml")
+	if err != nil {
+		t.Fatalf("Failed to load test config: %v", err)
+	}
+	// Connect to MongoDB
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.Db.Address))
+	if err != nil {
+		log.Fatal(err)
+	}
+	database := client.Database(cfg.Db.DbName)
+	collection := database.Collection(collectionName)
+
+	cursor, err := collection.Find(context.Background(), bson.D{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+
+	var results []T
+	for cursor.Next(context.Background()) {
+		var result T
+		err := cursor.Decode(&result)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
 }

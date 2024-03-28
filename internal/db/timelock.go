@@ -8,10 +8,7 @@ import (
 
 func (db *Database) SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64) error {
 	client := db.Client.Database(db.DbName).Collection(model.TimeLockCollection)
-	document := model.TimeLockDocument{
-		StakingTxHashHex: stakingTxHashHex,
-		ExpireHeight:     expireHeight,
-	}
+	document := model.NewTimeLockDocument(stakingTxHashHex, expireHeight)
 	_, err := client.InsertOne(ctx, document)
 	if err != nil {
 		return err
