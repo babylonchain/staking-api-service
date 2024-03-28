@@ -30,13 +30,13 @@ func (h *Handler) UnbondDelegation(request *http.Request) (*Result, *types.Error
 	if err != nil {
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid request payload")
 	}
-	unbondErro := h.services.UnbondDelegation(
+	unbondErr := h.services.UnbondDelegation(
 		request.Context(), payload.StakingTxHashHex,
 		payload.UnbondingTxHashHex, payload.UnbondingTxHex,
 		payload.StakerSignedSignatureHex,
 	)
-	if unbondErro != nil {
-		return nil, unbondErro
+	if unbondErr != nil {
+		return nil, unbondErr
 	}
 
 	return &Result{Status: http.StatusAccepted}, nil
