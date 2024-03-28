@@ -6,7 +6,7 @@ deployment:
   replicas: 2
   ports:
     - protocol: TCP
-      containerPort: 8080
+      containerPort: 8090
       name: staking-api
     - protocol: TCP
       containerPort: 2112
