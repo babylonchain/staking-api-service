@@ -16,6 +16,36 @@ type DBClient struct {
 	mock.Mock
 }
 
+// FindDelegationByTxHashHex provides a mock function with given fields: ctx, txHashHex
+func (_m *DBClient) FindDelegationByTxHashHex(ctx context.Context, txHashHex string) (*model.DelegationDocument, error) {
+	ret := _m.Called(ctx, txHashHex)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindDelegationByTxHashHex")
+	}
+
+	var r0 *model.DelegationDocument
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*model.DelegationDocument, error)); ok {
+		return rf(ctx, txHashHex)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *model.DelegationDocument); ok {
+		r0 = rf(ctx, txHashHex)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.DelegationDocument)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, txHashHex)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindDelegationsByStakerPk provides a mock function with given fields: ctx, stakerPk, paginationToken
 func (_m *DBClient) FindDelegationsByStakerPk(ctx context.Context, stakerPk string, paginationToken string) (*db.DbResultMap[model.DelegationDocument], error) {
 	ret := _m.Called(ctx, stakerPk, paginationToken)
@@ -75,6 +105,24 @@ func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHa
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, uint64, uint64, uint64) error); ok {
 		r0 = rf(ctx, stakingTxHashHex, stakerPhHex, finalityProviderPkHex, amount, startHeight, timelock)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SaveUnbondingTx provides a mock function with given fields: ctx, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex
+func (_m *DBClient) SaveUnbondingTx(ctx context.Context, stakingTxHashHex string, unbondingTxHashHex string, txHex string, signatureHex string) error {
+	ret := _m.Called(ctx, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveUnbondingTx")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex)
 	} else {
 		r0 = ret.Error(0)
 	}

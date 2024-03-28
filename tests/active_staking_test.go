@@ -2,14 +2,12 @@ package tests
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
-	"github.com/babylonchain/staking-api-service/internal/queue/client"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/stretchr/testify/assert"
 )
@@ -78,24 +76,4 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	assert.Equal(t, activeStakingEvent[0].StakerPkHex, response.Data[0].StakerPkHex, "expected response body to match")
 	assert.Equal(t, 10, len(response.Data), "expected contain 10 items in response")
 	assert.NotEmpty(t, response.Pagination.NextKey, "should have pagination token")
-}
-
-func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []client.ActiveStakingEvent {
-	var activeStakingEvents []client.ActiveStakingEvent
-	for i := 0; i < numOfEvenet; i++ {
-		activeStakingEvent := client.ActiveStakingEvent{
-			EventType:             client.ActiveStakingEventType,
-			StakingTxHashHex:      "0x1234567890abcdef" + fmt.Sprint(i),
-			StakerPkHex:           stakerHash,
-			FinalityProviderPkHex: "0xabcdef1234567890" + fmt.Sprint(i),
-			StakingValue:          1 + uint64(i),
-			StakingStartHeight:    100 + uint64(i),
-			StakingStartTimestamp: time.Now().String(),
-			StakingTimeLock:       200 + uint64(i),
-			StakingOutputIndex:    1 + uint64(i),
-			StakingTxHex:          "0xabcdef1234567890" + fmt.Sprint(i),
-		}
-		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
-	}
-	return activeStakingEvents
 }

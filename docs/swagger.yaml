@@ -1,0 +1,137 @@
+definitions:
+  github_com_babylonchain_staking-api-service_internal_types.Error:
+    properties:
+      err: {}
+      errorCode:
+        $ref: '#/definitions/types.ErrorCode'
+      statusCode:
+        type: integer
+    type: object
+  handlers.PublicResponse-array_services_DelegationPublic:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/services.DelegationPublic'
+        type: array
+      pagination:
+        $ref: '#/definitions/handlers.paginationResponse'
+    type: object
+  handlers.UnbondDelegationRequestPayload:
+    properties:
+      staker_signed_signature_hex:
+        type: string
+      staking_tx_hash_hex:
+        type: string
+      unbonding_tx_hash_hex:
+        type: string
+      unbonding_tx_hex:
+        type: string
+    type: object
+  handlers.paginationResponse:
+    properties:
+      next_key:
+        type: string
+    type: object
+  services.DelegationPublic:
+    properties:
+      finality_provider_pk_hex:
+        type: string
+      staker_pk_hex:
+        type: string
+      staking_tx_hash_hex:
+        type: string
+      staking_value:
+        type: integer
+      state:
+        type: string
+      time_lock_expire:
+        type: integer
+    type: object
+  types.ErrorCode:
+    enum:
+    - INTERNAL_SERVICE_ERROR
+    - VALIDATION_ERROR
+    - NOT_FOUND
+    - BAD_REQUEST
+    - FORBIDDEN
+    type: string
+    x-enum-varnames:
+    - InternalServiceError
+    - ValidationError
+    - NotFound
+    - BadRequest
+    - Forbidden
+info:
+  contact: {}
+paths:
+  /staker/delegations:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves delegations for a given staker
+      parameters:
+      - description: Staker BTC Public Key
+        in: query
+        name: staker_btc_pk
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of delegations and pagination token
+          schema:
+            $ref: '#/definitions/handlers.PublicResponse-array_services_DelegationPublic'
+        "400":
+          description: 'Error: Bad Request'
+          schema:
+            $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
+  /v1/unbonding:
+    post:
+      consumes:
+      - application/json
+      description: Unbonds a delegation by processing the provided transaction details.
+      parameters:
+      - description: Unbonding Request Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UnbondDelegationRequestPayload'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Request accepted and will be processed asynchronously
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
+      summary: Unbond delegation
+      tags:
+      - unbonding
+  /v1/unbonding/eligibility:
+    get:
+      consumes:
+      - application/json
+      description: Checks if a delegation identified by its staking transaction hash
+        is eligible for unbonding.
+      parameters:
+      - description: Staking Transaction Hash Hex
+        in: query
+        name: staking_tx_hash_hex
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The delegation is eligible for unbonding
+        "400":
+          description: Missing or invalid 'staking_tx_hash_hex' query parameter
+          schema:
+            $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
+      summary: Check unbonding eligibility
+      tags:
+      - unbonding
+swagger: "2.0"

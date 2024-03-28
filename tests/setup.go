@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/middlewares"
@@ -185,4 +186,24 @@ func sendTestMessage[T any](client client.QueueClient, data []T) error {
 		}
 	}
 	return nil
+}
+
+func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []client.ActiveStakingEvent {
+	var activeStakingEvents []client.ActiveStakingEvent
+	for i := 0; i < numOfEvenet; i++ {
+		activeStakingEvent := client.ActiveStakingEvent{
+			EventType:             client.ActiveStakingEventType,
+			StakingTxHashHex:      "0x1234567890abcdef" + fmt.Sprint(i),
+			StakerPkHex:           stakerHash,
+			FinalityProviderPkHex: "0xabcdef1234567890" + fmt.Sprint(i),
+			StakingValue:          1 + uint64(i),
+			StakingStartHeight:    100 + uint64(i),
+			StakingStartTimestamp: time.Now().String(),
+			StakingTimeLock:       200 + uint64(i),
+			StakingOutputIndex:    1 + uint64(i),
+			StakingTxHex:          "0xabcdef1234567890" + fmt.Sprint(i),
+		}
+		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
+	}
+	return activeStakingEvents
 }
