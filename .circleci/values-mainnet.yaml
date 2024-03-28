@@ -1,5 +1,3 @@
-nodeSelector:
-  workload: "webservices"
 namespace: staking-api-service
 name: staking-api-service
 deployment:
@@ -26,6 +24,17 @@ deployment:
     prometheus.io/scheme: http
     prometheus.io/scrape: "true"
     configmap.reloader.stakater.com/reload: "staking-api-service"
+  nodeSelector:
+    workload: "webservices"
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app: staking-api-service
+            topologyKey: topology.kubernetes.io/zone
+          weight: 1
 service:
   type: NodePort
   ports:
