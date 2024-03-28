@@ -22,4 +22,6 @@ type DBClient interface {
 	) error
 
 	FindDelegationByTxHashHex(ctx context.Context, txHashHex string) (*model.DelegationDocument, error)
+
+	SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64) error
 }

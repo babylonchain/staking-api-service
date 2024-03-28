@@ -59,13 +59,6 @@ func (s *Services) SaveActiveStakingDelegation(
 	return nil
 }
 
-// ProcessExpireCheck checks if the staking delegation has expired and updates the database.
-// This method tolerate duplicated calls.
-func (s *Services) ProcessExpireCheck(ctx context.Context, stakingTxHashHex string, startHeight, timelock uint64) error {
-	// TODO: To be implemented
-	return nil
-}
-
 // ProcessStakingStatsCalculation calculates the staking stats and updates the database.
 // This method tolerate duplicated calls, only the first call will be processed.
 func (s *Services) ProcessStakingStatsCalculation(ctx context.Context, eventMessage queue.EventMessage) error {
