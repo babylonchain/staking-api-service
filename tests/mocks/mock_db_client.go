@@ -94,9 +94,9 @@ func (_m *DBClient) Ping(ctx context.Context) error {
 	return r0
 }
 
-// SaveActiveStakingDelegation provides a mock function with given fields: ctx, stakingTxHashHex, stakerPhHex, finalityProviderPkHex, amount, startHeight, timelock
-func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHashHex string, stakerPhHex string, finalityProviderPkHex string, amount uint64, startHeight uint64, timelock uint64) error {
-	ret := _m.Called(ctx, stakingTxHashHex, stakerPhHex, finalityProviderPkHex, amount, startHeight, timelock)
+// SaveActiveStakingDelegation provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, finalityProviderPkHex, amount, startHeight, timelock
+func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHashHex string, stakerPkHex string, finalityProviderPkHex string, amount uint64, startHeight uint64, timelock uint64) error {
+	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, finalityProviderPkHex, amount, startHeight, timelock)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveActiveStakingDelegation")
@@ -104,7 +104,7 @@ func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHa
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, uint64, uint64, uint64) error); ok {
-		r0 = rf(ctx, stakingTxHashHex, stakerPhHex, finalityProviderPkHex, amount, startHeight, timelock)
+		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, finalityProviderPkHex, amount, startHeight, timelock)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -112,17 +112,17 @@ func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHa
 	return r0
 }
 
-// SaveTimeLockExpireCheck provides a mock function with given fields: ctx, stakingTxHashHex, expireHeight
-func (_m *DBClient) SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64) error {
-	ret := _m.Called(ctx, stakingTxHashHex, expireHeight)
+// SaveTimeLockExpireCheck provides a mock function with given fields: ctx, stakingTxHashHex, expireHeight, txType
+func (_m *DBClient) SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64, txType string) error {
+	ret := _m.Called(ctx, stakingTxHashHex, expireHeight, txType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveTimeLockExpireCheck")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) error); ok {
-		r0 = rf(ctx, stakingTxHashHex, expireHeight)
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint64, string) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, expireHeight, txType)
 	} else {
 		r0 = ret.Error(0)
 	}

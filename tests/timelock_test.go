@@ -14,6 +14,7 @@ func TestSaveTimelock(t *testing.T) {
 	server, queues := setupTestServer(t, nil)
 	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
 	defer server.Close()
+	defer queues.StopReceivingMessages()
 
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
@@ -41,6 +42,7 @@ func TestSaveTimelockWithDuplicates(t *testing.T) {
 	// Send again
 	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
 	defer server.Close()
+	defer queues.StopReceivingMessages()
 
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(5 * time.Second)

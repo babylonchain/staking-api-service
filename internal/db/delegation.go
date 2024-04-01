@@ -34,7 +34,7 @@ func (db *Database) SaveActiveStakingDelegation(
 					// Return the custom error type so that we can return 4xx errors to client
 					return &DuplicateKeyError{
 						Key:     stakingTxHashHex,
-						Message: "Staking transaction already exists in the database",
+						Message: "Delegation already exists",
 					}
 				}
 			}

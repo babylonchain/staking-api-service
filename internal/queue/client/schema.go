@@ -125,9 +125,21 @@ func NewWithdrawStakingEvent(stakingTxHashHex string) WithdrawStakingEvent {
 	}
 }
 
+type StakingTxType string
+
+const (
+	ActiveTxType    StakingTxType = "active"
+	UnbondingTxType StakingTxType = "unbonding"
+)
+
+func (s StakingTxType) ToString() string {
+	return string(s)
+}
+
 type ExpiredStakingEvent struct {
-	EventType        EventType `json:"event_type"` // always 4. ExpiredStakingEventType
-	StakingTxHashHex string    `json:"staking_tx_hash_hex"`
+	EventType        EventType     `json:"event_type"` // always 4. ExpiredStakingEventType
+	StakingTxHashHex string        `json:"staking_tx_hash_hex"`
+	TxType           StakingTxType `json:"tx_type"`
 }
 
 func (e ExpiredStakingEvent) GetEventType() EventType {
@@ -138,9 +150,10 @@ func (e ExpiredStakingEvent) GetStakingTxHash() string {
 	return e.StakingTxHashHex
 }
 
-func NewExpiredStakingEvent(stakingTxHashHex string) ExpiredStakingEvent {
+func NewExpiredStakingEvent(stakingTxHashHex string, txType StakingTxType) ExpiredStakingEvent {
 	return ExpiredStakingEvent{
 		EventType:        ExpiredStakingEventType,
 		StakingTxHashHex: stakingTxHashHex,
+		TxType:           txType,
 	}
 }

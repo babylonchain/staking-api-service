@@ -34,7 +34,9 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 
 	err = h.Services.ProcessExpireCheck(
 		ctx, activeStakingEvent.StakingTxHashHex,
-		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingTimeLock,
+		activeStakingEvent.StakingStartHeight,
+		activeStakingEvent.StakingTimeLock,
+		queueClient.ActiveTxType.ToString(),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to process expire check")

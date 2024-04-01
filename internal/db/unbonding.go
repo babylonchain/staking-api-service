@@ -40,7 +40,7 @@ func (db *Database) SaveUnbondingTx(
 		if result.MatchedCount == 0 {
 			return nil, &NotFoundError{
 				Key:     stakingTxHashHex,
-				Message: "no active delegation found during state update for unbonding",
+				Message: "delegation not found or not eligible for unbonding",
 			}
 		}
 
@@ -50,6 +50,7 @@ func (db *Database) SaveUnbondingTx(
 			UnbondingTxHex:           txHex,
 			StakerSignedSignatureHex: signatureHex,
 			State:                    model.UnbondingInitialState,
+			StakingTxHashHex:         stakingTxHashHex,
 		}
 		_, err = unbondingClient.InsertOne(sessCtx, unbondingDocument)
 		if err != nil {
@@ -59,7 +60,7 @@ func (db *Database) SaveUnbondingTx(
 					if mongo.IsDuplicateKeyError(e) {
 						return nil, &DuplicateKeyError{
 							Key:     txHashHex,
-							Message: "unbonding tx hash hex already exists in collection",
+							Message: "unbonding transaction already exists",
 						}
 					}
 				}
