@@ -10,6 +10,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
+	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/stretchr/testify/assert"
@@ -90,7 +91,7 @@ func TestUnbonding(t *testing.T) {
 	err = json.Unmarshal(bodyBytes, &response)
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 	assert.Equal(t, "FORBIDDEN", response.ErrorCode, "expected error code to be FORBIDDEN")
-	assert.Equal(t, "delegation not found or not eligible for unbonding", response.Message, "expected error message to be 'delegation not found or not eligible for unbonding'")
+	assert.Equal(t, "no active delegation found for unbonding request", response.Message, "expected error message to be 'no active delegation found for unbonding request'")
 
 	// The state should be updated to UnbondingRequested
 	getStakerDelegationUrl := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
@@ -111,6 +112,23 @@ func TestUnbonding(t *testing.T) {
 	// Check that the response body is as expected
 	assert.Equal(t, activeStakingEvent[0].StakerPkHex, getStakerDelegationResponse.Data[0].StakerPkHex, "expected response body to match")
 	assert.Equal(t, types.UnbondingRequested.ToString(), getStakerDelegationResponse.Data[0].State, "state should be unbonding requested")
+
+	// Let's inspect what's stored in the database
+	results, err := inspectDbDocuments[model.UnbondingDocument](t, model.UnbondingCollection)
+	assert.NoError(t, err, "failed to inspect DB documents")
+
+	assert.Equal(t, 1, len(results), "expected 1 document in the DB")
+	assert.Equal(t, activeStakingEvent[0].StakerPkHex, results[0].StakerPkHex)
+	assert.Equal(t, activeStakingEvent[0].FinalityProviderPkHex, results[0].FinalityPkHex)
+	assert.Equal(t, "0x1234567890abcdef", results[0].UnbondingTxSigHex)
+	assert.Equal(t, "INSERTED", results[0].State)
+	assert.Equal(t, activeStakingEvent[0].StakingTxHashHex, results[0].StakingTxHashHex)
+	assert.Equal(t, "0x1234567890abcdef", results[0].UnbondingTxHashHex)
+	assert.Equal(t, "0x1234567890abcdef", results[0].UnbondingTxHex)
+	assert.Equal(t, activeStakingEvent[0].StakingTxHex, results[0].StakingTxHex)
+	assert.Equal(t, activeStakingEvent[0].StakingOutputIndex, results[0].StakingOutputIndex)
+	assert.Equal(t, activeStakingEvent[0].StakingTimeLock, results[0].StakingTimelock)
+	assert.Equal(t, activeStakingEvent[0].StakingValue, results[0].StakingAmount)
 }
 
 func TestUnbondingEligibilityWhenNoMatchingDelegation(t *testing.T) {

@@ -20,7 +20,9 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 	err = h.Services.SaveActiveStakingDelegation(
 		ctx, activeStakingEvent.StakingTxHashHex, activeStakingEvent.StakerPkHex,
 		activeStakingEvent.FinalityProviderPkHex, activeStakingEvent.StakingValue,
-		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingTimeLock,
+		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingStartTimestamp,
+		activeStakingEvent.StakingTimeLock, activeStakingEvent.StakingOutputIndex,
+		activeStakingEvent.StakingTxHex,
 	)
 	if err != nil {
 		return err
