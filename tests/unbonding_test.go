@@ -25,6 +25,7 @@ func TestUnbonding(t *testing.T) {
 	server, queues := setupTestServer(t, nil)
 	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
 	defer server.Close()
+	defer queues.StopReceivingMessages()
 
 	eligibilityUrl := server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent[0].StakingTxHashHex
 
@@ -89,7 +90,7 @@ func TestUnbonding(t *testing.T) {
 	err = json.Unmarshal(bodyBytes, &response)
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 	assert.Equal(t, "FORBIDDEN", response.ErrorCode, "expected error code to be FORBIDDEN")
-	assert.Equal(t, "no active delegation found during state update for unbonding", response.Message, "expected error message to be 'no active delegation found during state update for unbonding'")
+	assert.Equal(t, "delegation not found or not eligible for unbonding", response.Message, "expected error message to be 'delegation not found or not eligible for unbonding'")
 
 	// The state should be updated to UnbondingRequested
 	getStakerDelegationUrl := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
@@ -114,8 +115,9 @@ func TestUnbonding(t *testing.T) {
 
 func TestUnbondingEligibilityWhenNoMatchingDelegation(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
-	server, _ := setupTestServer(t, nil)
+	server, queues := setupTestServer(t, nil)
 	defer server.Close()
+	defer queues.StopReceivingMessages()
 
 	eligibilityUrl := server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent[0].StakingTxHashHex
 

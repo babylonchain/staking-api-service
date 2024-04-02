@@ -10,7 +10,7 @@ type DBClient interface {
 	Ping(ctx context.Context) error
 	SaveActiveStakingDelegation(
 		ctx context.Context,
-		stakingTxHashHex, stakerPhHex, finalityProviderPkHex string,
+		stakingTxHashHex, stakerPkHex, finalityProviderPkHex string,
 		amount, startHeight, timelock uint64,
 	) error
 	FindDelegationsByStakerPk(
@@ -22,4 +22,6 @@ type DBClient interface {
 	) error
 
 	FindDelegationByTxHashHex(ctx context.Context, txHashHex string) (*model.DelegationDocument, error)
+
+	SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64, txType string) error
 }

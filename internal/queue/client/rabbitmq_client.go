@@ -139,8 +139,19 @@ func (c *RabbitMqClient) SendMessage(ctx context.Context, messageBody string) er
 }
 
 // Stop stops the message receiving process.
-func (c *RabbitMqClient) Stop() {
+func (c *RabbitMqClient) Stop() error {
 	close(c.stopCh) // Signal to stop receiving messages
+	err := c.channel.Close()
+	if err != nil {
+		fmt.Printf("Failed to close channel: %v\n", err)
+		return err
+	}
+	err = c.connection.Close()
+	if err != nil {
+		fmt.Printf("Failed to close connection: %v\n", err)
+		return err
+	}
+	return nil
 }
 
 func (c *RabbitMqClient) GetQueueName() string {
