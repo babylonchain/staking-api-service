@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/babylonchain/staking-api-service/internal/config"
-	"github.com/babylonchain/staking-api-service/internal/queue/client"
 	"github.com/babylonchain/staking-api-service/internal/queue/handlers"
 	"github.com/babylonchain/staking-api-service/internal/services"
+	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
 )
 

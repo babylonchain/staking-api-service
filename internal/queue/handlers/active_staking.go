@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	queueClient "github.com/babylonchain/staking-api-service/internal/queue/client"
+	queueClient "github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
 )
 

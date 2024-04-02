@@ -3,6 +3,7 @@ module github.com/babylonchain/staking-api-service
 go 1.21.6
 
 require (
+	github.com/babylonchain/staking-queue-client v0.0.0-20240402044323-a38eeba251b2
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.18.2
 	github.com/swaggo/swag v1.16.3

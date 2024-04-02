@@ -11,7 +11,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/types"
 
-	queue "github.com/babylonchain/staking-api-service/internal/queue/client"
+	queue "github.com/babylonchain/staking-queue-client/client"
 )
 
 // Service layer contains the business logic and is used to interact with
