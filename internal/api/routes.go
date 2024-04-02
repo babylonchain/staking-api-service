@@ -13,6 +13,7 @@ func (a *Server) SetupRoutes(r *chi.Mux) {
 	r.Get("/v1/staker/delegations", registerHandler(handlers.GetStakerDelegations))
 	r.Post("/v1/unbonding", registerHandler(handlers.UnbondDelegation))
 	r.Get("/v1/unbonding/eligibility", registerHandler(handlers.GetUnbondingEligibility))
+	r.Get("/v1/global-params", registerHandler(handlers.GetBabylonGlobalParams))
 
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 }

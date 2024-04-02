@@ -8,6 +8,7 @@ services:
     environment:
       - CONFIG=/home/staking-api-service/config.yml
     volumes:
+      - ./config/global-params.json:/home/staking-api-service/global-params.json:Z
       - ./config/config-docker.yml:/home/staking-api-service/config.yml:Z
   mongodb:
     image: mongo:latest

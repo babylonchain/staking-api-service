@@ -16,6 +16,13 @@ definitions:
       pagination:
         $ref: '#/definitions/handlers.paginationResponse'
     type: object
+  handlers.PublicResponse-services_GlobalParamsPublic:
+    properties:
+      data:
+        $ref: '#/definitions/services.GlobalParamsPublic'
+      pagination:
+        $ref: '#/definitions/handlers.paginationResponse'
+    type: object
   handlers.UnbondDelegationRequestPayload:
     properties:
       staker_signed_signature_hex:
@@ -47,6 +54,53 @@ definitions:
       time_lock_expire:
         type: integer
     type: object
+  services.FinalityProviderDetails:
+    properties:
+      btc_pk:
+        type: string
+      commission:
+        type: string
+      description:
+        $ref: '#/definitions/services.finalityProviderDescription'
+    type: object
+  services.GlobalParamsPublic:
+    properties:
+      covenant_pks:
+        items:
+          type: string
+        type: array
+      covenant_quorum:
+        type: integer
+      finality_providers:
+        items:
+          $ref: '#/definitions/services.FinalityProviderDetails'
+        type: array
+      max_staking_amount:
+        type: integer
+      max_staking_time:
+        type: integer
+      min_staking_amount:
+        type: integer
+      min_staking_time:
+        type: integer
+      tag:
+        type: string
+      unbonding_time:
+        type: integer
+    type: object
+  services.finalityProviderDescription:
+    properties:
+      details:
+        type: string
+      identity:
+        type: string
+      moniker:
+        type: string
+      security_contact:
+        type: string
+      website:
+        type: string
+    type: object
   types.ErrorCode:
     enum:
     - INTERNAL_SERVICE_ERROR
@@ -64,7 +118,23 @@ definitions:
 info:
   contact: {}
 paths:
-  /staker/delegations:
+  /v1/global-params:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the global parameters for Babylon, including finality
+        provider details.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Global parameters
+          schema:
+            $ref: '#/definitions/handlers.PublicResponse-services_GlobalParamsPublic'
+      summary: Get Babylon global parameters
+      tags:
+      - babylon
+  /v1/staker/delegations:
     get:
       consumes:
       - application/json

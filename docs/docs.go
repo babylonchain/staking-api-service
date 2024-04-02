@@ -15,7 +15,30 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/staker/delegations": {
+        "/v1/global-params": {
+            "get": {
+                "description": "Retrieves the global parameters for Babylon, including finality provider details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "babylon"
+                ],
+                "summary": "Get Babylon global parameters",
+                "responses": {
+                    "200": {
+                        "description": "Global parameters",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PublicResponse-services_GlobalParamsPublic"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/staker/delegations": {
             "get": {
                 "description": "Retrieves delegations for a given staker",
                 "consumes": [
@@ -149,6 +172,17 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.PublicResponse-services_GlobalParamsPublic": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/services.GlobalParamsPublic"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/handlers.paginationResponse"
+                }
+            }
+        },
         "handlers.UnbondDelegationRequestPayload": {
             "type": "object",
             "properties": {
@@ -194,6 +228,78 @@ const docTemplate = `{
                 },
                 "time_lock_expire": {
                     "type": "integer"
+                }
+            }
+        },
+        "services.FinalityProviderDetails": {
+            "type": "object",
+            "properties": {
+                "btc_pk": {
+                    "type": "string"
+                },
+                "commission": {
+                    "type": "string"
+                },
+                "description": {
+                    "$ref": "#/definitions/services.finalityProviderDescription"
+                }
+            }
+        },
+        "services.GlobalParamsPublic": {
+            "type": "object",
+            "properties": {
+                "covenant_pks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "covenant_quorum": {
+                    "type": "integer"
+                },
+                "finality_providers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.FinalityProviderDetails"
+                    }
+                },
+                "max_staking_amount": {
+                    "type": "integer"
+                },
+                "max_staking_time": {
+                    "type": "integer"
+                },
+                "min_staking_amount": {
+                    "type": "integer"
+                },
+                "min_staking_time": {
+                    "type": "integer"
+                },
+                "tag": {
+                    "type": "string"
+                },
+                "unbonding_time": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.finalityProviderDescription": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "identity": {
+                    "type": "string"
+                },
+                "moniker": {
+                    "type": "string"
+                },
+                "security_contact": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
                 }
             }
         },
