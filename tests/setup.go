@@ -1,7 +1,7 @@
 package tests
 
 import (
-	context "context"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,6 +10,12 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/rabbitmq/amqp091-go"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/middlewares"
@@ -20,11 +26,6 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/queue/client"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
-	"github.com/go-chi/chi"
-	"github.com/rabbitmq/amqp091-go"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type TestServerDependency struct {

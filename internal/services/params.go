@@ -1,5 +1,10 @@
 package services
 
+import (
+	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/babylonchain/staking-api-service/internal/utils"
+)
+
 type FpDescriptionPublic struct {
 	Moniker         string `json:"moniker"`
 	Identity        string `json:"identity"`
@@ -26,12 +31,12 @@ type GlobalParamsPublic struct {
 	MinStakingTime    uint64            `json:"min_staking_time"`
 }
 
-func (s *Services) GetGlobalParams() *GlobalParamsPublic {
+func (s *Services) GetGlobalParamsPublic() *GlobalParamsPublic {
 	fpDetails := s.GetFinalityProvidersFromGlobalParams()
 
 	return &GlobalParamsPublic{
 		Tag:               s.params.Tag,
-		CovenantPks:       s.params.CovenantPks,
+		CovenantPks:       utils.BtcPksToStrings(s.params.CovenantPks),
 		FinalityProviders: fpDetails,
 		CovenantQuorum:    s.params.CovenantQuorum,
 		UnbondingTime:     s.params.UnbondingTime,
@@ -40,6 +45,10 @@ func (s *Services) GetGlobalParams() *GlobalParamsPublic {
 		MaxStakingTime:    s.params.MaxStakingTime,
 		MinStakingTime:    s.params.MinStakingTime,
 	}
+}
+
+func (s *Services) GetGlobalParams() *types.GlobalParams {
+	return s.params
 }
 
 // GetFinalityProvidersFromGlobalParams returns the finality providers from the global params.

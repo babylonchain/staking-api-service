@@ -44,10 +44,11 @@ func (s *Services) DoHealthCheck(ctx context.Context) error {
 func (s *Services) SaveActiveStakingDelegation(
 	ctx context.Context, txHashHex string, stakerPkHex string,
 	finalityProviderPkHex string, value uint64, startHeight uint64, timeLock uint64,
+	stakingOutputIndex uint64,
 ) error {
 	err := s.DbClient.SaveActiveStakingDelegation(
 		ctx,
-		txHashHex, stakerPkHex, finalityProviderPkHex, value, startHeight, timeLock,
+		txHashHex, stakerPkHex, finalityProviderPkHex, value, startHeight, timeLock, stakingOutputIndex,
 	)
 	if err != nil {
 		if ok := db.IsDuplicateKeyError(err); ok {

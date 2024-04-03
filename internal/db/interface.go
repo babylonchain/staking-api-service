@@ -11,7 +11,7 @@ type DBClient interface {
 	SaveActiveStakingDelegation(
 		ctx context.Context,
 		stakingTxHashHex, stakerPkHex, finalityProviderPkHex string,
-		amount, startHeight, timelock uint64,
+		amount, startHeight, timelock, stakingOutputIndex uint64,
 	) error
 	FindDelegationsByStakerPk(
 		ctx context.Context, stakerPk string, paginationToken string,

@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/babylonchain/staking-api-service/internal/db/model"
-	"github.com/babylonchain/staking-api-service/internal/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/babylonchain/staking-api-service/internal/db/model"
+	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 func (db *Database) SaveActiveStakingDelegation(
 	ctx context.Context, stakingTxHashHex, stakerPhHex,
-	finalityProviderPkHex string, amount, startHeight, timelock uint64,
+	finalityProviderPkHex string, amount, startHeight, timelock, stakingOutputIndex uint64,
 ) error {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 	document := model.DelegationDocument{
@@ -23,6 +24,7 @@ func (db *Database) SaveActiveStakingDelegation(
 		StakingValue:          amount,
 		StakingStartHeight:    startHeight,
 		StakingTimeLock:       timelock,
+		StakingOutputIndex:    stakingOutputIndex,
 		State:                 types.Active,
 	}
 	_, err := client.InsertOne(ctx, document)

@@ -16,6 +16,7 @@ type DelegationDocument struct {
 	StakingValue          uint64                `bson:"staking_value"`
 	StakingStartHeight    uint64                `bson:"staking_start_height"`
 	StakingTimeLock       uint64                `bson:"staking_timelock"`
+	StakingOutputIndex    uint64                `bson:"staking_output_index"`
 	State                 types.DelegationState `bson:"state"`
 }
 
