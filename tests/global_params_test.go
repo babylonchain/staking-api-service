@@ -16,8 +16,9 @@ const (
 )
 
 func TestGlobalParams(t *testing.T) {
-	server, _ := setupTestServer(t, nil)
+	server, queue := setupTestServer(t, nil)
 	defer server.Close()
+	defer queue.StopReceivingMessages()
 
 	url := server.URL + globalParamsPath
 
@@ -47,7 +48,7 @@ func TestGlobalParams(t *testing.T) {
 	assert.Equal(t, "0.060000000000000000", result.FinalityProviders[1].Commission)
 	assert.Equal(t, "0d2f9728abc45c0cdeefdd73f52a0e0102470e35fb689fc5bc681959a61b021f", result.FinalityProviders[3].BtcPk)
 
-	assert.Equal(t, uint64(3), result.CovenantQuoRum)
+	assert.Equal(t, uint64(3), result.CovenantQuorum)
 	assert.Equal(t, uint64(1000), result.UnbondingTime)
 	assert.Equal(t, uint64(300000), result.MaxStakingAmount)
 	assert.Equal(t, uint64(3000), result.MinStakingAmount)

@@ -23,7 +23,7 @@ type GlobalParams struct {
 	Tag               string                    `json:"tag"`
 	CovenantPks       []string                  `json:"covenant_pks"`
 	FinalityProviders []FinalityProviderDetails `json:"finality_providers"`
-	CovenantQuoRum    uint64                    `json:"covenant_quorum"`
+	CovenantQuorum    uint64                    `json:"covenant_quorum"`
 	UnbondingTime     uint64                    `json:"unbonding_time"`
 	MaxStakingAmount  uint64                    `json:"max_staking_amount"`
 	MinStakingAmount  uint64                    `json:"min_staking_amount"`
