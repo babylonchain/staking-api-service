@@ -95,3 +95,19 @@ func (s *Services) SaveActiveStakingDelegation(
 	}
 	return nil
 }
+
+func (s *Services) IsDelegationExist(ctx context.Context, txHashHex string) (bool, *types.Error) {
+	delegation, err := s.DbClient.FindDelegationByTxHashHex(ctx, txHashHex)
+	if err != nil {
+		if db.IsNotFoundError(err) {
+			return false, nil
+		}
+		log.Error().Err(err).Msg("Failed to find delegation by tx hash hex")
+		return false, types.NewInternalServiceError(err)
+	}
+	if delegation != nil {
+		return true, nil
+	}
+
+	return false, nil
+}

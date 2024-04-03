@@ -14,9 +14,10 @@ import (
 type MessageHandler func(ctx context.Context, messageBody string) error
 
 type Queues struct {
-	ActiveStakingQueueClient client.QueueClient
-	Handlers                 *handlers.QueueHandler
-	processingTimeout        time.Duration
+	Handlers                  *handlers.QueueHandler
+	processingTimeout         time.Duration
+	ActiveStakingQueueClient  client.QueueClient
+	ExpiredStakingQueueClient client.QueueClient
 }
 
 func New(cfg config.QueueConfig, service *services.Services) *Queues {
@@ -26,11 +27,20 @@ func New(cfg config.QueueConfig, service *services.Services) *Queues {
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while creating ActiveStakingQueueClient")
 	}
+
+	expiredStakingQueueClient, err := client.NewQueueClient(
+		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ExpiredStakingQueueName,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while creating ExpiredStakingQueueClient")
+	}
+
 	handlers := handlers.NewQueueHandler(service)
 	return &Queues{
-		ActiveStakingQueueClient: activeStakingQueueClient,
-		Handlers:                 handlers,
-		processingTimeout:        time.Duration(cfg.QueueProcessingTimeout) * time.Second,
+		Handlers:                  handlers,
+		processingTimeout:         time.Duration(cfg.QueueProcessingTimeout) * time.Second,
+		ActiveStakingQueueClient:  activeStakingQueueClient,
+		ExpiredStakingQueueClient: expiredStakingQueueClient,
 	}
 }
 
@@ -38,6 +48,7 @@ func New(cfg config.QueueConfig, service *services.Services) *Queues {
 func (q *Queues) StartReceivingMessages() {
 	// start processing messages from the active staking queue
 	startQueueMessageProcessing(q.ActiveStakingQueueClient, q.Handlers.ActiveStakingHandler, q.processingTimeout)
+	startQueueMessageProcessing(q.ExpiredStakingQueueClient, q.Handlers.ExpiredStakingHandler, q.processingTimeout)
 	// ...add more queues here
 }
 
