@@ -8,7 +8,6 @@ import (
 
 // GetStakerDelegations @Summary Get staker delegations
 // @Description Retrieves delegations for a given staker
-// @Accept json
 // @Produce json
 // @Param staker_btc_pk query string true "Staker BTC Public Key"
 // @Success 200 {object} PublicResponse[[]services.DelegationPublic]{array} "List of delegations and pagination token"

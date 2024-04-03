@@ -15,17 +15,45 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/v1/global-params": {
+        "/healthcheck": {
             "get": {
-                "description": "Retrieves the global parameters for Babylon, including finality provider details.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Health check the service, including ping database connection",
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "babylon"
+                "summary": "Health check endpoint",
+                "responses": {
+                    "200": {
+                        "description": "Server is up and running",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/finality-providers": {
+            "get": {
+                "description": "Fetches details of all active finality providers sorted by their active total value locked (ActiveTvl) in descending order.",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Active Finality Providers",
+                "responses": {
+                    "200": {
+                        "description": "A list of finality providers sorted by ActiveTvl in descending order",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PublicResponse-array_services_FpDetailsPublic"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/global-params": {
+            "get": {
+                "description": "Retrieves the global parameters for Babylon, including finality provider details.",
+                "produces": [
+                    "application/json"
                 ],
                 "summary": "Get Babylon global parameters",
                 "responses": {
@@ -41,9 +69,6 @@ const docTemplate = `{
         "/v1/staker/delegations": {
             "get": {
                 "description": "Retrieves delegations for a given staker",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -81,9 +106,6 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "unbonding"
-                ],
                 "summary": "Unbond delegation",
                 "parameters": [
                     {
@@ -112,14 +134,8 @@ const docTemplate = `{
         "/v1/unbonding/eligibility": {
             "get": {
                 "description": "Checks if a delegation identified by its staking transaction hash is eligible for unbonding.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
-                ],
-                "tags": [
-                    "unbonding"
                 ],
                 "summary": "Check unbonding eligibility",
                 "parameters": [
@@ -172,6 +188,20 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.PublicResponse-array_services_FpDetailsPublic": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.FpDetailsPublic"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/handlers.paginationResponse"
+                }
+            }
+        },
         "handlers.PublicResponse-services_GlobalParamsPublic": {
             "type": "object",
             "properties": {
@@ -217,6 +247,9 @@ const docTemplate = `{
                 "staker_pk_hex": {
                     "type": "string"
                 },
+                "staking_tx": {
+                    "$ref": "#/definitions/services.TransactionPublic"
+                },
                 "staking_tx_hash_hex": {
                     "type": "string"
                 },
@@ -226,12 +259,58 @@ const docTemplate = `{
                 "state": {
                     "type": "string"
                 },
-                "time_lock_expire": {
+                "unbonding_tx": {
+                    "$ref": "#/definitions/services.TransactionPublic"
+                }
+            }
+        },
+        "services.FpDescriptionPublic": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "identity": {
+                    "type": "string"
+                },
+                "moniker": {
+                    "type": "string"
+                },
+                "security_contact": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.FpDetailsPublic": {
+            "type": "object",
+            "properties": {
+                "active_delegations": {
+                    "type": "integer"
+                },
+                "active_tvl": {
+                    "type": "integer"
+                },
+                "btc_pk": {
+                    "type": "string"
+                },
+                "commission": {
+                    "type": "string"
+                },
+                "description": {
+                    "$ref": "#/definitions/services.FpDescriptionPublic"
+                },
+                "total_delegations": {
+                    "type": "integer"
+                },
+                "total_tvl": {
                     "type": "integer"
                 }
             }
         },
-        "services.FinalityProviderDetails": {
+        "services.FpParamsPublic": {
             "type": "object",
             "properties": {
                 "btc_pk": {
@@ -241,7 +320,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
-                    "$ref": "#/definitions/services.finalityProviderDescription"
+                    "$ref": "#/definitions/services.FpDescriptionPublic"
                 }
             }
         },
@@ -260,7 +339,7 @@ const docTemplate = `{
                 "finality_providers": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/services.FinalityProviderDetails"
+                        "$ref": "#/definitions/services.FpParamsPublic"
                     }
                 },
                 "max_staking_amount": {
@@ -283,22 +362,22 @@ const docTemplate = `{
                 }
             }
         },
-        "services.finalityProviderDescription": {
+        "services.TransactionPublic": {
             "type": "object",
             "properties": {
-                "details": {
+                "output_index": {
+                    "type": "integer"
+                },
+                "start_height": {
+                    "type": "integer"
+                },
+                "start_timestamp": {
                     "type": "string"
                 },
-                "identity": {
-                    "type": "string"
+                "timelock": {
+                    "type": "integer"
                 },
-                "moniker": {
-                    "type": "string"
-                },
-                "security_contact": {
-                    "type": "string"
-                },
-                "website": {
+                "tx_hex": {
                     "type": "string"
                 }
             }
