@@ -12,18 +12,23 @@ import (
 )
 
 func (db *Database) SaveActiveStakingDelegation(
-	ctx context.Context, stakingTxHashHex, stakerPhHex,
-	finalityProviderPkHex string, amount, startHeight, timelock uint64,
+	ctx context.Context, stakingTxHashHex, stakerPkHex, fpPkHex string, stakingTxHex string,
+	amount, startHeight, timelock, outputIndex uint64, startTimestamp string,
 ) error {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 	document := model.DelegationDocument{
 		StakingTxHashHex:      stakingTxHashHex, // Primary key of db collection
-		StakerPkHex:           stakerPhHex,
-		FinalityProviderPkHex: finalityProviderPkHex,
+		StakerPkHex:           stakerPkHex,
+		FinalityProviderPkHex: fpPkHex,
 		StakingValue:          amount,
-		StakingStartHeight:    startHeight,
-		StakingTimeLock:       timelock,
 		State:                 types.Active,
+		StakingTx: &model.TimelockTransaction{
+			TxHex:          stakingTxHex,
+			OutputIndex:    outputIndex,
+			StartTimestamp: startTimestamp,
+			StartHeight:    startHeight,
+			TimeLock:       timelock,
+		},
 	}
 	_, err := client.InsertOne(ctx, document)
 	if err != nil {

@@ -94,17 +94,17 @@ func (_m *DBClient) Ping(ctx context.Context) error {
 	return r0
 }
 
-// SaveActiveStakingDelegation provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, finalityProviderPkHex, amount, startHeight, timelock
-func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHashHex string, stakerPkHex string, finalityProviderPkHex string, amount uint64, startHeight uint64, timelock uint64) error {
-	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, finalityProviderPkHex, amount, startHeight, timelock)
+// SaveActiveStakingDelegation provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp
+func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHashHex string, stakerPkHex string, fpPkHex string, stakingTxHex string, amount uint64, startHeight uint64, timelock uint64, outputIndex uint64, startTimestamp string) error {
+	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveActiveStakingDelegation")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, uint64, uint64, uint64) error); ok {
-		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, finalityProviderPkHex, amount, startHeight, timelock)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, uint64, uint64, uint64, uint64, string) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp)
 	} else {
 		r0 = ret.Error(0)
 	}

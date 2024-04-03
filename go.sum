@@ -1,5 +1,7 @@
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
+github.com/babylonchain/staking-queue-client v0.0.0-20240402081626-91b89f937e85 h1:sh3rGO3M70a9J4WqGNswqBn4dZKu0D+z7/ytSDbhq0Q=
+github.com/babylonchain/staking-queue-client v0.0.0-20240402081626-91b89f937e85/go.mod h1:TpiAQWNlCiHcDp7eiu6FJZDLYElV8NdksI1TzUmf3og=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
