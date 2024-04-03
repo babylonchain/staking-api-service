@@ -3,11 +3,13 @@ package services
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 
 	"github.com/babylonchain/babylon/btcstaking"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/rs/zerolog/log"
@@ -102,7 +104,42 @@ func (s *Services) verifyUnbondingRequestSignature(ctx context.Context, stakingT
 		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, outputErr)
 	}
 
-	// 5. validate that un-bonding output has most of the value of staking output
+	// 5. verify the signature
+	stakingInfo, err := btcstaking.BuildStakingInfo(
+		stakerPk,
+		[]*btcec.PublicKey{finalityProviderPk},
+		params.CovenantPks,
+		uint32(params.CovenantQuorum),
+		uint16(delegationDoc.StakingTimeLock),
+		btcutil.Amount(delegationDoc.StakingValue),
+		// TODO should parameterize BTC net in config
+		&chaincfg.RegressionNetParams,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("error while building staking info")
+		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, err)
+	}
+	sigBytes, err := hex.DecodeString(signatureHex)
+	if err != nil {
+		log.Error().Err(err).Msg("error while decoding signature from hex")
+		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, err)
+	}
+	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	if err != nil {
+		log.Error().Err(err).Msg("error while getting unbonding path spend info")
+		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, err)
+	}
+	if err := btcstaking.VerifyTransactionSigWithOutputData(
+		unbondingTx,
+		stakingInfo.StakingOutput.PkScript,
+		stakingInfo.StakingOutput.Value,
+		unbondingSpendInfo.GetPkScriptPath(),
+		stakerPk,
+		sigBytes,
+	); err != nil {
+	}
+
+	// 6. validate that un-bonding output has most of the value of staking output
 	// TODO global parameter TBD
 
 	return nil
