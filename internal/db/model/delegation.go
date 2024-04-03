@@ -22,8 +22,6 @@ type DelegationDocument struct {
 	StakerPkHex           string                `bson:"staker_pk_hex"`
 	FinalityProviderPkHex string                `bson:"finality_provider_pk_hex"`
 	StakingValue          uint64                `bson:"staking_value"`
-	StakingStartHeight    uint64                `bson:"staking_start_height"`
-	StakingTimeLock       uint64                `bson:"staking_timelock"`
 	State                 types.DelegationState `bson:"state"`
 	StakingTx             *TimelockTransaction  `bson:"staking_tx"` // Always exist
 	UnbondingTx           *TimelockTransaction  `bson:"unbonding_tx,omitempty"`

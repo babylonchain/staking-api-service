@@ -110,7 +110,7 @@ func (s *Services) verifyUnbondingRequestSignature(ctx context.Context, stakingT
 		[]*btcec.PublicKey{finalityProviderPk},
 		params.CovenantPks,
 		uint32(params.CovenantQuorum),
-		uint16(delegationDoc.StakingTimeLock),
+		uint16(delegationDoc.StakingTx.TimeLock),
 		btcutil.Amount(delegationDoc.StakingValue),
 		// TODO should parameterize BTC net in config
 		&chaincfg.RegressionNetParams,
