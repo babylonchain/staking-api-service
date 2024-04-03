@@ -16,12 +16,15 @@ deployment:
       value: /home/staking-api-service/config.yml
   volumes:
     - name: staking-api-service
-      configMap:
-        name: staking-api-service
+      projected:
+        sources:
+          - configMap:
+              name: staking-api-service
+          - configMap:
+              name: phase1-global-config
   volumeMounts:
     - name: staking-api-service
-      subPath: config.yml
-      mountPath: /home/staking-api-service/config.yml
+      mountPath: /home/staking-api-service
   annotations:
     prometheus.io/path: /metrics
     prometheus.io/port: "2112"

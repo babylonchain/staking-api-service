@@ -144,7 +144,7 @@ workflows:
       - deploy_mainnet:
           requires:
             - push_docker
-          #  - build_lint_tests
+            - build_lint_tests
           filters:
             branches:
               only:
