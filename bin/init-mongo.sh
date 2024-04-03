@@ -7,7 +7,7 @@ mongod --replSet "RS" --bind_ip_all &
 sleep 10
 
 # Initiate the replica set
-mongosh --eval "rs.initiate({_id: 'RS', members: [{ _id: 0, host: 'mongodb:27017' }]})"
+mongosh --eval "rs.initiate({_id: 'RS', members: [{ _id: 0, host: 'localhost:27017' }]})"
 
 # Wait for replica set to initiate
 sleep 5

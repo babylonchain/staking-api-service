@@ -9,12 +9,14 @@ import (
 )
 
 const (
-	defaultConfigFileName = "config.yml"
+	defaultConfigFileName       = "config.yml"
+	defaultGlobalParamsFileName = "global_params.json"
 )
 
 var (
-	cfgPath string
-	rootCmd = &cobra.Command{
+	cfgPath          string
+	globalParamsPath string
+	rootCmd          = &cobra.Command{
 		Use: "start-server",
 	}
 )
@@ -26,8 +28,10 @@ func Setup() error {
 	}
 
 	defaultConfigPath := getDefaultConfigFile(homePath, defaultConfigFileName)
+	defaultGlobalParamsPath := getDefaultConfigFile(homePath, defaultGlobalParamsFileName)
 
 	rootCmd.PersistentFlags().StringVar(&cfgPath, "config", defaultConfigPath, fmt.Sprintf("config file (default %s)", defaultConfigPath))
+	rootCmd.PersistentFlags().StringVar(&globalParamsPath, "params", defaultGlobalParamsPath, fmt.Sprintf("global params file (default %s)", defaultGlobalParamsPath))
 	if err := rootCmd.Execute(); err != nil {
 		return err
 	}
@@ -41,4 +45,8 @@ func getDefaultConfigFile(homePath, filename string) string {
 
 func GetConfigPath() string {
 	return cfgPath
+}
+
+func GetGlobalParamsPath() string {
+	return globalParamsPath
 }

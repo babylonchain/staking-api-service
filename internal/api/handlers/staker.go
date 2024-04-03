@@ -13,7 +13,7 @@ import (
 // @Param staker_btc_pk query string true "Staker BTC Public Key"
 // @Success 200 {object} PublicResponse[[]services.DelegationPublic]{array} "List of delegations and pagination token"
 // @Failure 400 {object} types.Error "Error: Bad Request"
-// @Router /staker/delegations [get]
+// @Router /v1/staker/delegations [get]
 func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.Error) {
 	stakerBtcPk := request.URL.Query().Get("staker_btc_pk")
 	if stakerBtcPk == "" {

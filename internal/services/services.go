@@ -19,9 +19,10 @@ import (
 type Services struct {
 	DbClient db.DBClient
 	cfg      *config.Config
+	params   *types.GlobalParams
 }
 
-func New(ctx context.Context, cfg *config.Config) (*Services, error) {
+func New(ctx context.Context, cfg *config.Config, globalParams *types.GlobalParams) (*Services, error) {
 	dbClient, err := db.New(ctx, cfg.Db.DbName, cfg.Db.Address)
 	if err != nil {
 		log.Ctx(ctx).Fatal().Err(err).Msg("error while creating db client")
@@ -30,6 +31,7 @@ func New(ctx context.Context, cfg *config.Config) (*Services, error) {
 	return &Services{
 		DbClient: dbClient,
 		cfg:      cfg,
+		params:   globalParams,
 	}, nil
 }
 

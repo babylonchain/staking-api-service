@@ -16,8 +16,9 @@ const (
 )
 
 func TestHealthCheck(t *testing.T) {
-	server, _ := setupTestServer(t, nil)
+	server, queue := setupTestServer(t, nil)
 	defer server.Close()
+	defer queue.StopReceivingMessages()
 
 	url := server.URL + healthCheckPath
 
@@ -47,9 +48,10 @@ func TestHealthCheckDBError(t *testing.T) {
 	mockDB := new(testmock.DBClient)
 	mockDB.On("Ping", mock.Anything).Return(io.EOF) // Expect db error
 
-	server, _ := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
+	server, queue := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
 
 	defer server.Close()
+	defer queue.StopReceivingMessages()
 
 	url := server.URL + healthCheckPath
 
@@ -72,8 +74,9 @@ func TestHealthCheckDBError(t *testing.T) {
 }
 
 func TestOptionsRequest(t *testing.T) {
-	server, _ := setupTestServer(t, nil)
+	server, queue := setupTestServer(t, nil)
 	defer server.Close()
+	defer queue.StopReceivingMessages()
 
 	url := server.URL + healthCheckPath
 

@@ -19,6 +19,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/queue"
 	"github.com/babylonchain/staking-api-service/internal/queue/client"
 	"github.com/babylonchain/staking-api-service/internal/services"
+	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/go-chi/chi"
 	"github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -40,11 +41,16 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) (*httptest.Server,
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
 
+	params, err := types.NewGlobalParams("./global-params-test.json")
+	if err != nil {
+		t.Fatalf("Failed to load global params: %v", err)
+	}
+
 	if dep != nil && dep.ConfigOverrides != nil {
 		applyConfigOverrides(cfg, dep.ConfigOverrides)
 	}
 
-	services, err := services.New(context.Background(), cfg)
+	services, err := services.New(context.Background(), cfg, params)
 	if err != nil {
 		t.Fatalf("Failed to initialize services: %v", err)
 	}
