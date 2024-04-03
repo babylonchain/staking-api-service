@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	queueClient "github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
-
-	queueClient "github.com/babylonchain/staking-api-service/internal/queue/client"
 )
 
 func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody string) error {
@@ -21,8 +20,9 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 	err = h.Services.SaveActiveStakingDelegation(
 		ctx, activeStakingEvent.StakingTxHashHex, activeStakingEvent.StakerPkHex,
 		activeStakingEvent.FinalityProviderPkHex, activeStakingEvent.StakingValue,
-		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingTimeLock,
-		activeStakingEvent.StakingOutputIndex,
+		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingStartTimestamp,
+		activeStakingEvent.StakingTimeLock, activeStakingEvent.StakingOutputIndex,
+		activeStakingEvent.StakingTxHex,
 	)
 	if err != nil {
 		return err

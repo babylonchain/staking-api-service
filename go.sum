@@ -60,6 +60,8 @@ github.com/aws/aws-sdk-go v1.44.224 h1:09CiaaF35nRmxrzWZ2uRq5v6Ghg/d2RiPjZnSgtt+
 github.com/aws/aws-sdk-go v1.44.224/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/babylonchain/babylon v0.8.5 h1:YOhcpWweW0LaueM16mnzL3XkbmUhLHzESrJzM0svR9w=
 github.com/babylonchain/babylon v0.8.5/go.mod h1:jR1b+5mA7BkRrXfd/PMHwk7W/RpoeQtunvjal+tKeHY=
+github.com/babylonchain/staking-queue-client v0.0.0-20240402081626-91b89f937e85 h1:sh3rGO3M70a9J4WqGNswqBn4dZKu0D+z7/ytSDbhq0Q=
+github.com/babylonchain/staking-queue-client v0.0.0-20240402081626-91b89f937e85/go.mod h1:TpiAQWNlCiHcDp7eiu6FJZDLYElV8NdksI1TzUmf3og=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d h1:xDfNPAt8lFiC1UJrqV3uuy861HCTo708pDMbjHHdCas=

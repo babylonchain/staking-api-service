@@ -25,10 +25,21 @@ func (db *Database) SaveUnbondingTx(
 
 	// Define the work to be done in the transaction
 	transactionWork := func(sessCtx mongo.SessionContext) (interface{}, error) {
-		// Handle the delegation update
+		// Find the existing delegation document first, it will be used later in the transaction
 		delegationFilter := bson.M{
 			"_id":   stakingTxHashHex,
 			"state": types.Active,
+		}
+		var delegationDocument model.DelegationDocument
+		err = delegationClient.FindOne(sessCtx, delegationFilter).Decode(&delegationDocument)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return nil, &NotFoundError{
+					Key:     stakingTxHashHex,
+					Message: "no active delegation found for unbonding request",
+				}
+			}
+			return nil, err
 		}
 		// Update the state to UnbondingRequested
 		delegationUpdate := bson.M{"$set": bson.M{"state": types.UnbondingRequested}}
@@ -46,11 +57,17 @@ func (db *Database) SaveUnbondingTx(
 
 		// Insert the unbonding transaction document
 		unbondingDocument := model.UnbondingDocument{
-			UnbondingTxHashHex:       txHashHex,
-			UnbondingTxHex:           txHex,
-			StakerSignedSignatureHex: signatureHex,
-			State:                    model.UnbondingInitialState,
-			StakingTxHashHex:         stakingTxHashHex,
+			StakerPkHex:        delegationDocument.StakerPkHex,
+			FinalityPkHex:      delegationDocument.FinalityProviderPkHex,
+			UnbondingTxSigHex:  signatureHex,
+			State:              model.UnbondingInitialState,
+			UnbondingTxHashHex: txHashHex,
+			UnbondingTxHex:     txHex,
+			StakingTxHex:       delegationDocument.StakingTx.TxHex,
+			StakingOutputIndex: delegationDocument.StakingTx.OutputIndex,
+			StakingTimelock:    delegationDocument.StakingTx.TimeLock,
+			StakingTxHashHex:   stakingTxHashHex,
+			StakingAmount:      delegationDocument.StakingValue,
 		}
 		_, err = unbondingClient.InsertOne(sessCtx, unbondingDocument)
 		if err != nil {

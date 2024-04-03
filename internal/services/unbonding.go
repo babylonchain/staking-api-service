@@ -65,7 +65,7 @@ func (s *Services) verifyUnbondingRequestSignature(ctx context.Context, stakingT
 		log.Error().Err(inputErr).Msg(invalidUnbondingTxMsg)
 		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, inputErr)
 	}
-	if uint64(unbondingTx.TxIn[0].PreviousOutPoint.Index) != delegationDoc.StakingOutputIndex {
+	if uint64(unbondingTx.TxIn[0].PreviousOutPoint.Index) != delegationDoc.StakingTx.OutputIndex {
 		inputErr := fmt.Errorf("the unbonding tx input must match the previous staking tx output index")
 		log.Error().Err(inputErr).Msg(invalidUnbondingTxMsg)
 		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, inputErr)

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/go-chi/chi"
 	"github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,7 +24,6 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
 	"github.com/babylonchain/staking-api-service/internal/queue"
-	"github.com/babylonchain/staking-api-service/internal/queue/client"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
