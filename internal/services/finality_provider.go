@@ -50,11 +50,13 @@ func (s *Services) GetActiveFinalityProviders(ctx context.Context) ([]FpDetailsP
 	var finalityProviderDetailsPublic []FpDetailsPublic
 
 	for _, fp := range fpParams {
+		// Default values being set for ActiveTvl, TotalTvl, ActiveDelegations, TotalDelegations
+		// This could happen if our system has never processed any staking tx events associated to this finality provider
 		detail := FpDetailsPublic{
 			Description:       fp.Description,
 			Commission:        fp.Commission,
 			BtcPk:             fp.BtcPk,
-			ActiveTvl:         0, // Default to 0 if not found in DB
+			ActiveTvl:         0,
 			TotalTvl:          0,
 			ActiveDelegations: 0,
 			TotalDelegations:  0,
@@ -65,6 +67,8 @@ func (s *Services) GetActiveFinalityProviders(ctx context.Context) ([]FpDetailsP
 			detail.TotalTvl = finalityProvider.TotalTvl
 			detail.ActiveDelegations = finalityProvider.ActiveDelegations
 			detail.TotalDelegations = finalityProvider.TotalDelegations
+		} else if !ok {
+			log.Ctx(ctx).Warn().Str("btc_pk", fp.BtcPk).Msg("Finality provider not found in DB")
 		}
 		finalityProviderDetailsPublic = append(finalityProviderDetailsPublic, detail)
 	}
