@@ -19,7 +19,7 @@ func (h *QueueHandler) ExpiredStakingHandler(ctx context.Context, messageBody st
 	}
 
 	// If delegation does not exist in our system, then this message is out of order and should be retried later
-	if exist, err := h.Services.IsDelegationExist(ctx, expiredStakingEvent.StakingTxHashHex); err != nil {
+	if exist, err := h.Services.IsDelegationPresent(ctx, expiredStakingEvent.StakingTxHashHex); err != nil {
 		log.Err(err).Msg("Failed to check if delegation exists")
 		return err
 	} else if !exist {

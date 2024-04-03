@@ -105,6 +105,8 @@ func (db *Database) FindDelegationByTxHashHex(ctx context.Context, stakingTxHash
 	return &delegation, nil
 }
 
+// TransitionState updates the state of a staking transaction to a new state
+// It returns an NotFoundError if the staking transaction is not found or not in the eligible state to transition
 func (db *Database) TransitionState(ctx context.Context, stakingTxHashHex, newState string, eligiblePreviousState []string) error {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 	filter := bson.M{"_id": stakingTxHashHex, "state": bson.M{"$in": eligiblePreviousState}}
