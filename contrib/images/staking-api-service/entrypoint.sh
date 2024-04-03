@@ -21,4 +21,4 @@ if ! [ -f "${PARAMS}" ]; then
 	exit 1
 fi
 
-$BINARY --config "$CONFIG" 2>&1
+$BINARY --config "$CONFIG" --params "$PARAMS" 2>&1
