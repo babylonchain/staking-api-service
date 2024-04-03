@@ -17,7 +17,6 @@ type UnbondDelegationRequestPayload struct {
 // UnbondDelegation godoc
 // @Summary Unbond delegation
 // @Description Unbonds a delegation by processing the provided transaction details.
-// @Tags unbonding
 // @Accept json
 // @Produce json
 // @Param payload body UnbondDelegationRequestPayload true "Unbonding Request Payload"
@@ -45,8 +44,6 @@ func (h *Handler) UnbondDelegation(request *http.Request) (*Result, *types.Error
 // GetUnbondingEligibility godoc
 // @Summary Check unbonding eligibility
 // @Description Checks if a delegation identified by its staking transaction hash is eligible for unbonding.
-// @Tags unbonding
-// @Accept json
 // @Produce json
 // @Param staking_tx_hash_hex query string true "Staking Transaction Hash Hex"
 // @Success 200 "The delegation is eligible for unbonding"
