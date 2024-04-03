@@ -16,6 +16,7 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 11)
 	server, queues := setupTestServer(t, nil)
 	defer server.Close()
+	defer queues.StopReceivingMessages()
 	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
 
 	// Wait for 2 seconds to make sure the message is processed

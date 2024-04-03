@@ -74,7 +74,17 @@ func startQueueMessageProcessing(
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			err := handler(ctx, message.Body)
 			if err != nil {
-				log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error while processing message from queue")
+				log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
+					Str("receipt", message.Receipt).
+					Msg("error while processing message from queue, will be requeued")
+				// TODO: Below requeue is a workaround
+				// it need to be handled by https://github.com/babylonchain/staking-api-service/issues/38
+				time.Sleep(5 * time.Second)
+				err = queueClient.ReQueueMessage(message.Receipt)
+				if err != nil {
+					log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
+						Str("receipt", message.Receipt).Msg("error while requeuing message")
+				}
 				// TODO: Add metrics for failed message processing
 				cancel()
 				continue
@@ -83,7 +93,8 @@ func startQueueMessageProcessing(
 			delErr := queueClient.DeleteMessage(message.Receipt)
 			if delErr != nil {
 				// TODO: Add metrics for failed message deletion
-				log.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).Msg("error while deleting message from queue")
+				log.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).
+					Str("receipt", message.Receipt).Msg("error while deleting message from queue")
 			}
 
 			// TODO: Add metrics for successful message processing
