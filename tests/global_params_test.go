@@ -22,7 +22,7 @@ func TestGlobalParams(t *testing.T) {
 
 	url := server.URL + globalParamsPath
 
-	// Make a GET request to the health check endpoint
+	// Make a GET request to the global params endpoint
 	resp, err := http.Get(url)
 	assert.NoError(t, err, "making GET request to global params endpoint should not fail")
 	defer resp.Body.Close()

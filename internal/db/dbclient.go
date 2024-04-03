@@ -7,8 +7,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// TODO: This will be dynamic from the client with max limit from config
-const FetchLimit = 10
+// TODO: Will be moved into a config. https://github.com/babylonchain/staking-api-service/issues/20
+const (
+	FetchLimit = 10
+	BatchSize  = 100
+)
 
 type Database struct {
 	DbName string

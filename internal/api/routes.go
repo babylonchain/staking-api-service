@@ -14,6 +14,7 @@ func (a *Server) SetupRoutes(r *chi.Mux) {
 	r.Post("/v1/unbonding", registerHandler(handlers.UnbondDelegation))
 	r.Get("/v1/unbonding/eligibility", registerHandler(handlers.GetUnbondingEligibility))
 	r.Get("/v1/global-params", registerHandler(handlers.GetBabylonGlobalParams))
+	r.Get("/v1/finality-providers", registerHandler(handlers.GetFinalityProviders))
 
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 }

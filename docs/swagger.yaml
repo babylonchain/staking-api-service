@@ -16,6 +16,15 @@ definitions:
       pagination:
         $ref: '#/definitions/handlers.paginationResponse'
     type: object
+  handlers.PublicResponse-array_services_FpDetailsPublic:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/services.FpDetailsPublic'
+        type: array
+      pagination:
+        $ref: '#/definitions/handlers.paginationResponse'
+    type: object
   handlers.PublicResponse-services_GlobalParamsPublic:
     properties:
       data:
@@ -45,23 +54,55 @@ definitions:
         type: string
       staker_pk_hex:
         type: string
+      staking_tx:
+        $ref: '#/definitions/services.TransactionPublic'
       staking_tx_hash_hex:
         type: string
       staking_value:
         type: integer
       state:
         type: string
-      time_lock_expire:
+      unbonding_tx:
+        $ref: '#/definitions/services.TransactionPublic'
+    type: object
+  services.FpDescriptionPublic:
+    properties:
+      details:
+        type: string
+      identity:
+        type: string
+      moniker:
+        type: string
+      security_contact:
+        type: string
+      website:
+        type: string
+    type: object
+  services.FpDetailsPublic:
+    properties:
+      active_delegations:
+        type: integer
+      active_tvl:
+        type: integer
+      btc_pk:
+        type: string
+      commission:
+        type: string
+      description:
+        $ref: '#/definitions/services.FpDescriptionPublic'
+      total_delegations:
+        type: integer
+      total_tvl:
         type: integer
     type: object
-  services.FinalityProviderDetails:
+  services.FpParamsPublic:
     properties:
       btc_pk:
         type: string
       commission:
         type: string
       description:
-        $ref: '#/definitions/services.finalityProviderDescription'
+        $ref: '#/definitions/services.FpDescriptionPublic'
     type: object
   services.GlobalParamsPublic:
     properties:
@@ -73,7 +114,7 @@ definitions:
         type: integer
       finality_providers:
         items:
-          $ref: '#/definitions/services.FinalityProviderDetails'
+          $ref: '#/definitions/services.FpParamsPublic'
         type: array
       max_staking_amount:
         type: integer
@@ -88,17 +129,17 @@ definitions:
       unbonding_time:
         type: integer
     type: object
-  services.finalityProviderDescription:
+  services.TransactionPublic:
     properties:
-      details:
+      output_index:
+        type: integer
+      start_height:
+        type: integer
+      start_timestamp:
         type: string
-      identity:
-        type: string
-      moniker:
-        type: string
-      security_contact:
-        type: string
-      website:
+      timelock:
+        type: integer
+      tx_hex:
         type: string
     type: object
   types.ErrorCode:
@@ -118,10 +159,32 @@ definitions:
 info:
   contact: {}
 paths:
+  /healthcheck:
+    get:
+      description: Health check the service, including ping database connection
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Server is up and running
+          schema:
+            type: string
+      summary: Health check endpoint
+  /v1/finality-providers:
+    get:
+      description: Fetches details of all active finality providers sorted by their
+        active total value locked (ActiveTvl) in descending order.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: A list of finality providers sorted by ActiveTvl in descending
+            order
+          schema:
+            $ref: '#/definitions/handlers.PublicResponse-array_services_FpDetailsPublic'
+      summary: Get Active Finality Providers
   /v1/global-params:
     get:
-      consumes:
-      - application/json
       description: Retrieves the global parameters for Babylon, including finality
         provider details.
       produces:
@@ -132,12 +195,8 @@ paths:
           schema:
             $ref: '#/definitions/handlers.PublicResponse-services_GlobalParamsPublic'
       summary: Get Babylon global parameters
-      tags:
-      - babylon
   /v1/staker/delegations:
     get:
-      consumes:
-      - application/json
       description: Retrieves delegations for a given staker
       parameters:
       - description: Staker BTC Public Key
@@ -178,12 +237,8 @@ paths:
           schema:
             $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
       summary: Unbond delegation
-      tags:
-      - unbonding
   /v1/unbonding/eligibility:
     get:
-      consumes:
-      - application/json
       description: Checks if a delegation identified by its staking transaction hash
         is eligible for unbonding.
       parameters:
@@ -202,6 +257,4 @@ paths:
           schema:
             $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
       summary: Check unbonding eligibility
-      tags:
-      - unbonding
 swagger: "2.0"

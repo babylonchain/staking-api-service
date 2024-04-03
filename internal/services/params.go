@@ -5,30 +5,22 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/utils"
 )
 
-type FpDescriptionPublic struct {
-	Moniker         string `json:"moniker"`
-	Identity        string `json:"identity"`
-	Website         string `json:"website"`
-	SecurityContact string `json:"security_contact"`
-	Details         string `json:"details"`
-}
-
-type FpDetailsPublic struct {
+type FpParamsPublic struct {
 	Description FpDescriptionPublic `json:"description"`
 	Commission  string              `json:"commission"`
 	BtcPk       string              `json:"btc_pk"`
 }
 
 type GlobalParamsPublic struct {
-	Tag               string            `json:"tag"`
-	CovenantPks       []string          `json:"covenant_pks"`
-	FinalityProviders []FpDetailsPublic `json:"finality_providers"`
-	CovenantQuorum    uint64            `json:"covenant_quorum"`
-	UnbondingTime     uint64            `json:"unbonding_time"`
-	MaxStakingAmount  uint64            `json:"max_staking_amount"`
-	MinStakingAmount  uint64            `json:"min_staking_amount"`
-	MaxStakingTime    uint64            `json:"max_staking_time"`
-	MinStakingTime    uint64            `json:"min_staking_time"`
+	Tag               string           `json:"tag"`
+	CovenantPks       []string         `json:"covenant_pks"`
+	FinalityProviders []FpParamsPublic `json:"finality_providers"`
+	CovenantQuorum    uint64           `json:"covenant_quorum"`
+	UnbondingTime     uint64           `json:"unbonding_time"`
+	MaxStakingAmount  uint64           `json:"max_staking_amount"`
+	MinStakingAmount  uint64           `json:"min_staking_amount"`
+	MaxStakingTime    uint64           `json:"max_staking_time"`
+	MinStakingTime    uint64           `json:"min_staking_time"`
 }
 
 func (s *Services) GetGlobalParamsPublic() *GlobalParamsPublic {
@@ -53,8 +45,8 @@ func (s *Services) GetGlobalParams() *types.GlobalParams {
 
 // GetFinalityProvidersFromGlobalParams returns the finality providers from the global params.
 // Those FP are treated as "active" finality providers.
-func (s *Services) GetFinalityProvidersFromGlobalParams() []FpDetailsPublic {
-	var fpDetails []FpDetailsPublic
+func (s *Services) GetFinalityProvidersFromGlobalParams() []FpParamsPublic {
+	var fpDetails []FpParamsPublic
 	for _, finalityProvider := range s.params.FinalityProviders {
 		description := FpDescriptionPublic{
 			Moniker:         finalityProvider.Description.Moniker,
@@ -63,7 +55,7 @@ func (s *Services) GetFinalityProvidersFromGlobalParams() []FpDetailsPublic {
 			SecurityContact: finalityProvider.Description.SecurityContact,
 			Details:         finalityProvider.Description.Details,
 		}
-		fpDetails = append(fpDetails, FpDetailsPublic{
+		fpDetails = append(fpDetails, FpParamsPublic{
 			Description: description,
 			Commission:  finalityProvider.Commission,
 			BtcPk:       finalityProvider.BtcPk,

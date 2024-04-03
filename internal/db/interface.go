@@ -15,12 +15,10 @@ type DBClient interface {
 	FindDelegationsByStakerPk(
 		ctx context.Context, stakerPk string, paginationToken string,
 	) (*DbResultMap[model.DelegationDocument], error)
-
 	SaveUnbondingTx(
 		ctx context.Context, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex string,
 	) error
-
 	FindDelegationByTxHashHex(ctx context.Context, txHashHex string) (*model.DelegationDocument, error)
-
 	SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64, txType string) error
+	FindFinalityProvidersByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderDocument, error)
 }
