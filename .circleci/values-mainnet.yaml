@@ -19,9 +19,9 @@ deployment:
       projected:
         sources:
           - configMap:
-            name: staking-api-service
+              name: staking-api-service
           - configMap:
-            name: phase1-global-params
+              name: phase1-global-params
   volumeMounts:
     - name: staking-api-service
       mountPath: /home/staking-api-service
