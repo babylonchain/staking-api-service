@@ -18,9 +18,9 @@ type FinalityProviderDescription struct {
 }
 
 type FinalityProviderDetails struct {
-	Description FinalityProviderDescription
-	Commission  string
-	BtcPk       string
+	Description FinalityProviderDescription `json:"description"`
+	Commission  string                      `json:"commission"`
+	BtcPk       string                      `json:"btc_pk"`
 }
 
 type GlobalParams struct {

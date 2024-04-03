@@ -89,7 +89,7 @@ func (s *Services) verifyUnbondingRequestSignature(ctx context.Context, stakingT
 		uint16(params.UnbondingTime),
 		// unbondingAmount does not affect taproot script
 		0,
-		// TODO should parameterize BTC net
+		// TODO should parameterize BTC net in config
 		&chaincfg.RegressionNetParams,
 	)
 	if err != nil {
@@ -109,7 +109,7 @@ func (s *Services) verifyUnbondingRequestSignature(ctx context.Context, stakingT
 }
 
 func (s *Services) UnbondDelegation(ctx context.Context, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex string) *types.Error {
-	err := s.verifyUnbondingRequestSignature(ctx, stakingTxHashHex, unbondingTxHashHex, signatureHex)
+	err := s.verifyUnbondingRequestSignature(ctx, stakingTxHashHex, txHex, signatureHex)
 	if err != nil {
 		log.Warn().Err(err).Msg("did not pass unbonding request verification")
 		return types.NewError(http.StatusForbidden, types.ValidationError, err)
