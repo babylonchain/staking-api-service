@@ -7,6 +7,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db"
+	"github.com/babylonchain/staking-api-service/internal/types"
 
 	queue "github.com/babylonchain/staking-queue-client/client"
 )

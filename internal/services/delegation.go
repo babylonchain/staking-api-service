@@ -11,19 +11,19 @@ import (
 )
 
 type TransactionPublic struct {
-	TxHex       string `json:"tx_hex"`
-	OutputIndex uint64 `json:"output_index"`
+	TxHex          string `json:"tx_hex"`
+	OutputIndex    uint64 `json:"output_index"`
+	StartTimestamp string `json:"start_timestamp"`
+	StartHeight    uint64 `json:"start_height"`
+	TimeLock       uint64 `json:"timelock"`
 }
 
 type DelegationPublic struct {
 	StakingTxHashHex      string             `json:"staking_tx_hash_hex"`
 	StakerPkHex           string             `json:"staker_pk_hex"`
 	FinalityProviderPkHex string             `json:"finality_provider_pk_hex"`
-	StakingStartHeight    uint64             `json:"staking_start_height"`
-	StakingStartTimestamp string             `json:"staking_start_timestamp"`
-	Timelock              uint64             `json:"timelock"`
-	StakingValue          uint64             `json:"staking_value"`
 	State                 string             `json:"state"`
+	StakingValue          uint64             `json:"staking_value"`
 	StakingTx             *TransactionPublic `json:"staking_tx"`
 	UnbondingTx           *TransactionPublic `json:"unbonding_tx,omitempty"`
 }
@@ -33,22 +33,25 @@ func fromDelegationDocument(d model.DelegationDocument) DelegationPublic {
 		StakingTxHashHex:      d.StakingTxHashHex,
 		StakerPkHex:           d.StakerPkHex,
 		FinalityProviderPkHex: d.FinalityProviderPkHex,
-		StakingStartHeight:    d.StakingTx.StartHeight,
-		StakingStartTimestamp: d.StakingTx.StartTimestamp,
-		Timelock:              d.StakingTx.TimeLock,
 		StakingValue:          d.StakingValue,
 		State:                 d.State.ToString(),
 		StakingTx: &TransactionPublic{
-			TxHex:       d.StakingTx.TxHex,
-			OutputIndex: d.StakingTx.OutputIndex,
+			TxHex:          d.StakingTx.TxHex,
+			OutputIndex:    d.StakingTx.OutputIndex,
+			StartTimestamp: d.StakingTx.StartTimestamp,
+			StartHeight:    d.StakingTx.StartHeight,
+			TimeLock:       d.StakingTx.TimeLock,
 		},
 	}
 
 	// Add unbonding transaction if it exists
 	if d.UnbondingTx != nil && d.UnbondingTx.TxHex != "" {
 		delPublic.UnbondingTx = &TransactionPublic{
-			TxHex:       d.UnbondingTx.TxHex,
-			OutputIndex: d.UnbondingTx.OutputIndex,
+			TxHex:          d.UnbondingTx.TxHex,
+			OutputIndex:    d.UnbondingTx.OutputIndex,
+			StartTimestamp: d.UnbondingTx.StartTimestamp,
+			StartHeight:    d.UnbondingTx.StartHeight,
+			TimeLock:       d.UnbondingTx.TimeLock,
 		}
 	}
 	return delPublic
