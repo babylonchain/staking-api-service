@@ -1,0 +1,100 @@
+namespace: staking-api-service
+name: staking-api-service
+deployment:
+  image: 490721144737.dkr.ecr.us-east-1.amazonaws.com/staking-api-service
+  version: REPLACEME
+  replicas: 2
+  ports:
+    - protocol: TCP
+      containerPort: 8090
+      name: staking-api
+    - protocol: TCP
+      containerPort: 2112
+      name: prom
+  env:
+    - name: CONFIG
+      value: /home/staking-api-service/config.yml
+  volumes:
+    - name: staking-api-service
+      configMap:
+        name: staking-api-service
+  volumeMounts:
+    - name: staking-api-service
+      subPath: config.yml
+      mountPath: /home/staking-api-service/config.yml
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "2112"
+    prometheus.io/scheme: http
+    prometheus.io/scrape: "true"
+    configmap.reloader.stakater.com/reload: "staking-api-service"
+  nodeSelector:
+    workload: "webservices"
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app: staking-api-service
+            topologyKey: topology.kubernetes.io/zone
+          weight: 1
+service:
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: staking-api
+      name: staking-api
+    - protocol: TCP
+      port: 2112
+      targetPort: prom
+      name: prom
+ingress:
+  enabled: true
+  groupName: "mainnet-internal"
+  tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/2c6cb5ad-8899-4871-9206-ea8e978aebae
+  scheme: "internal"
+  hosts:
+    - host: staking-api.mainnet.babylonchain.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ssl-redirect
+                port:
+                  name: use-annotation
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: staking-api-service
+                port:
+                  name: staking-api
+externalDns:
+  fqdn: staking-api.mainnet.babylonchain.io
+  ttl: 60
+purgeCloudflareCache:
+  enabled: false
+configFiles:
+  config.yml: |
+    server:
+      host: 0.0.0.0
+      port: 8090
+      write-timeout: 60s
+      read-timeout: 60s
+      idle-timeout: 60s
+      allowed-origins: [ "*" ]
+    db:
+      address: mongodb://mongodb-headless.mongodb-staking-api:27017
+      db-name: staking-api-service
+    queue:
+      queue_user: USER
+      queue_password: PASSWORD
+      url: "rabbitmq-headless.rabbitmq:5672"
+      processing_timeout: 5 # 5 second
+    metrics:
+      host: 0.0.0.0
+      port: 2112
