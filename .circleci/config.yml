@@ -112,7 +112,7 @@ jobs:
               --values /home/circleci/project/.circleci/values-mainnet.yaml \
               --version $HELM_CHART_VERSION \
               --set deployment.version=$CIRCLE_SHA1 \
-              babylon-api $HELM_CHART_REPO
+              staking-api-service $HELM_CHART_REPO
       - run:
           name: Release new service version in an atomic way
           command: |
@@ -121,7 +121,7 @@ jobs:
               --values /home/circleci/project/.circleci/values-mainnet.yaml \
               --version $HELM_CHART_VERSION \
               --set deployment.version=$CIRCLE_SHA1 \
-              babylon-api $HELM_CHART_REPO
+              staking-api-service $HELM_CHART_REPO
 
 workflows:
   CICD:
