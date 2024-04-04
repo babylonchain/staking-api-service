@@ -3,10 +3,6 @@ package types
 import (
 	"encoding/json"
 	"os"
-
-	"github.com/btcsuite/btcd/btcec/v2"
-
-	"github.com/babylonchain/staking-api-service/internal/utils"
 )
 
 type FinalityProviderDescription struct {
@@ -24,18 +20,6 @@ type FinalityProviderDetails struct {
 }
 
 type GlobalParams struct {
-	Tag               string
-	CovenantPks       []*btcec.PublicKey
-	FinalityProviders []FinalityProviderDetails
-	CovenantQuorum    uint64
-	UnbondingTime     uint64
-	MaxStakingAmount  uint64
-	MinStakingAmount  uint64
-	MaxStakingTime    uint64
-	MinStakingTime    uint64
-}
-
-type internalGlobalParams struct {
 	Tag               string                    `json:"tag"`
 	CovenantPks       []string                  `json:"covenant_pks"`
 	FinalityProviders []FinalityProviderDetails `json:"finality_providers"`
@@ -53,26 +37,11 @@ func NewGlobalParams(filePath string) (*GlobalParams, error) {
 		return nil, err
 	}
 
-	var globalParams internalGlobalParams
+	var globalParams GlobalParams
 	err = json.Unmarshal(data, &globalParams)
 	if err != nil {
 		return nil, err
 	}
 
-	covenantPks, err := utils.GetBtcPksFromStrings(globalParams.CovenantPks)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GlobalParams{
-		Tag:               globalParams.Tag,
-		CovenantPks:       covenantPks,
-		FinalityProviders: globalParams.FinalityProviders,
-		CovenantQuorum:    globalParams.CovenantQuorum,
-		UnbondingTime:     globalParams.UnbondingTime,
-		MaxStakingAmount:  globalParams.MaxStakingAmount,
-		MinStakingAmount:  globalParams.MinStakingAmount,
-		MaxStakingTime:    globalParams.MaxStakingTime,
-		MinStakingTime:    globalParams.MinStakingTime,
-	}, nil
+	return &globalParams, nil
 }

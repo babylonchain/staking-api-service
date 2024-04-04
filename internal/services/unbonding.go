@@ -72,7 +72,13 @@ func (s *Services) verifyUnbondingRequestSignature(ctx context.Context, stakingT
 	}
 
 	// 4. validate that output commits to proper taproot script tree
-	params := s.GetGlobalParams()
+	params := s.params
+	covenantPks, err := utils.GetBtcPksFromStrings(params.CovenantPks)
+	if err != nil {
+		log.Error().Err(err).Msg("error while decoding covenant public keys")
+		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, err)
+	}
+
 	stakerPk, err := utils.GetBtcPkFromHex(delegationDoc.StakerPkHex)
 	if err != nil {
 		log.Error().Err(err).Msg("error while parsing staker public key from hex")
@@ -86,7 +92,7 @@ func (s *Services) verifyUnbondingRequestSignature(ctx context.Context, stakingT
 	expectedUnbondingOutput, err := btcstaking.BuildUnbondingInfo(
 		stakerPk,
 		[]*btcec.PublicKey{finalityProviderPk},
-		params.CovenantPks,
+		covenantPks,
 		uint32(params.CovenantQuorum),
 		uint16(params.UnbondingTime),
 		// unbondingAmount does not affect taproot script
@@ -108,7 +114,7 @@ func (s *Services) verifyUnbondingRequestSignature(ctx context.Context, stakingT
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		stakerPk,
 		[]*btcec.PublicKey{finalityProviderPk},
-		params.CovenantPks,
+		covenantPks,
 		uint32(params.CovenantQuorum),
 		uint16(delegationDoc.StakingTx.TimeLock),
 		btcutil.Amount(delegationDoc.StakingValue),
