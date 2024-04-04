@@ -41,19 +41,6 @@ func GetBtcPkFromHex(pkHex string) (*btcec.PublicKey, error) {
 	return schnorr.ParsePubKey(pkBytes)
 }
 
-func BtcPkToHex(pk *btcec.PublicKey) string {
-	return hex.EncodeToString(schnorr.SerializePubKey(pk))
-}
-
-func BtcPksToStrings(pks []*btcec.PublicKey) []string {
-	btcPkStrings := make([]string, len(pks))
-	for i, pk := range pks {
-		btcPkStrings[i] = BtcPkToHex(pk)
-	}
-
-	return btcPkStrings
-}
-
 func GetBtcPksFromStrings(pkStrings []string) ([]*btcec.PublicKey, error) {
 	pks := make([]*btcec.PublicKey, len(pkStrings))
 	for i, pkStr := range pkStrings {
@@ -65,10 +52,6 @@ func GetBtcPksFromStrings(pkStrings []string) ([]*btcec.PublicKey, error) {
 	}
 
 	return pks, nil
-}
-
-func GetTxHashFromHex(hashHex string) (*chainhash.Hash, error) {
-	return chainhash.NewHashFromStr(hashHex)
 }
 
 func VerifyUnbondingRequest(
