@@ -86,6 +86,8 @@ func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 	return toResultMapWithPaginationToken(delegations, model.BuildDelegationByStakerPaginationToken)
 }
 
+// SaveUnbondingTx saves the unbonding transaction details for a staking transaction
+// It returns an NotFoundError if the staking transaction is not found
 func (db *Database) FindDelegationByTxHashHex(ctx context.Context, stakingTxHashHex string) (*model.DelegationDocument, error) {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 	filter := bson.M{"_id": stakingTxHashHex}
@@ -101,4 +103,23 @@ func (db *Database) FindDelegationByTxHashHex(ctx context.Context, stakingTxHash
 		return nil, err
 	}
 	return &delegation, nil
+}
+
+// TransitionState updates the state of a staking transaction to a new state
+// It returns an NotFoundError if the staking transaction is not found or not in the eligible state to transition
+func (db *Database) TransitionState(ctx context.Context, stakingTxHashHex, newState string, eligiblePreviousState []string) error {
+	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
+	filter := bson.M{"_id": stakingTxHashHex, "state": bson.M{"$in": eligiblePreviousState}}
+	update := bson.M{"$set": bson.M{"state": newState}}
+	_, err := client.UpdateOne(ctx, filter, update)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return &NotFoundError{
+				Key:     stakingTxHashHex,
+				Message: "Delegation not found or not in eligible state to transition",
+			}
+		}
+		return err
+	}
+	return nil
 }
