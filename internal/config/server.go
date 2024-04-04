@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/rs/zerolog"
 
 	"github.com/babylonchain/staking-api-service/internal/utils"
@@ -20,6 +21,8 @@ type ServerConfig struct {
 	AllowedOrigins []string      `mapstructure:"allowed-origins"`
 	BTCNet         string        `mapstructure:"btc-net"`
 	LogLevel       string        `mapstructure:"log-level"`
+
+	BTCNetParam *chaincfg.Params
 }
 
 func (cfg *ServerConfig) Validate() error {
@@ -44,10 +47,12 @@ func (cfg *ServerConfig) Validate() error {
 		return errors.New("idle timeout cannot be negative")
 	}
 
-	_, err := utils.GetBtcNetParamesFromString(cfg.BTCNet)
+	btcNet, err := utils.GetBtcNetParamesFromString(cfg.BTCNet)
 	if err != nil {
 		return errors.New("invalid btc-net")
 	}
+
+	cfg.BTCNetParam = btcNet
 
 	return nil
 }

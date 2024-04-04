@@ -39,7 +39,7 @@ func (s *Services) UnbondDelegation(ctx context.Context, stakingTxHashHex, unbon
 		delegationDoc.StakingTx.OutputIndex,
 		delegationDoc.StakingValue,
 		s.params,
-		s.cfg.Server.BTCNet,
+		s.cfg.Server.BTCNetParam,
 	); err != nil {
 		log.Warn().Err(err).Msg("did not pass unbonding request verification")
 		return types.NewError(http.StatusForbidden, types.ValidationError, err)

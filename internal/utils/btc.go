@@ -6,31 +6,15 @@ import (
 	"fmt"
 
 	"github.com/babylonchain/babylon/btcstaking"
+	bbntypes "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
-
-func GetBtcTxFromHex(txHex string) (*wire.MsgTx, error) {
-	txBytes, err := hex.DecodeString(txHex)
-	if err != nil {
-		return nil, err
-	}
-
-	r := bytes.NewReader(txBytes)
-
-	var tx wire.MsgTx
-	if err := tx.Deserialize(r); err != nil {
-		return nil, err
-	}
-
-	return &tx, nil
-}
 
 func GetBtcPkFromHex(pkHex string) (*btcec.PublicKey, error) {
 	pkBytes, err := hex.DecodeString(pkHex)
@@ -64,10 +48,10 @@ func VerifyUnbondingRequest(
 	stakingOutputIndex,
 	stakingValue uint64,
 	params *types.GlobalParams,
-	btcNetParamStr string,
+	btcNetParam *chaincfg.Params,
 ) error {
 	// 1. validate that un-bonding transaction has proper shape
-	unbondingTx, err := GetBtcTxFromHex(unbondingTxHex)
+	unbondingTx, _, err := bbntypes.NewBTCTxFromHex(unbondingTxHex)
 	if err != nil {
 		return fmt.Errorf("failed to decode unbonding tx from hex: %w", err)
 	}
@@ -115,7 +99,6 @@ func VerifyUnbondingRequest(
 		return fmt.Errorf("failed to decode finality provider public key from hex: %w", err)
 	}
 
-	btcNetParam, err := GetBtcNetParamesFromString(btcNetParamStr)
 	expectedUnbondingOutput, err := btcstaking.BuildUnbondingInfo(
 		stakerPk,
 		[]*btcec.PublicKey{finalityProviderPk},
@@ -177,7 +160,7 @@ func GetBtcNetParamesFromString(net string) (*chaincfg.Params, error) {
 	switch net {
 	case "mainnet":
 		netParams = chaincfg.MainNetParams
-	case "testnet":
+	case "testnet3":
 		netParams = chaincfg.TestNet3Params
 	case "regtest":
 		netParams = chaincfg.RegressionNetParams
