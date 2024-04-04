@@ -21,15 +21,14 @@ const (
 
 func TestActiveStaking(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
-	server, queues := setupTestServer(t, nil)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
-	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
 
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
 	// Test the API
-	url := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
+	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
 	resp, err := http.Get(url)
 	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
 	defer resp.Body.Close()
@@ -64,16 +63,15 @@ func TestActiveStaking(t *testing.T) {
 func TestUnbondActiveStaking(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
 	expiredStakingEvent := client.NewExpiredStakingEvent(activeStakingEvent[0].StakingTxHashHex, client.ActiveTxType)
-	server, queues := setupTestServer(t, nil)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
-	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
 	time.Sleep(2 * time.Second)
-	sendTestMessage(queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredStakingEvent})
+	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredStakingEvent})
 	time.Sleep(2 * time.Second)
 
 	// Test the API
-	url := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
+	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
 	resp, err := http.Get(url)
 	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
 	defer resp.Body.Close()
@@ -97,16 +95,15 @@ func TestUnbondActiveStaking(t *testing.T) {
 func TestUnbondActiveStakingShouldTolerateOutOfOrder(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
 	expiredStakingEvent := client.NewExpiredStakingEvent(activeStakingEvent[0].StakingTxHashHex, client.ActiveTxType)
-	server, queues := setupTestServer(t, nil)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
-	sendTestMessage(queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredStakingEvent})
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredStakingEvent})
 	time.Sleep(2 * time.Second)
-	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
 	time.Sleep(10 * time.Second)
 
 	// Test the API
-	url := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
+	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
 	resp, err := http.Get(url)
 	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
 	defer resp.Body.Close()
@@ -130,14 +127,13 @@ func TestUnbondActiveStakingShouldTolerateOutOfOrder(t *testing.T) {
 func TestShouldNotUnbondIfNotActiveState(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
 	expiredStakingEvent := client.NewExpiredStakingEvent(activeStakingEvent[0].StakingTxHashHex, client.ActiveTxType)
-	server, queues := setupTestServer(t, nil)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
-	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
 	time.Sleep(2 * time.Second)
 
 	// Let's make a POST request to the unbonding endpoint to change the state to unbonding_requested
-	unbondingUrl := server.URL + unbondingPath
+	unbondingUrl := testServer.Server.URL + unbondingPath
 	requestBody := &handlers.UnbondDelegationRequestPayload{
 		StakingTxHashHex:         activeStakingEvent[0].StakingTxHashHex,
 		UnbondingTxHashHex:       "0x1234567890abcdef",
@@ -154,11 +150,11 @@ func TestShouldNotUnbondIfNotActiveState(t *testing.T) {
 	// Check that the status code is HTTP 202
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode, "expected HTTP 202 Accepted status")
 
-	sendTestMessage(queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredStakingEvent})
+	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredStakingEvent})
 	time.Sleep(2 * time.Second)
 
 	// Test the API
-	url := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
+	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
 	resp, err = http.Get(url)
 	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
 	defer resp.Body.Close()

@@ -23,12 +23,11 @@ const (
 
 func TestUnbonding(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
-	server, queues := setupTestServer(t, nil)
-	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
+	testServer := setupTestServer(t, nil)
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
+	defer testServer.Close()
 
-	eligibilityUrl := server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent[0].StakingTxHashHex
+	eligibilityUrl := testServer.Server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent[0].StakingTxHashHex
 
 	time.Sleep(2 * time.Second)
 
@@ -41,7 +40,7 @@ func TestUnbonding(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
 
 	// Let's make a POST request to the unbonding endpoint
-	unbondingUrl := server.URL + unbondingPath
+	unbondingUrl := testServer.Server.URL + unbondingPath
 	requestBody := &handlers.UnbondDelegationRequestPayload{
 		StakingTxHashHex:         activeStakingEvent[0].StakingTxHashHex,
 		UnbondingTxHashHex:       "0x1234567890abcdef",
@@ -94,7 +93,7 @@ func TestUnbonding(t *testing.T) {
 	assert.Equal(t, "no active delegation found for unbonding request", response.Message, "expected error message to be 'no active delegation found for unbonding request'")
 
 	// The state should be updated to UnbondingRequested
-	getStakerDelegationUrl := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
+	getStakerDelegationUrl := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
 	resp, err = http.Get(getStakerDelegationUrl)
 	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
 
@@ -133,11 +132,10 @@ func TestUnbonding(t *testing.T) {
 
 func TestUnbondingEligibilityWhenNoMatchingDelegation(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
-	server, queues := setupTestServer(t, nil)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
 
-	eligibilityUrl := server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent[0].StakingTxHashHex
+	eligibilityUrl := testServer.Server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent[0].StakingTxHashHex
 
 	// Make a GET request to the unbonding eligibility check endpoint
 	resp, err := http.Get(eligibilityUrl)

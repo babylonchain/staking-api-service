@@ -9,6 +9,7 @@ type QueueConfig struct {
 	QueuePassword          string `mapstructure:"queue_password"`
 	Url                    string `mapstructure:"url"`
 	QueueProcessingTimeout int    `mapstructure:"processing_timeout"`
+	MaxRetryAttempts       int32  `mapstructure:"max_retry_attempts"`
 }
 
 func (cfg *QueueConfig) Validate() error {
@@ -26,6 +27,10 @@ func (cfg *QueueConfig) Validate() error {
 
 	if cfg.QueueProcessingTimeout <= 0 {
 		return fmt.Errorf("invalid queue processing timeout")
+	}
+
+	if cfg.MaxRetryAttempts <= 0 {
+		return fmt.Errorf("invalid max retry attempts")
 	}
 
 	return nil

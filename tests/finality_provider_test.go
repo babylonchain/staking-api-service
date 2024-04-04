@@ -5,11 +5,9 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
-	"github.com/babylonchain/staking-api-service/internal/queue"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	testmock "github.com/babylonchain/staking-api-service/tests/mocks"
 	"github.com/stretchr/testify/assert"
@@ -20,10 +18,9 @@ const (
 	finalityProviderPath = "/v1/finality-providers"
 )
 
-func shouldGetFinalityProvidersSuccessfully(t *testing.T, server *httptest.Server, queue *queue.Queues) {
-	url := server.URL + finalityProviderPath
-	defer server.Close()
-	defer queue.StopReceivingMessages()
+func shouldGetFinalityProvidersSuccessfully(t *testing.T, testServer *TestServer) {
+	url := testServer.Server.URL + finalityProviderPath
+	defer testServer.Close()
 	// Make a GET request to the finality providers endpoint
 	resp, err := http.Get(url)
 	assert.NoError(t, err, "making GET request to finality providers endpoint should not fail")
@@ -58,14 +55,14 @@ func shouldGetFinalityProvidersSuccessfully(t *testing.T, server *httptest.Serve
 }
 
 func TestGetFinalityProvidersSuccessfully(t *testing.T) {
-	server, queue := setupTestServer(t, nil)
-	shouldGetFinalityProvidersSuccessfully(t, server, queue)
+	testServer := setupTestServer(t, nil)
+	shouldGetFinalityProvidersSuccessfully(t, testServer)
 }
 
 func TestGetFinalityProviderShouldNotFailInCaseOfDbFailure(t *testing.T) {
 	mockDB := new(testmock.DBClient)
 	mockDB.On("FindFinalityProvidersByPkHex", mock.Anything, mock.Anything).Return(nil, errors.New("just an error"))
 
-	server, queue := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
-	shouldGetFinalityProvidersSuccessfully(t, server, queue)
+	testServer := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
+	shouldGetFinalityProvidersSuccessfully(t, testServer)
 }

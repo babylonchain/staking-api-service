@@ -14,15 +14,14 @@ import (
 
 func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 11)
-	server, queues := setupTestServer(t, nil)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
-	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
 
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
 	// Test the API
-	url := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
+	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
 	resp, err := http.Get(url)
 	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
 	defer resp.Body.Close()

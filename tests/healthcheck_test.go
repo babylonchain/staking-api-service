@@ -16,11 +16,10 @@ const (
 )
 
 func TestHealthCheck(t *testing.T) {
-	server, queue := setupTestServer(t, nil)
-	defer server.Close()
-	defer queue.StopReceivingMessages()
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
 
-	url := server.URL + healthCheckPath
+	url := testServer.Server.URL + healthCheckPath
 
 	// Make a GET request to the health check endpoint
 	resp, err := http.Get(url)
@@ -48,12 +47,11 @@ func TestHealthCheckDBError(t *testing.T) {
 	mockDB := new(testmock.DBClient)
 	mockDB.On("Ping", mock.Anything).Return(io.EOF) // Expect db error
 
-	server, queue := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
+	testServer := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
 
-	defer server.Close()
-	defer queue.StopReceivingMessages()
+	defer testServer.Close()
 
-	url := server.URL + healthCheckPath
+	url := testServer.Server.URL + healthCheckPath
 
 	// Make a GET request to the health check endpoint
 	resp, err := http.Get(url)
@@ -74,11 +72,10 @@ func TestHealthCheckDBError(t *testing.T) {
 }
 
 func TestOptionsRequest(t *testing.T) {
-	server, queue := setupTestServer(t, nil)
-	defer server.Close()
-	defer queue.StopReceivingMessages()
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
 
-	url := server.URL + healthCheckPath
+	url := testServer.Server.URL + healthCheckPath
 
 	// Make a OPTION request to the health check endpoint
 	client := &http.Client{}

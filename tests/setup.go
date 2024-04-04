@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,7 +34,21 @@ type TestServerDependency struct {
 	PreInjectEventsHandler func(queueClient client.QueueClient) error
 }
 
-func setupTestServer(t *testing.T, dep *TestServerDependency) (*httptest.Server, *queue.Queues) {
+type TestServer struct {
+	Server  *httptest.Server
+	Queues  *queue.Queues
+	Conn    *amqp091.Connection
+	channel *amqp091.Channel
+}
+
+func (ts *TestServer) Close() {
+	ts.Server.Close()
+	ts.Queues.StopReceivingMessages()
+	ts.Conn.Close()
+	ts.channel.Close()
+}
+
+func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 	cfg, err := config.New("./config-test.yml")
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
@@ -73,7 +88,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) (*httptest.Server,
 	r.Use(middlewares.CorsMiddleware(cfg))
 	apiServer.SetupRoutes(r)
 
-	queues, err := setUpTestQueue(cfg.Queue, services)
+	queues, conn, ch, err := setUpTestQueue(cfg.Queue, services)
 	if err != nil {
 		t.Fatalf("Failed to setup test queue: %v", err)
 	}
@@ -81,7 +96,12 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) (*httptest.Server,
 	// Create an httptest server
 	server := httptest.NewServer(r)
 
-	return server, queues
+	return &TestServer{
+		Server:  server,
+		Queues:  queues,
+		Conn:    conn,
+		channel: ch,
+	}
 }
 
 // Generic function to apply configuration overrides
@@ -135,44 +155,60 @@ func setupTestDB(cfg config.Config) *mongo.Client {
 	return client
 }
 
-func setUpTestQueue(cfg config.QueueConfig, service *services.Services) (*queue.Queues, error) {
+func setUpTestQueue(cfg config.QueueConfig, service *services.Services) (*queue.Queues, *amqp091.Connection, *amqp091.Channel, error) {
 	amqpURI := fmt.Sprintf("amqp://%s:%s@%s", cfg.QueueUser, cfg.QueuePassword, cfg.Url)
 	conn, err := amqp091.Dial(amqpURI)
 	if err != nil {
 		log.Fatal("failed to connect to RabbitMQ in test: ", err)
-		return nil, err
+		return nil, nil, nil, err
 	}
-	defer conn.Close()
-	purgeQueues(conn, []string{
+
+	ch, err := conn.Channel()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to open a channel in test: %w", err)
+	}
+	purgeError := purgeQueues(ch, []string{
 		client.ActiveStakingQueueName,
 		client.UnbondingStakingQueueName,
 		client.WithdrawStakingQueueName,
 		client.ExpiredStakingQueueName,
 	})
-
-	if err != nil {
-		log.Fatal("failed to inject events in test: ", err)
-		return nil, err
+	if purgeError != nil {
+		log.Fatal("failed to purge queues in test: ", purgeError)
+		return nil, nil, nil, purgeError
 	}
 
 	// Start the actual queue processing in our codebase
 	queues := queue.New(cfg, service)
 	queues.StartReceivingMessages()
 
-	return queues, nil
+	return queues, conn, ch, nil
+}
+
+// inspectQueueMessageCount inspects the number of messages in the given queue.
+func inspectQueueMessageCount(t *testing.T, conn *amqp091.Connection, queueName string) (int, error) {
+	ch, err := conn.Channel()
+	if err != nil {
+		t.Fatalf("failed to open a channel in test: %v", err)
+	}
+	q, err := ch.QueueInspect(queueName)
+	if err != nil {
+		if strings.Contains(err.Error(), "NOT_FOUND") || strings.Contains(err.Error(), "channel/connection is not open") {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("failed to inspect queue in test %s: %w", queueName, err)
+	}
+	return q.Messages, nil
 }
 
 // purgeQueues purges all messages from the given list of queues.
-func purgeQueues(conn *amqp091.Connection, queues []string) error {
-	ch, err := conn.Channel()
-	if err != nil {
-		return fmt.Errorf("failed to open a channel in test: %w", err)
-	}
-	defer ch.Close()
-
+func purgeQueues(ch *amqp091.Channel, queues []string) error {
 	for _, queue := range queues {
 		_, err := ch.QueuePurge(queue, false)
 		if err != nil {
+			if strings.Contains(err.Error(), "NOT_FOUND") || strings.Contains(err.Error(), "channel/connection is not open") {
+				continue
+			}
 			return fmt.Errorf("failed to purge queue in test %s: %w", queue, err)
 		}
 	}
