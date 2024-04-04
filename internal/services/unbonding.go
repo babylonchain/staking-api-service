@@ -39,8 +39,7 @@ func (s *Services) UnbondDelegation(ctx context.Context, stakingTxHashHex, unbon
 		delegationDoc.StakingTx.OutputIndex,
 		delegationDoc.StakingValue,
 		s.params,
-		// TODO: BTC net param should be set in config
-		"regtest",
+		s.cfg.Server.BTCNet,
 	); err != nil {
 		log.Warn().Err(err).Msg("did not pass unbonding request verification")
 		return types.NewError(http.StatusForbidden, types.ValidationError, err)
