@@ -26,16 +26,14 @@ const (
 
 func TestUnbonding(t *testing.T) {
 	activeStakingEvent := getTestActiveStakingEvent()
-	server, queues := setupTestServer(t, nil)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
-
-	err := sendTestMessage(queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	testServer := setupTestServer(t, nil)
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	defer testServer.Close()
 	require.NoError(t, err)
-	// wait for the event message processed
+
 	time.Sleep(2 * time.Second)
 
-	eligibilityUrl := server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent.StakingTxHashHex
+	eligibilityUrl := testServer.Server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent.StakingTxHashHex
 
 	// Make a GET request to the unbonding eligibility check endpoint again
 	resp, err := http.Get(eligibilityUrl)
@@ -46,7 +44,7 @@ func TestUnbonding(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
 
 	// Let's make a POST request to the unbonding endpoint
-	unbondingUrl := server.URL + unbondingPath
+	unbondingUrl := testServer.Server.URL + unbondingPath
 	requestBody := getTestUnbondDelegationRequestPayload(activeStakingEvent.StakingTxHashHex)
 	requestBodyBytes, err := json.Marshal(requestBody)
 	assert.NoError(t, err, "marshalling request body should not fail")
@@ -91,7 +89,7 @@ func TestUnbonding(t *testing.T) {
 	assert.Equal(t, "delegation state is not active", response.Message, "expected error message to be 'no active delegation found for unbonding request'")
 
 	// The state should be updated to UnbondingRequested
-	getStakerDelegationUrl := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
+	getStakerDelegationUrl := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
 	resp, err = http.Get(getStakerDelegationUrl)
 	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
 
@@ -130,11 +128,10 @@ func TestUnbonding(t *testing.T) {
 
 func TestUnbondingEligibilityWhenNoMatchingDelegation(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
-	server, queues := setupTestServer(t, nil)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
 
-	eligibilityUrl := server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent[0].StakingTxHashHex
+	eligibilityUrl := testServer.Server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent[0].StakingTxHashHex
 
 	// Make a GET request to the unbonding eligibility check endpoint
 	resp, err := http.Get(eligibilityUrl)

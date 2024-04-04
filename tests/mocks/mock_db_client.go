@@ -178,6 +178,24 @@ func (_m *DBClient) SaveUnbondingTx(ctx context.Context, stakingTxHashHex string
 	return r0
 }
 
+// SaveUnprocessableMessage provides a mock function with given fields: ctx, messageBody, receipt
+func (_m *DBClient) SaveUnprocessableMessage(ctx context.Context, messageBody string, receipt string) error {
+	ret := _m.Called(ctx, messageBody, receipt)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveUnprocessableMessage")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, messageBody, receipt)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // TransitionState provides a mock function with given fields: ctx, stakingTxHashHex, newState, eligiblePreviousState
 func (_m *DBClient) TransitionState(ctx context.Context, stakingTxHashHex string, newState string, eligiblePreviousState []string) error {
 	ret := _m.Called(ctx, stakingTxHashHex, newState, eligiblePreviousState)

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/rs/zerolog/log"
 
@@ -41,5 +42,14 @@ func (s *Services) DoHealthCheck(ctx context.Context) error {
 // ProcessStakingStatsCalculation calculates the staking stats and updates the database.
 // This method tolerate duplicated calls, only the first call will be processed.
 func (s *Services) ProcessStakingStatsCalculation(ctx context.Context, eventMessage queue.EventMessage) error {
+	return nil
+}
+
+func (s *Services) SaveUnprocessableMessages(ctx context.Context, messageBody, receipt string) error {
+	err := s.DbClient.SaveUnprocessableMessage(ctx, messageBody, receipt)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while saving unprocessable message")
+		return types.NewErrorWithMsg(http.StatusInternalServerError, types.InternalServiceError, "error while saving unprocessable message")
+	}
 	return nil
 }

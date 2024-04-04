@@ -97,7 +97,8 @@ configFiles:
       queue_user: USER
       queue_password: PASSWORD
       url: "rabbitmq-headless.rabbitmq:5672"
-      processing_timeout: 5 # 5 second
+      processing_timeout: 30
+      msg_max_retry_attempts: 10
     metrics:
       host: 0.0.0.0
       port: 2112

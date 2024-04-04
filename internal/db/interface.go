@@ -22,4 +22,5 @@ type DBClient interface {
 	SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64, txType string) error
 	FindFinalityProvidersByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderDocument, error)
 	TransitionState(ctx context.Context, stakingTxHashHex, newState string, eligiblePreviousState []string) error
+	SaveUnprocessableMessage(ctx context.Context, messageBody, receipt string) error
 }
