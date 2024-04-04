@@ -13,8 +13,9 @@ func (db *Database) FindFinalityProvidersByPkHex(ctx context.Context, pkHex []st
 	client := db.Client.Database(db.DbName).Collection(model.FinalityProviderCollection)
 	finalityProvidersMap := make(map[string]model.FinalityProviderDocument)
 
-	for i := 0; i < len(pkHex); i += BatchSize {
-		end := i + BatchSize
+	batchSize := int(db.cfg.DbBatchSizeLimist)
+	for i := 0; i < len(pkHex); i += batchSize {
+		end := i + batchSize
 		if end > len(pkHex) {
 			end = len(pkHex)
 		}

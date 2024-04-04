@@ -22,7 +22,7 @@ type Services struct {
 }
 
 func New(ctx context.Context, cfg *config.Config, globalParams *types.GlobalParams) (*Services, error) {
-	dbClient, err := db.New(ctx, cfg.Db.DbName, cfg.Db.Address)
+	dbClient, err := db.New(ctx, cfg.Db)
 	if err != nil {
 		log.Ctx(ctx).Fatal().Err(err).Msg("error while creating db client")
 		return nil, err

@@ -10,6 +10,8 @@ server:
 db:
   address: "mongodb://localhost:27017"
   db-name: staking-api-service
+  max-pagination-limit: 10
+  db-batch-size-limit: 100
 queue:
   queue_user: user
   queue_password: password
