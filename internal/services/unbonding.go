@@ -23,8 +23,10 @@ func (s *Services) UnbondDelegation(ctx context.Context, stakingTxHashHex, unbon
 		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, err)
 	}
 
-	// TODO: we should check whether the state is active for unbonding
-	//  don't add this check for now to get the test to pass
+	if delegationDoc.State != types.Active {
+		log.Warn().Msg("delegation state is not active, hence not eligible for unbonding")
+		return types.NewErrorWithMsg(http.StatusForbidden, types.Forbidden, "delegation state is not active")
+	}
 
 	// 2. verify the unbonding request
 	if err := utils.VerifyUnbondingRequest(

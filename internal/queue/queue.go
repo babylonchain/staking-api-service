@@ -14,9 +14,10 @@ import (
 type MessageHandler func(ctx context.Context, messageBody string) error
 
 type Queues struct {
-	ActiveStakingQueueClient client.QueueClient
-	Handlers                 *handlers.QueueHandler
-	processingTimeout        time.Duration
+	Handlers                  *handlers.QueueHandler
+	processingTimeout         time.Duration
+	ActiveStakingQueueClient  client.QueueClient
+	ExpiredStakingQueueClient client.QueueClient
 }
 
 func New(cfg config.QueueConfig, service *services.Services) *Queues {
@@ -26,11 +27,20 @@ func New(cfg config.QueueConfig, service *services.Services) *Queues {
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while creating ActiveStakingQueueClient")
 	}
+
+	expiredStakingQueueClient, err := client.NewQueueClient(
+		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ExpiredStakingQueueName,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while creating ExpiredStakingQueueClient")
+	}
+
 	handlers := handlers.NewQueueHandler(service)
 	return &Queues{
-		ActiveStakingQueueClient: activeStakingQueueClient,
-		Handlers:                 handlers,
-		processingTimeout:        time.Duration(cfg.QueueProcessingTimeout) * time.Second,
+		Handlers:                  handlers,
+		processingTimeout:         time.Duration(cfg.QueueProcessingTimeout) * time.Second,
+		ActiveStakingQueueClient:  activeStakingQueueClient,
+		ExpiredStakingQueueClient: expiredStakingQueueClient,
 	}
 }
 
@@ -38,15 +48,21 @@ func New(cfg config.QueueConfig, service *services.Services) *Queues {
 func (q *Queues) StartReceivingMessages() {
 	// start processing messages from the active staking queue
 	startQueueMessageProcessing(q.ActiveStakingQueueClient, q.Handlers.ActiveStakingHandler, q.processingTimeout)
+	startQueueMessageProcessing(q.ExpiredStakingQueueClient, q.Handlers.ExpiredStakingHandler, q.processingTimeout)
 	// ...add more queues here
 }
 
 // Turn off all message processing
 func (q *Queues) StopReceivingMessages() {
-	err := q.ActiveStakingQueueClient.Stop()
-	if err != nil {
-		log.Error().Err(err).Str("queueName", q.ActiveStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+	activeQueueErr := q.ActiveStakingQueueClient.Stop()
+	if activeQueueErr != nil {
+		log.Error().Err(activeQueueErr).Str("queueName", q.ActiveStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
 	}
+	expiredQueueErr := q.ExpiredStakingQueueClient.Stop()
+	if expiredQueueErr != nil {
+		log.Error().Err(expiredQueueErr).Str("queueName", q.ExpiredStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+	}
+	// ...add more queues here
 }
 
 func startQueueMessageProcessing(
@@ -63,7 +79,17 @@ func startQueueMessageProcessing(
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			err := handler(ctx, message.Body)
 			if err != nil {
-				log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error while processing message from queue")
+				log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
+					Str("receipt", message.Receipt).
+					Msg("error while processing message from queue, will be requeued")
+				// TODO: Below requeue is a workaround
+				// it need to be handled by https://github.com/babylonchain/staking-api-service/issues/38
+				time.Sleep(5 * time.Second)
+				err = queueClient.ReQueueMessage(message.Receipt)
+				if err != nil {
+					log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
+						Str("receipt", message.Receipt).Msg("error while requeuing message")
+				}
 				// TODO: Add metrics for failed message processing
 				cancel()
 				continue
@@ -72,7 +98,8 @@ func startQueueMessageProcessing(
 			delErr := queueClient.DeleteMessage(message.Receipt)
 			if delErr != nil {
 				// TODO: Add metrics for failed message deletion
-				log.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).Msg("error while deleting message from queue")
+				log.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).
+					Str("receipt", message.Receipt).Msg("error while deleting message from queue")
 			}
 
 			// TODO: Add metrics for successful message processing

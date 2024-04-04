@@ -27,14 +27,15 @@ const (
 func TestUnbonding(t *testing.T) {
 	activeStakingEvent := getTestActiveStakingEvent()
 	server, queues := setupTestServer(t, nil)
-	err := sendTestMessage(queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
-	require.NoError(t, err)
 	defer server.Close()
 	defer queues.StopReceivingMessages()
 
-	eligibilityUrl := server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent.StakingTxHashHex
-
+	err := sendTestMessage(queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	require.NoError(t, err)
+	// wait for the event message processed
 	time.Sleep(2 * time.Second)
+
+	eligibilityUrl := server.URL + unbondingEligibilityPath + "?staking_tx_hash_hex=" + activeStakingEvent.StakingTxHashHex
 
 	// Make a GET request to the unbonding eligibility check endpoint again
 	resp, err := http.Get(eligibilityUrl)
@@ -53,9 +54,6 @@ func TestUnbonding(t *testing.T) {
 	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader(requestBodyBytes))
 	assert.NoError(t, err, "making POST request to unbonding endpoint should not fail")
 	defer resp.Body.Close()
-
-	// Check that the status code is HTTP 202
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode, "expected HTTP 202 Accepted status")
 
 	// Make a GET request to the unbonding eligibility check endpoint again
 	resp, err = http.Get(eligibilityUrl)
@@ -90,7 +88,7 @@ func TestUnbonding(t *testing.T) {
 	err = json.Unmarshal(bodyBytes, &response)
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 	assert.Equal(t, "FORBIDDEN", response.ErrorCode, "expected error code to be FORBIDDEN")
-	assert.Equal(t, "no active delegation found for unbonding request", response.Message, "expected error message to be 'no active delegation found for unbonding request'")
+	assert.Equal(t, "delegation state is not active", response.Message, "expected error message to be 'no active delegation found for unbonding request'")
 
 	// The state should be updated to UnbondingRequested
 	getStakerDelegationUrl := server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex

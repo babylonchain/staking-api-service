@@ -4,11 +4,12 @@ go 1.21.6
 
 require (
 	github.com/babylonchain/babylon v0.8.5
-	github.com/babylonchain/staking-queue-client v0.0.0-20240402081626-91b89f937e85
+	github.com/babylonchain/staking-queue-client v0.0.0-20240403122622-f9d7fee5244c
 	github.com/btcsuite/btcd v0.24.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcd/btcutil v1.1.5
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
+	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.18.2
 	github.com/swaggo/swag v1.16.3
 )
@@ -38,7 +39,6 @@ require (
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/rabbitmq/amqp091-go v1.9.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
