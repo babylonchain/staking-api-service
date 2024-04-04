@@ -11,10 +11,9 @@ import (
 func TestSaveTimelock(t *testing.T) {
 	// Inject random data
 	activeStakingEvent := buildActiveStakingEvent("0x1234567890abcdef", 1)
-	server, queues := setupTestServer(t, nil)
-	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
+	testServer := setupTestServer(t, nil)
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
+	defer testServer.Close()
 
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
@@ -37,12 +36,11 @@ func TestSaveTimelock(t *testing.T) {
 func TestSaveTimelockWithDuplicates(t *testing.T) {
 	// Inject random data
 	activeStakingEvent := buildActiveStakingEvent("0x1234567890abcdef", 1)
-	server, queues := setupTestServer(t, nil)
-	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
 	// Send again
-	sendTestMessage(queues.ActiveStakingQueueClient, activeStakingEvent)
-	defer server.Close()
-	defer queues.StopReceivingMessages()
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
 
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(5 * time.Second)
@@ -64,7 +62,7 @@ func TestSaveTimelockWithDuplicates(t *testing.T) {
 	eventWithDifferentExpireHeight := buildActiveStakingEvent("0x1234567890abcdef", 1)
 	expectedExpireHeight = eventWithDifferentExpireHeight[0].StakingStartHeight + eventWithDifferentExpireHeight[0].StakingTimeLock
 
-	sendTestMessage(queues.ActiveStakingQueueClient, eventWithDifferentExpireHeight)
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, eventWithDifferentExpireHeight)
 	time.Sleep(2 * time.Second)
 
 	// Check from DB if the data is saved

@@ -16,11 +16,10 @@ const (
 )
 
 func TestGlobalParams(t *testing.T) {
-	server, queue := setupTestServer(t, nil)
-	defer server.Close()
-	defer queue.StopReceivingMessages()
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
 
-	url := server.URL + globalParamsPath
+	url := testServer.Server.URL + globalParamsPath
 
 	// Make a GET request to the global params endpoint
 	resp, err := http.Get(url)

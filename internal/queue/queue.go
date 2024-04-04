@@ -4,23 +4,22 @@ import (
 	"context"
 	"time"
 
-	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/queue/handlers"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-queue-client/client"
+	queueConfig "github.com/babylonchain/staking-queue-client/config"
 	"github.com/rs/zerolog/log"
 )
-
-type MessageHandler func(ctx context.Context, messageBody string) error
 
 type Queues struct {
 	Handlers                  *handlers.QueueHandler
 	processingTimeout         time.Duration
+	maxRetryAttempts          int32
 	ActiveStakingQueueClient  client.QueueClient
 	ExpiredStakingQueueClient client.QueueClient
 }
 
-func New(cfg config.QueueConfig, service *services.Services) *Queues {
+func New(cfg queueConfig.QueueConfig, service *services.Services) *Queues {
 	activeStakingQueueClient, err := client.NewQueueClient(
 		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ActiveStakingQueueName,
 	)
@@ -39,6 +38,7 @@ func New(cfg config.QueueConfig, service *services.Services) *Queues {
 	return &Queues{
 		Handlers:                  handlers,
 		processingTimeout:         time.Duration(cfg.QueueProcessingTimeout) * time.Second,
+		maxRetryAttempts:          cfg.MsgMaxRetryAttempts,
 		ActiveStakingQueueClient:  activeStakingQueueClient,
 		ExpiredStakingQueueClient: expiredStakingQueueClient,
 	}
@@ -47,8 +47,16 @@ func New(cfg config.QueueConfig, service *services.Services) *Queues {
 // Start all message processing
 func (q *Queues) StartReceivingMessages() {
 	// start processing messages from the active staking queue
-	startQueueMessageProcessing(q.ActiveStakingQueueClient, q.Handlers.ActiveStakingHandler, q.processingTimeout)
-	startQueueMessageProcessing(q.ExpiredStakingQueueClient, q.Handlers.ExpiredStakingHandler, q.processingTimeout)
+	startQueueMessageProcessing(
+		q.ActiveStakingQueueClient,
+		q.Handlers.ActiveStakingHandler, q.Handlers.HandleUnprocessedMessage,
+		q.maxRetryAttempts, q.processingTimeout,
+	)
+	startQueueMessageProcessing(
+		q.ExpiredStakingQueueClient,
+		q.Handlers.ExpiredStakingHandler, q.Handlers.HandleUnprocessedMessage,
+		q.maxRetryAttempts, q.processingTimeout,
+	)
 	// ...add more queues here
 }
 
@@ -66,7 +74,10 @@ func (q *Queues) StopReceivingMessages() {
 }
 
 func startQueueMessageProcessing(
-	queueClient client.QueueClient, handler MessageHandler, timeout time.Duration) {
+	queueClient client.QueueClient,
+	handler handlers.MessageHandler, unprocessableHandler handlers.UnprocessableMessageHandler,
+	maxRetryAttempts int32, processingTimeout time.Duration,
+) {
 	messagesChan, err := queueClient.ReceiveMessages()
 	log.Info().Str("queueName", queueClient.GetQueueName()).Msg("start receiving messages from queue")
 	if err != nil {
@@ -76,23 +87,38 @@ func startQueueMessageProcessing(
 	go func() {
 		for message := range messagesChan {
 			// For each message, create a new context with a deadline or timeout
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			ctx, cancel := context.WithTimeout(context.Background(), processingTimeout)
 			err := handler(ctx, message.Body)
 			if err != nil {
-				log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
-					Str("receipt", message.Receipt).
-					Msg("error while processing message from queue, will be requeued")
-				// TODO: Below requeue is a workaround
-				// it need to be handled by https://github.com/babylonchain/staking-api-service/issues/38
-				time.Sleep(5 * time.Second)
-				err = queueClient.ReQueueMessage(message.Receipt)
-				if err != nil {
+				attempts := message.GetRetryAttempts()
+				// We will retry the message if it has not exceeded the max retry attempts
+				// otherwise, we will dump the message into db for manual inspection and remove from the queue
+				if attempts > maxRetryAttempts {
 					log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
-						Str("receipt", message.Receipt).Msg("error while requeuing message")
+						Str("receipt", message.Receipt).Msg("exceeded retry attempts, message will be dumped into db for manual inspection")
+					saveUnprocessableMsgErr := unprocessableHandler(ctx, message.Body, message.Receipt)
+					if saveUnprocessableMsgErr != nil {
+						log.Error().Err(saveUnprocessableMsgErr).Str("queueName", queueClient.GetQueueName()).
+							Str("receipt", message.Receipt).Msg("error while saving unprocessable message")
+						cancel()
+						continue
+					}
+				} else {
+					// TODO: Below requeue is a workaround
+					// it need to be handled by https://github.com/babylonchain/staking-api-service/issues/38
+					time.Sleep(5 * time.Second)
+					err = queueClient.ReQueueMessage(ctx, message)
+					log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
+						Str("receipt", message.Receipt).
+						Msg("error while processing message from queue, will be requeued")
+					if err != nil {
+						log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
+							Str("receipt", message.Receipt).Msg("error while requeuing message")
+					}
+					// TODO: Add metrics for failed message processing
+					cancel()
+					continue
 				}
-				// TODO: Add metrics for failed message processing
-				cancel()
-				continue
 			}
 
 			delErr := queueClient.DeleteMessage(message.Receipt)
