@@ -11,8 +11,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type MessageHandler func(ctx context.Context, messageBody string) error
-
 type Queues struct {
 	Handlers                  *handlers.QueueHandler
 	processingTimeout         time.Duration
@@ -49,8 +47,16 @@ func New(cfg queueConfig.QueueConfig, service *services.Services) *Queues {
 // Start all message processing
 func (q *Queues) StartReceivingMessages() {
 	// start processing messages from the active staking queue
-	startQueueMessageProcessing(q.ActiveStakingQueueClient, q.Handlers.ActiveStakingHandler, q)
-	startQueueMessageProcessing(q.ExpiredStakingQueueClient, q.Handlers.ExpiredStakingHandler, q)
+	startQueueMessageProcessing(
+		q.ActiveStakingQueueClient,
+		q.Handlers.ActiveStakingHandler, q.Handlers.HandleUnprocessedMessage,
+		q.maxRetryAttempts, q.processingTimeout,
+	)
+	startQueueMessageProcessing(
+		q.ExpiredStakingQueueClient,
+		q.Handlers.ExpiredStakingHandler, q.Handlers.HandleUnprocessedMessage,
+		q.maxRetryAttempts, q.processingTimeout,
+	)
 	// ...add more queues here
 }
 
@@ -68,7 +74,10 @@ func (q *Queues) StopReceivingMessages() {
 }
 
 func startQueueMessageProcessing(
-	queueClient client.QueueClient, handler MessageHandler, q *Queues) {
+	queueClient client.QueueClient,
+	handler handlers.MessageHandler, unprocessableHandler handlers.UnprocessableMessageHandler,
+	maxRetryAttempts int32, processingTimeout time.Duration,
+) {
 	messagesChan, err := queueClient.ReceiveMessages()
 	log.Info().Str("queueName", queueClient.GetQueueName()).Msg("start receiving messages from queue")
 	if err != nil {
@@ -78,16 +87,16 @@ func startQueueMessageProcessing(
 	go func() {
 		for message := range messagesChan {
 			// For each message, create a new context with a deadline or timeout
-			ctx, cancel := context.WithTimeout(context.Background(), q.processingTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), processingTimeout)
 			err := handler(ctx, message.Body)
 			if err != nil {
 				attempts := message.GetRetryAttempts()
 				// We will retry the message if it has not exceeded the max retry attempts
 				// otherwise, we will dump the message into db for manual inspection and remove from the queue
-				if attempts > q.maxRetryAttempts {
+				if attempts > maxRetryAttempts {
 					log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
 						Str("receipt", message.Receipt).Msg("exceeded retry attempts, message will be dumped into db for manual inspection")
-					saveUnprocessableMsgErr := q.Handlers.HandleUnprocessedMessage(ctx, message.Body, message.Receipt)
+					saveUnprocessableMsgErr := unprocessableHandler(ctx, message.Body, message.Receipt)
 					if saveUnprocessableMsgErr != nil {
 						log.Error().Err(saveUnprocessableMsgErr).Str("queueName", queueClient.GetQueueName()).
 							Str("receipt", message.Receipt).Msg("error while saving unprocessable message")

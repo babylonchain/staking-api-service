@@ -10,7 +10,8 @@ type QueueHandler struct {
 	Services *services.Services
 }
 
-type MessageHandler func(messageBody string) error
+type MessageHandler func(ctx context.Context, messageBody string) error
+type UnprocessableMessageHandler func(ctx context.Context, messageBody, receipt string) error
 
 func NewQueueHandler(services *services.Services) *QueueHandler {
 	return &QueueHandler{
