@@ -18,7 +18,7 @@ type GlobalParamsPublic struct {
 	MinStakingTime    uint64           `json:"min_staking_time"`
 }
 
-func (s *Services) GetGlobalParams() *GlobalParamsPublic {
+func (s *Services) GetGlobalParamsPublic() *GlobalParamsPublic {
 	fpDetails := s.GetFinalityProvidersFromGlobalParams()
 
 	return &GlobalParamsPublic{

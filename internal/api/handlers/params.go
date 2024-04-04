@@ -13,6 +13,6 @@ import (
 // @Success 200 {object} PublicResponse[services.GlobalParamsPublic] "Global parameters"
 // @Router /v1/global-params [get]
 func (h *Handler) GetBabylonGlobalParams(request *http.Request) (*Result, *types.Error) {
-	params := h.services.GetGlobalParams()
+	params := h.services.GetGlobalParamsPublic()
 	return NewResult(params), nil
 }

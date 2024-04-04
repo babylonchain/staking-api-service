@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/babylonchain/staking-api-service/internal/db/model"
-	"github.com/babylonchain/staking-api-service/internal/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/babylonchain/staking-api-service/internal/db/model"
+	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 func (db *Database) SaveActiveStakingDelegation(
