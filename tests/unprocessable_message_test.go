@@ -11,7 +11,7 @@ import (
 
 func TestUnprocessableMessageShouldBeStoredInDB(t *testing.T) {
 	testServer := setupTestServer(t, nil)
-
+	defer testServer.Close()
 	sendTestMessage[string](testServer.Queues.ActiveStakingQueueClient, []string{"a rubbish message"})
 	// In test, we retry 3 times. (config is 2, but counting start from 0)
 	time.Sleep(20 * time.Second)
@@ -34,5 +34,4 @@ func TestUnprocessableMessageShouldBeStoredInDB(t *testing.T) {
 		t.Fatalf("Failed to inspect queue: %v", err)
 	}
 	assert.Equal(t, 0, count, "expected no message in the queue")
-	defer testServer.Close()
 }

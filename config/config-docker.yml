@@ -13,7 +13,7 @@ queue:
   queue_password: password
   url: "localhost:5672"
   processing_timeout: 30
-  max_retry_attempts: 10
+  msg_max_retry_attempts: 10
 metrics:
   host: 0.0.0.0
   port: 2112

@@ -21,6 +21,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/babylonchain/staking-queue-client/client"
+	queueConfig "github.com/babylonchain/staking-queue-client/config"
 	"github.com/go-chi/chi"
 	"github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -155,7 +156,7 @@ func setupTestDB(cfg config.Config) *mongo.Client {
 	return client
 }
 
-func setUpTestQueue(cfg config.QueueConfig, service *services.Services) (*queue.Queues, *amqp091.Connection, *amqp091.Channel, error) {
+func setUpTestQueue(cfg queueConfig.QueueConfig, service *services.Services) (*queue.Queues, *amqp091.Connection, *amqp091.Channel, error) {
 	amqpURI := fmt.Sprintf("amqp://%s:%s@%s", cfg.QueueUser, cfg.QueuePassword, cfg.Url)
 	conn, err := amqp091.Dial(amqpURI)
 	if err != nil {

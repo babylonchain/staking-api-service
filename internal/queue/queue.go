@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/queue/handlers"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-queue-client/client"
+	queueConfig "github.com/babylonchain/staking-queue-client/config"
 	"github.com/rs/zerolog/log"
 )
 
@@ -21,7 +21,7 @@ type Queues struct {
 	ExpiredStakingQueueClient client.QueueClient
 }
 
-func New(cfg config.QueueConfig, service *services.Services) *Queues {
+func New(cfg queueConfig.QueueConfig, service *services.Services) *Queues {
 	activeStakingQueueClient, err := client.NewQueueClient(
 		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ActiveStakingQueueName,
 	)
@@ -40,7 +40,7 @@ func New(cfg config.QueueConfig, service *services.Services) *Queues {
 	return &Queues{
 		Handlers:                  handlers,
 		processingTimeout:         time.Duration(cfg.QueueProcessingTimeout) * time.Second,
-		maxRetryAttempts:          cfg.MaxRetryAttempts,
+		maxRetryAttempts:          cfg.MsgMaxRetryAttempts,
 		ActiveStakingQueueClient:  activeStakingQueueClient,
 		ExpiredStakingQueueClient: expiredStakingQueueClient,
 	}
