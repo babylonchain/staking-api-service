@@ -90,6 +90,8 @@ configFiles:
       read-timeout: 60s
       idle-timeout: 60s
       allowed-origins: [ "*" ]
+      log-level: debug
+      btc-net: "mainnet"
     db:
       address: mongodb://mongodb-headless.mongodb-staking-api:27017
       db-name: staking-api-service
