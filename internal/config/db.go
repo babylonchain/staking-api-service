@@ -7,8 +7,10 @@ import (
 )
 
 type DbConfig struct {
-	DbName  string `mapstructure:"db-name"`
-	Address string `mapstructure:"address"`
+	DbName             string `mapstructure:"db-name"`
+	Address            string `mapstructure:"address"`
+	MaxPaginationLimit int64  `mapstructure:"max-pagination-limit"`
+	DbBatchSizeLimist  int64  `mapstructure:"db-batch-size-limit"`
 }
 
 func (cfg *DbConfig) Validate() error {
@@ -45,6 +47,14 @@ func (cfg *DbConfig) Validate() error {
 
 	if portNum < 1024 || portNum > 65535 {
 		return fmt.Errorf("port number must be between 1024 and 65535 (inclusive)")
+	}
+
+	if cfg.MaxPaginationLimit <= 0 {
+		return fmt.Errorf("max pagination limit must be greater than 0")
+	}
+
+	if cfg.DbBatchSizeLimist <= 0 {
+		return fmt.Errorf("db batch size limit must be greater than 0")
 	}
 
 	return nil

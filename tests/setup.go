@@ -281,7 +281,7 @@ func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []client.Active
 			FinalityProviderPkHex: "0xabcdef1234567890" + fmt.Sprint(i),
 			StakingValue:          uint64(rand.Intn(1000)),
 			StakingStartHeight:    uint64(rand.Intn(200)),
-			StakingStartTimestamp: time.Now().String(),
+			StakingStartTimestamp: time.Now().Format(time.RFC3339),
 			StakingTimeLock:       uint64(rand.Intn(100)),
 			StakingOutputIndex:    uint64(rand.Intn(100)),
 			StakingTxHex:          "0xabcdef1234567890" + fmt.Sprint(i),

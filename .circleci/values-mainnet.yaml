@@ -93,6 +93,8 @@ configFiles:
     db:
       address: mongodb://mongodb-headless.mongodb-staking-api:27017
       db-name: staking-api-service
+      max-pagination-limit: 50
+      db-batch-size-limit: 100
     queue:
       queue_user: USER
       queue_password: PASSWORD

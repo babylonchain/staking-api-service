@@ -54,9 +54,9 @@ func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 
 	filter := bson.M{"staker_pk_hex": stakerPk}
-	options := options.Find().SetSort(bson.M{"staking_start_height": -1}) // Sorting in descending order
+	options := options.Find().SetSort(bson.M{"staking_tx.start_height": -1}) // Sorting in descending order
 
-	options.SetLimit(FetchLimit)
+	options.SetLimit(db.cfg.MaxPaginationLimit)
 	// Decode the pagination token first if it exist
 	if paginationToken != "" {
 		decodedToken, err := model.DecodeDelegationByStakerPaginationToken(paginationToken)
@@ -67,8 +67,8 @@ func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 		}
 		filter = bson.M{
 			"$or": []bson.M{
-				{"staking_start_height": bson.M{"$lt": decodedToken.StakingStartHeight}},
-				{"staking_start_height": decodedToken.StakingStartHeight, "_id": bson.M{"$gt": decodedToken.StakingTxHashHex}},
+				{"staking_tx.start_height": bson.M{"$lt": decodedToken.StakingStartHeight}},
+				{"staking_tx.start_height": decodedToken.StakingStartHeight, "_id": bson.M{"$gt": decodedToken.StakingTxHashHex}},
 			},
 		}
 	}
@@ -84,7 +84,7 @@ func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 		return nil, err
 	}
 
-	return toResultMapWithPaginationToken(delegations, model.BuildDelegationByStakerPaginationToken)
+	return toResultMapWithPaginationToken(db.cfg, delegations, model.BuildDelegationByStakerPaginationToken)
 }
 
 // SaveUnbondingTx saves the unbonding transaction details for a staking transaction

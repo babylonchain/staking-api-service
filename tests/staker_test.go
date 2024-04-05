@@ -38,7 +38,13 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 
 	// Check that the response body is as expected
+	assert.NotEmpty(t, response.Data, "expected response body to have data")
 	assert.Equal(t, activeStakingEvent[0].StakerPkHex, response.Data[0].StakerPkHex, "expected response body to match")
 	assert.Equal(t, 10, len(response.Data), "expected contain 10 items in response")
 	assert.NotEmpty(t, response.Pagination.NextKey, "should have pagination token")
+
+	// Also make sure the returned data is sorted by staking start height
+	for i := 0; i < len(response.Data)-1; i++ {
+		assert.True(t, response.Data[i].StakingTx.StartHeight >= response.Data[i+1].StakingTx.StartHeight, "expected response body to be sorted")
+	}
 }
