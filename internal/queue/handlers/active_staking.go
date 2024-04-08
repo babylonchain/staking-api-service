@@ -20,10 +20,10 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		return err
 	}
 
-	// Check if delegation is already exist
-	exist, delErro := h.Services.IsDelegationPresent(ctx, activeStakingEvent.StakingTxHashHex)
-	if delErro != nil {
-		return delErro
+	// Check if delegation already exists
+	exist, delError := h.Services.IsDelegationPresent(ctx, activeStakingEvent.StakingTxHashHex)
+	if delError != nil {
+		return delError
 	}
 	if exist {
 		// Ignore the message as the delegation already exists. This is a duplicate message
@@ -49,6 +49,8 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		return err
 	}
 
+	// Save the active staking delegation. This is the final step in the active staking event processing
+	// Please refer to the README.md for the details on the active staking event processing workflow
 	err = h.Services.SaveActiveStakingDelegation(
 		ctx, activeStakingEvent.StakingTxHashHex, activeStakingEvent.StakerPkHex,
 		activeStakingEvent.FinalityProviderPkHex, activeStakingEvent.StakingValue,

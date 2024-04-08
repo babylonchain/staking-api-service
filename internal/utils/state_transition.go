@@ -16,7 +16,9 @@ func QualifiedStatesToUnbonding() []types.DelegationState {
 }
 
 // List of states to be ignored for unbonding as it means it's already been processed
-var OutdatedStatesForUnbonding = []types.DelegationState{types.Unbonding, types.Unbonded, types.Withdrawn}
+func OutdatedStatesForUnbonding() []types.DelegationState {
+	return []types.DelegationState{types.Unbonding, types.Unbonded, types.Withdrawn}
+}
 
 // QualifiedStatesToUnbonded returns the qualified exisitng states to transition to "unbonded"
 func QualifiedStatesToUnbonded(unbondTxType types.ExpiredTxType) []types.DelegationState {
@@ -31,7 +33,9 @@ func QualifiedStatesToUnbonded(unbondTxType types.ExpiredTxType) []types.Delegat
 }
 
 // List of states to be ignored for unbonded(timelock expired) as it means it's already been processed
-var OutdatedStatesForUnbonded = []types.DelegationState{types.Unbonded, types.Withdrawn}
+func OutdatedStatesForUnbonded() []types.DelegationState {
+	return []types.DelegationState{types.Unbonded, types.Withdrawn}
+}
 
 // QualifiedStatesToWithdrawn returns the qualified exisitng states to transition to "withdrawn"
 func QualifiedStatesToWithdrawn() []types.DelegationState {

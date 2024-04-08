@@ -14,7 +14,7 @@ func (h *QueueHandler) ExpiredStakingHandler(ctx context.Context, messageBody st
 	var expiredStakingEvent queueClient.ExpiredStakingEvent
 	err := json.Unmarshal([]byte(messageBody), &expiredStakingEvent)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to unmarshal the message body into expiredStakingEvent")
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to unmarshal the message body into expiredStakingEvent")
 		return err
 	}
 
@@ -24,14 +24,15 @@ func (h *QueueHandler) ExpiredStakingHandler(ctx context.Context, messageBody st
 	if stateErr != nil {
 		return stateErr
 	}
-	if utils.Contains[types.DelegationState](utils.OutdatedStatesForUnbonded, state) {
+	if utils.Contains[types.DelegationState](utils.OutdatedStatesForUnbonded(), state) {
+		log.Ctx(ctx).Warn().Str("StakingTxHashHex", expiredStakingEvent.StakingTxHashHex).Msg("delegation state is outdated for unbonded event")
 		// Ignore the message as the delegation state already passed the unbonded state. This is an outdated duplication
 		return nil
 	}
 
 	transitionErr := h.Services.TransitionToUnbondedState(ctx, expiredStakingEvent.TxType.ToString(), expiredStakingEvent.StakingTxHashHex)
 	if transitionErr != nil {
-		log.Error().Err(transitionErr).Str("StakingTxHashHex", expiredStakingEvent.StakingTxHashHex).Msg("Failed to transition to unbonded state after timelock expired")
+		log.Ctx(ctx).Error().Err(transitionErr).Str("StakingTxHashHex", expiredStakingEvent.StakingTxHashHex).Msg("Failed to transition to unbonded state after timelock expired")
 		return transitionErr
 	}
 

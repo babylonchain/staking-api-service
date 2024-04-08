@@ -24,7 +24,7 @@ func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody 
 	if stateErr != nil {
 		return stateErr
 	}
-	if utils.Contains[types.DelegationState](utils.OutdatedStatesForUnbonding, state) {
+	if utils.Contains[types.DelegationState](utils.OutdatedStatesForUnbonding(), state) {
 		// Ignore the message as the delegation state already passed the unbonding state. This is an outdated duplication
 		return nil
 	}
@@ -33,15 +33,6 @@ func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody 
 	if err := h.Services.ProcessStakingStatsCalculation(ctx, unbondingStakingEvent); err != nil {
 		log.Ctx(ctx).Err(err).Msg("Failed to update stats while processing unbonding staking event")
 		return err
-	}
-
-	transitionErr := h.Services.TransitionToUnbondingState(
-		ctx, unbondingStakingEvent.StakingTxHashHex, unbondingStakingEvent.UnbondingStartHeight, unbondingStakingEvent.UnbondingTimeLock,
-		unbondingStakingEvent.UnbondingOutputIndex, unbondingStakingEvent.UnbondingTxHex, unbondingStakingEvent.UnbondingStartTimestamp,
-	)
-	if transitionErr != nil {
-		log.Ctx(ctx).Err(transitionErr).Msg("Failed to transition to unbonding state")
-		return transitionErr
 	}
 
 	err = h.Services.ProcessExpireCheck(
@@ -53,6 +44,18 @@ func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody 
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to process expire check")
 		return err
+	}
+
+	// Save the unbonding staking delegation. This is the final step in the unbonding staking event processing
+	// Please refer to the README.md for the details on the unbonding staking event processing workflow
+	transitionErr := h.Services.TransitionToUnbondingState(
+		ctx, unbondingStakingEvent.StakingTxHashHex, unbondingStakingEvent.UnbondingStartHeight,
+		unbondingStakingEvent.UnbondingTimeLock, unbondingStakingEvent.UnbondingOutputIndex,
+		unbondingStakingEvent.UnbondingTxHex, unbondingStakingEvent.UnbondingStartTimestamp,
+	)
+	if transitionErr != nil {
+		log.Ctx(ctx).Err(transitionErr).Msg("Failed to transition to unbonding state")
+		return transitionErr
 	}
 
 	return nil
