@@ -220,6 +220,7 @@ paths:
       consumes:
       - application/json
       description: Unbonds a delegation by processing the provided transaction details.
+        This is an async operation.
       parameters:
       - description: Unbonding Request Payload
         in: body

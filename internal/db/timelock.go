@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/babylonchain/staking-api-service/internal/db/model"
+	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 func (db *Database) SaveTimeLockExpireCheck(
@@ -17,4 +18,10 @@ func (db *Database) SaveTimeLockExpireCheck(
 		return err
 	}
 	return nil
+}
+
+func (db *Database) TransitionToUnbondedState(
+	ctx context.Context, stakingTxHashHex string, eligiblePreviousState []types.DelegationState,
+) error {
+	return db.transitionState(ctx, stakingTxHashHex, types.Unbonded.ToString(), eligiblePreviousState, nil)
 }

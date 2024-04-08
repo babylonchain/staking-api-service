@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/babylonchain/staking-api-service/internal/utils"
 	queueClient "github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
 )
@@ -14,23 +14,26 @@ func (h *QueueHandler) ExpiredStakingHandler(ctx context.Context, messageBody st
 	var expiredStakingEvent queueClient.ExpiredStakingEvent
 	err := json.Unmarshal([]byte(messageBody), &expiredStakingEvent)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to unmarshal the message body into expiredStakingEvent")
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to unmarshal the message body into expiredStakingEvent")
 		return err
 	}
 
-	// If delegation does not exist in our system, then this message is out of order and should be retried later
-	if exist, err := h.Services.IsDelegationPresent(ctx, expiredStakingEvent.StakingTxHashHex); err != nil {
-		log.Err(err).Msg("Failed to check if delegation exists")
-		return err
-	} else if !exist {
-		log.Warn().Str("stakingTxHash", expiredStakingEvent.StakingTxHashHex).Msg("Staking delegation not found, the expired message will need to be retried as it's out of order")
-		return types.NewErrorWithMsg(http.StatusNotFound, types.NotFound, "Staking delegation not found")
+	// Check if the delegation is in the right state to process the unbonded(timelock expire) event
+	state, stateErr := h.Services.GetDelegationState(ctx, expiredStakingEvent.StakingTxHashHex)
+	// Requeue if found any error. Including not found error
+	if stateErr != nil {
+		return stateErr
+	}
+	if utils.Contains[types.DelegationState](utils.OutdatedStatesForUnbonded(), state) {
+		log.Ctx(ctx).Warn().Str("StakingTxHashHex", expiredStakingEvent.StakingTxHashHex).Msg("delegation state is outdated for unbonded event")
+		// Ignore the message as the delegation state already passed the unbonded state. This is an outdated duplication
+		return nil
 	}
 
-	_, err = h.Services.TransitionToUnbondedState(ctx, expiredStakingEvent.TxType.ToString(), expiredStakingEvent.StakingTxHashHex)
-	if err != nil {
-		log.Err(err).Msg("Failed to transition to unbonded state")
-		return err
+	transitionErr := h.Services.TransitionToUnbondedState(ctx, expiredStakingEvent.TxType.ToString(), expiredStakingEvent.StakingTxHashHex)
+	if transitionErr != nil {
+		log.Ctx(ctx).Error().Err(transitionErr).Str("StakingTxHashHex", expiredStakingEvent.StakingTxHashHex).Msg("Failed to transition to unbonded state after timelock expired")
+		return transitionErr
 	}
 
 	return nil
