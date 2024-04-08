@@ -24,11 +24,12 @@ const (
 	unbondingPath            = "/v1/unbonding"
 )
 
-func TestUnbonding(t *testing.T) {
+func TestUnbondingRequest(t *testing.T) {
 	activeStakingEvent := getTestActiveStakingEvent()
 	testServer := setupTestServer(t, nil)
-	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
 	defer testServer.Close()
+
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
 	require.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -92,7 +93,7 @@ func TestUnbonding(t *testing.T) {
 	getStakerDelegationUrl := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
 	resp, err = http.Get(getStakerDelegationUrl)
 	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
-
+	defer resp.Body.Close()
 	// Check that the status code is HTTP 200 OK
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
 
@@ -126,7 +127,7 @@ func TestUnbonding(t *testing.T) {
 	assert.Equal(t, activeStakingEvent.StakingValue, results[0].StakingAmount)
 }
 
-func TestUnbondingEligibilityWhenNoMatchingDelegation(t *testing.T) {
+func TestUnbondingRequestEligibilityWhenNoMatchingDelegation(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
@@ -173,4 +174,296 @@ func getTestUnbondDelegationRequestPayload(stakingTxHashHex string) handlers.Unb
 		UnbondingTxHex:           "0200000001f37a55582c52ad133fa9d1f8b320a7465da564bad69d03ca36d67621ff6c43e30100000000ffffffff016fe3700300000000225120077251500d5425110488b9dba4c87676ed2f37c3c70bd6cff90bc1dc3d0a18d500000000",
 		StakerSignedSignatureHex: "3bd94e2559ad19a7e06b884ff7e1cf46287b7213e73290f1a4c5700ee660daf29d0da9a74c65f21751e97229d4e82e26117eee5c48c5ecf3a3be697ecee0be36",
 	}
+}
+
+func TestProcessUnbondingStakingEvent(t *testing.T) {
+	activeStakingEvent := getTestActiveStakingEvent()
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	require.NoError(t, err)
+
+	time.Sleep(2 * time.Second)
+
+	// Let's make a POST request to the unbonding endpoint
+	unbondingUrl := testServer.Server.URL + unbondingPath
+	requestBody := getTestUnbondDelegationRequestPayload(activeStakingEvent.StakingTxHashHex)
+	requestBodyBytes, err := json.Marshal(requestBody)
+	assert.NoError(t, err, "marshalling request body should not fail")
+
+	resp, err := http.Post(unbondingUrl, "application/json", bytes.NewReader(requestBodyBytes))
+	assert.NoError(t, err, "making POST request to unbonding endpoint should not fail")
+	defer resp.Body.Close()
+
+	// Let's inspect what's stored in the database
+	results, err := inspectDbDocuments[model.UnbondingDocument](t, model.UnbondingCollection)
+	assert.NoError(t, err, "failed to inspect DB documents")
+
+	assert.Equal(t, 1, len(results), "expected 1 document in the DB")
+	assert.Equal(t, "INSERTED", results[0].State)
+	assert.Equal(t, activeStakingEvent.StakingTxHex, results[0].StakingTxHex)
+
+	// Let's send an unbonding event
+	unbondingEvent := client.UnbondingStakingEvent{
+		EventType:               client.UnbondingStakingEventType,
+		StakingTxHashHex:        requestBody.StakingTxHashHex,
+		UnbondingTxHashHex:      requestBody.UnbondingTxHashHex,
+		UnbondingTxHex:          requestBody.UnbondingTxHex,
+		UnbondingTimeLock:       10,
+		UnbondingStartTimestamp: time.Now().Format(time.RFC3339),
+		UnbondingStartHeight:    activeStakingEvent.StakingStartHeight + 100,
+		UnbondingOutputIndex:    1,
+	}
+
+	sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, []client.UnbondingStakingEvent{unbondingEvent})
+	time.Sleep(2 * time.Second)
+
+	// Let's GET the delegation from API
+	getStakerDelegationUrl := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
+	resp, err = http.Get(getStakerDelegationUrl)
+	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
+	defer resp.Body.Close()
+	// Check that the status code is HTTP 200 OK
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	var getStakerDelegationResponse handlers.PublicResponse[[]services.DelegationPublic]
+	err = json.Unmarshal(bodyBytes, &getStakerDelegationResponse)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
+
+	// Check that the response body is as expected
+	assert.Equal(t, 1, len(getStakerDelegationResponse.Data), "expected 1 delegation in the response")
+	assert.Equal(t, activeStakingEvent.StakerPkHex, getStakerDelegationResponse.Data[0].StakerPkHex, "expected response body to match")
+	assert.Equal(t, types.Unbonding.ToString(), getStakerDelegationResponse.Data[0].State, "state should be unbonding")
+	// Make sure the unbonding tx exist in the response body
+	assert.NotNil(t, getStakerDelegationResponse.Data[0].UnbondingTx, "expected unbonding tx to be present in the response body")
+	assert.Equal(t, unbondingEvent.UnbondingTxHex, getStakerDelegationResponse.Data[0].UnbondingTx.TxHex, "expected unbonding tx to match")
+
+	// Let's also fetch the DB to make sure the expired check is processed
+	timeLockResults, err := inspectDbDocuments[model.TimeLockDocument](t, model.TimeLockCollection)
+	assert.NoError(t, err, "failed to inspect DB documents")
+
+	assert.Equal(t, 2, len(timeLockResults), "expected 2 document in the DB")
+	// The first one is from the
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[0].StakingTxHashHex)
+	assert.Equal(t, types.ActiveType.ToString(), timeLockResults[0].TxType)
+	// Point to the same staking tx hash
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
+	assert.Equal(t, requestBody.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
+	assert.Equal(t, types.UnbondingType.ToString(), timeLockResults[1].TxType)
+}
+
+func TestProcessUnbondingStakingEventDuringBootstrap(t *testing.T) {
+	activeStakingEvent := getTestActiveStakingEvent()
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	require.NoError(t, err)
+
+	time.Sleep(2 * time.Second)
+
+	// We generate the necessary unbonding request payload, but we not sending it to the unbonding endpoint
+	// Instead, we send the unbonding event directly to simulate the case where our system is bootstrapping
+	// which means we have the unbonding data but not the unbonding request
+	requestBody := getTestUnbondDelegationRequestPayload(activeStakingEvent.StakingTxHashHex)
+	unbondingEvent := client.UnbondingStakingEvent{
+		EventType:               client.UnbondingStakingEventType,
+		StakingTxHashHex:        requestBody.StakingTxHashHex,
+		UnbondingTxHashHex:      requestBody.UnbondingTxHashHex,
+		UnbondingTxHex:          requestBody.UnbondingTxHex,
+		UnbondingTimeLock:       10,
+		UnbondingStartTimestamp: time.Now().Format(time.RFC3339),
+		UnbondingStartHeight:    activeStakingEvent.StakingStartHeight + 100,
+		UnbondingOutputIndex:    1,
+	}
+
+	sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, []client.UnbondingStakingEvent{unbondingEvent})
+	time.Sleep(2 * time.Second)
+
+	// Let's GET the delegation from API
+	getStakerDelegationUrl := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
+	resp, err := http.Get(getStakerDelegationUrl)
+	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 200 OK
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	var getStakerDelegationResponse handlers.PublicResponse[[]services.DelegationPublic]
+	err = json.Unmarshal(bodyBytes, &getStakerDelegationResponse)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
+
+	// Check that the response body is as expected
+	assert.Equal(t, 1, len(getStakerDelegationResponse.Data), "expected 1 delegation in the response")
+	assert.Equal(t, activeStakingEvent.StakerPkHex, getStakerDelegationResponse.Data[0].StakerPkHex, "expected response body to match")
+	assert.Equal(t, types.Unbonding.ToString(), getStakerDelegationResponse.Data[0].State, "state should be unbonding")
+	// Make sure the unbonding tx exist in the response body
+	assert.NotNil(t, getStakerDelegationResponse.Data[0].UnbondingTx, "expected unbonding tx to be present in the response body")
+	assert.Equal(t, unbondingEvent.UnbondingTxHex, getStakerDelegationResponse.Data[0].UnbondingTx.TxHex, "expected unbonding tx to match")
+
+	// Let's also fetch the DB to make sure the expired check is processed
+	timeLockResults, err := inspectDbDocuments[model.TimeLockDocument](t, model.TimeLockCollection)
+	assert.NoError(t, err, "failed to inspect DB documents")
+
+	assert.Equal(t, 2, len(timeLockResults), "expected 2 document in the DB")
+	// The first one is from the
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[0].StakingTxHashHex)
+	assert.Equal(t, types.ActiveType.ToString(), timeLockResults[0].TxType)
+	// Point to the same staking tx hash
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
+	assert.Equal(t, requestBody.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
+	assert.Equal(t, types.UnbondingType.ToString(), timeLockResults[1].TxType)
+}
+
+func TestShouldIgnoreOutdatedUnbondingEvent(t *testing.T) {
+	activeStakingEvent := getTestActiveStakingEvent()
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	require.NoError(t, err)
+
+	time.Sleep(2 * time.Second)
+
+	requestBody := getTestUnbondDelegationRequestPayload(activeStakingEvent.StakingTxHashHex)
+	unbondingEvent := client.UnbondingStakingEvent{
+		EventType:               client.UnbondingStakingEventType,
+		StakingTxHashHex:        requestBody.StakingTxHashHex,
+		UnbondingTxHashHex:      requestBody.UnbondingTxHashHex,
+		UnbondingTxHex:          requestBody.UnbondingTxHex,
+		UnbondingTimeLock:       10,
+		UnbondingStartTimestamp: time.Now().Format(time.RFC3339),
+		UnbondingStartHeight:    activeStakingEvent.StakingStartHeight + 100,
+		UnbondingOutputIndex:    1,
+	}
+
+	sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, []client.UnbondingStakingEvent{unbondingEvent})
+	time.Sleep(2 * time.Second)
+
+	// Let's GET the delegation from API
+	getStakerDelegationUrl := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
+	resp, err := http.Get(getStakerDelegationUrl)
+	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 200 OK
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	var getStakerDelegationResponse handlers.PublicResponse[[]services.DelegationPublic]
+	err = json.Unmarshal(bodyBytes, &getStakerDelegationResponse)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
+
+	// Check that the response body is as expected
+	assert.Equal(t, 1, len(getStakerDelegationResponse.Data), "expected 1 delegation in the response")
+	assert.Equal(t, activeStakingEvent.StakerPkHex, getStakerDelegationResponse.Data[0].StakerPkHex, "expected response body to match")
+	assert.Equal(t, types.Unbonding.ToString(), getStakerDelegationResponse.Data[0].State, "state should be unbonding")
+	// Make sure the unbonding tx exist in the response body
+	assert.NotNil(t, getStakerDelegationResponse.Data[0].UnbondingTx, "expected unbonding tx to be present in the response body")
+	assert.Equal(t, unbondingEvent.UnbondingTxHex, getStakerDelegationResponse.Data[0].UnbondingTx.TxHex, "expected unbonding tx to match")
+
+	// Let's also fetch the DB to make sure the expired check is processed
+	timeLockResults, err := inspectDbDocuments[model.TimeLockDocument](t, model.TimeLockCollection)
+	assert.NoError(t, err, "failed to inspect DB documents")
+
+	assert.Equal(t, 2, len(timeLockResults), "expected 2 document in the DB")
+	// The first one is from the
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[0].StakingTxHashHex)
+	assert.Equal(t, types.ActiveType.ToString(), timeLockResults[0].TxType)
+	// Point to the same staking tx hash
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
+	assert.Equal(t, requestBody.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
+	assert.Equal(t, types.UnbondingType.ToString(), timeLockResults[1].TxType)
+
+	// Let's send an outdated unbonding event
+	sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, []client.UnbondingStakingEvent{unbondingEvent})
+	time.Sleep(2 * time.Second)
+
+	// Fetch from the expire checker to make sure we only processed the unbonding event once
+	timeLockResults, err = inspectDbDocuments[model.TimeLockDocument](t, model.TimeLockCollection)
+	assert.NoError(t, err, "failed to inspect DB documents")
+
+	// Should still be 2
+	assert.Equal(t, 2, len(timeLockResults), "expected 2 document in the DB")
+}
+
+func TestProcessUnbondingStakingEventShouldTolerateEventMsgOutOfOrder(t *testing.T) {
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+
+	// We generate the active event, but not sending it yet. we will send it after sending the unbonding event
+	activeStakingEvent := getTestActiveStakingEvent()
+	requestBody := getTestUnbondDelegationRequestPayload(activeStakingEvent.StakingTxHashHex)
+	unbondingEvent := client.UnbondingStakingEvent{
+		EventType:               client.UnbondingStakingEventType,
+		StakingTxHashHex:        requestBody.StakingTxHashHex,
+		UnbondingTxHashHex:      requestBody.UnbondingTxHashHex,
+		UnbondingTxHex:          requestBody.UnbondingTxHex,
+		UnbondingTimeLock:       10,
+		UnbondingStartTimestamp: time.Now().Format(time.RFC3339),
+		UnbondingStartHeight:    activeStakingEvent.StakingStartHeight + 100,
+		UnbondingOutputIndex:    1,
+	}
+
+	sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, []client.UnbondingStakingEvent{unbondingEvent})
+	time.Sleep(2 * time.Second)
+	// Check DB, there should be no unbonding document
+	results, err := inspectDbDocuments[model.UnbondingDocument](t, model.UnbondingCollection)
+	assert.NoError(t, err, "failed to inspect DB documents")
+	assert.Empty(t, results, "expected no unbonding document in the DB")
+
+	// Send the active event
+	err = sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	require.NoError(t, err)
+
+	time.Sleep(10 * time.Second)
+
+	// Let's GET the delegation from API
+	getStakerDelegationUrl := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
+	resp, err := http.Get(getStakerDelegationUrl)
+	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 200 OK
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	var getStakerDelegationResponse handlers.PublicResponse[[]services.DelegationPublic]
+	err = json.Unmarshal(bodyBytes, &getStakerDelegationResponse)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
+
+	// Check that the response body is as expected
+	assert.Equal(t, 1, len(getStakerDelegationResponse.Data), "expected 1 delegation in the response")
+	assert.Equal(t, types.Unbonding.ToString(), getStakerDelegationResponse.Data[0].State, "state should be unbonding")
+	// Make sure the unbonding tx exist in the response body
+	assert.NotNil(t, getStakerDelegationResponse.Data[0].UnbondingTx, "expected unbonding tx to be present in the response body")
+	assert.Equal(t, unbondingEvent.UnbondingTxHex, getStakerDelegationResponse.Data[0].UnbondingTx.TxHex, "expected unbonding tx to match")
+
+	// Let's also fetch the DB to make sure the expired check is processed
+	timeLockResults, err := inspectDbDocuments[model.TimeLockDocument](t, model.TimeLockCollection)
+	assert.NoError(t, err, "failed to inspect DB documents")
+
+	assert.Equal(t, 2, len(timeLockResults), "expected 2 document in the DB")
+	// The first one is from the
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[0].StakingTxHashHex)
+	assert.Equal(t, types.ActiveType.ToString(), timeLockResults[0].TxType)
+	// Point to the same staking tx hash
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
+	assert.Equal(t, requestBody.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
+	assert.Equal(t, types.UnbondingType.ToString(), timeLockResults[1].TxType)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/babylonchain/staking-api-service/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -94,5 +95,29 @@ func (db *Database) SaveUnbondingTx(
 		return err
 	}
 
+	return nil
+}
+
+// Change the state to `unbonding` and save the unbondingTx data
+// Return not found error if the stakingTxHashHex is not found or the existing state is not eligible for unbonding
+func (db *Database) TransitionToUnbondingState(
+	ctx context.Context, txHashHex string, startHeight, timelock, outputIndex uint64, txHex, startTimestamp string,
+) error {
+	unbondingTxMap := make(map[string]interface{})
+	unbondingTxMap["unbonding_tx"] = model.TimelockTransaction{
+		TxHex:          txHex,
+		OutputIndex:    outputIndex,
+		StartTimestamp: startTimestamp,
+		StartHeight:    startHeight,
+		TimeLock:       timelock,
+	}
+
+	err := db.transitionState(
+		ctx, txHashHex, types.Unbonding.ToString(),
+		utils.QualifiedStatesToUnbonding(), unbondingTxMap,
+	)
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -108,10 +108,17 @@ func (db *Database) FindDelegationByTxHashHex(ctx context.Context, stakingTxHash
 
 // TransitionState updates the state of a staking transaction to a new state
 // It returns an NotFoundError if the staking transaction is not found or not in the eligible state to transition
-func (db *Database) TransitionState(ctx context.Context, stakingTxHashHex, newState string, eligiblePreviousState []string) error {
+func (db *Database) transitionState(
+	ctx context.Context, stakingTxHashHex, newState string,
+	eligiblePreviousState []types.DelegationState, additionalUpdates map[string]interface{},
+) error {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 	filter := bson.M{"_id": stakingTxHashHex, "state": bson.M{"$in": eligiblePreviousState}}
 	update := bson.M{"$set": bson.M{"state": newState}}
+	for field, value := range additionalUpdates {
+		// Add additional fields to the $set operation
+		update["$set"].(bson.M)[field] = value
+	}
 	_, err := client.UpdateOne(ctx, filter, update)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {

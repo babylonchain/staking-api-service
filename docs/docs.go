@@ -99,7 +99,7 @@ const docTemplate = `{
         },
         "/v1/unbonding": {
             "post": {
-                "description": "Unbonds a delegation by processing the provided transaction details.",
+                "description": "Unbonds a delegation by processing the provided transaction details. This is an async operation.",
                 "consumes": [
                     "application/json"
                 ],

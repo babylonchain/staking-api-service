@@ -61,10 +61,10 @@ func (s *Services) DelegationsByStakerPk(ctx context.Context, stakerPk string, p
 	resultMap, err := s.DbClient.FindDelegationsByStakerPk(ctx, stakerPk, pageToken)
 	if err != nil {
 		if db.IsInvalidPaginationTokenError(err) {
-			log.Warn().Err(err).Msg("Invalid pagination token when fetching delegations by staker pk")
+			log.Ctx(ctx).Warn().Err(err).Msg("Invalid pagination token when fetching delegations by staker pk")
 			return nil, "", types.NewError(http.StatusBadRequest, types.BadRequest, err)
 		}
-		log.Error().Err(err).Msg("Failed to find delegations by staker pk")
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to find delegations by staker pk")
 		return nil, "", types.NewInternalServiceError(err)
 	}
 	var delegations []DelegationPublic
@@ -86,11 +86,11 @@ func (s *Services) SaveActiveStakingDelegation(
 	)
 	if err != nil {
 		if ok := db.IsDuplicateKeyError(err); ok {
-			log.Warn().Err(err).Msg("Skip the active staking event as it already exists in the database")
+			log.Ctx(ctx).Warn().Err(err).Msg("Skip the active staking event as it already exists in the database")
 			// TODO: Add metrics for duplicate active staking events
 			return nil
 		}
-		log.Error().Err(err).Msg("Failed to save active staking delegation")
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to save active staking delegation")
 		return types.NewInternalServiceError(err)
 	}
 	return nil
@@ -102,7 +102,7 @@ func (s *Services) IsDelegationPresent(ctx context.Context, txHashHex string) (b
 		if db.IsNotFoundError(err) {
 			return false, nil
 		}
-		log.Error().Err(err).Msg("Failed to find delegation by tx hash hex")
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to find delegation by tx hash hex")
 		return false, types.NewInternalServiceError(err)
 	}
 	if delegation != nil {
@@ -110,4 +110,17 @@ func (s *Services) IsDelegationPresent(ctx context.Context, txHashHex string) (b
 	}
 
 	return false, nil
+}
+
+func (s *Services) GetDelegationState(ctx context.Context, txHashHex string) (types.DelegationState, *types.Error) {
+	delegation, err := s.DbClient.FindDelegationByTxHashHex(ctx, txHashHex)
+	if err != nil {
+		if db.IsNotFoundError(err) {
+			log.Ctx(ctx).Warn().Err(err).Str("stakingTxHash", txHashHex).Msg("Staking delegation not found")
+			return "", types.NewErrorWithMsg(http.StatusNotFound, types.NotFound, "staking delegation not found, please retry")
+		}
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to find delegation by tx hash hex")
+		return "", types.NewInternalServiceError(err)
+	}
+	return delegation.State, nil
 }

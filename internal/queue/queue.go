@@ -12,11 +12,12 @@ import (
 )
 
 type Queues struct {
-	Handlers                  *handlers.QueueHandler
-	processingTimeout         time.Duration
-	maxRetryAttempts          int32
-	ActiveStakingQueueClient  client.QueueClient
-	ExpiredStakingQueueClient client.QueueClient
+	Handlers                    *handlers.QueueHandler
+	processingTimeout           time.Duration
+	maxRetryAttempts            int32
+	ActiveStakingQueueClient    client.QueueClient
+	ExpiredStakingQueueClient   client.QueueClient
+	UnbondingStakingQueueClient client.QueueClient
 }
 
 func New(cfg queueConfig.QueueConfig, service *services.Services) *Queues {
@@ -34,13 +35,21 @@ func New(cfg queueConfig.QueueConfig, service *services.Services) *Queues {
 		log.Fatal().Err(err).Msg("error while creating ExpiredStakingQueueClient")
 	}
 
+	unbondingStakingQueueClient, err := client.NewQueueClient(
+		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.UnbondingStakingQueueName,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while creating UnbondingStakingQueueClient")
+	}
+
 	handlers := handlers.NewQueueHandler(service)
 	return &Queues{
-		Handlers:                  handlers,
-		processingTimeout:         time.Duration(cfg.QueueProcessingTimeout) * time.Second,
-		maxRetryAttempts:          cfg.MsgMaxRetryAttempts,
-		ActiveStakingQueueClient:  activeStakingQueueClient,
-		ExpiredStakingQueueClient: expiredStakingQueueClient,
+		Handlers:                    handlers,
+		processingTimeout:           time.Duration(cfg.QueueProcessingTimeout) * time.Second,
+		maxRetryAttempts:            cfg.MsgMaxRetryAttempts,
+		ActiveStakingQueueClient:    activeStakingQueueClient,
+		ExpiredStakingQueueClient:   expiredStakingQueueClient,
+		UnbondingStakingQueueClient: unbondingStakingQueueClient,
 	}
 }
 
@@ -57,6 +66,11 @@ func (q *Queues) StartReceivingMessages() {
 		q.Handlers.ExpiredStakingHandler, q.Handlers.HandleUnprocessedMessage,
 		q.maxRetryAttempts, q.processingTimeout,
 	)
+	startQueueMessageProcessing(
+		q.UnbondingStakingQueueClient,
+		q.Handlers.UnbondingStakingHandler, q.Handlers.HandleUnprocessedMessage,
+		q.maxRetryAttempts, q.processingTimeout,
+	)
 	// ...add more queues here
 }
 
@@ -69,6 +83,10 @@ func (q *Queues) StopReceivingMessages() {
 	expiredQueueErr := q.ExpiredStakingQueueClient.Stop()
 	if expiredQueueErr != nil {
 		log.Error().Err(expiredQueueErr).Str("queueName", q.ExpiredStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+	}
+	unbondingQueueErr := q.UnbondingStakingQueueClient.Stop()
+	if unbondingQueueErr != nil {
+		log.Error().Err(unbondingQueueErr).Str("queueName", q.UnbondingStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
 	}
 	// ...add more queues here
 }
@@ -94,11 +112,11 @@ func startQueueMessageProcessing(
 				// We will retry the message if it has not exceeded the max retry attempts
 				// otherwise, we will dump the message into db for manual inspection and remove from the queue
 				if attempts > maxRetryAttempts {
-					log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
+					log.Ctx(ctx).Error().Err(err).Str("queueName", queueClient.GetQueueName()).
 						Str("receipt", message.Receipt).Msg("exceeded retry attempts, message will be dumped into db for manual inspection")
 					saveUnprocessableMsgErr := unprocessableHandler(ctx, message.Body, message.Receipt)
 					if saveUnprocessableMsgErr != nil {
-						log.Error().Err(saveUnprocessableMsgErr).Str("queueName", queueClient.GetQueueName()).
+						log.Ctx(ctx).Error().Err(saveUnprocessableMsgErr).Str("queueName", queueClient.GetQueueName()).
 							Str("receipt", message.Receipt).Msg("error while saving unprocessable message")
 						cancel()
 						continue
@@ -108,11 +126,11 @@ func startQueueMessageProcessing(
 					// it need to be handled by https://github.com/babylonchain/staking-api-service/issues/38
 					time.Sleep(5 * time.Second)
 					err = queueClient.ReQueueMessage(ctx, message)
-					log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
+					log.Ctx(ctx).Error().Err(err).Str("queueName", queueClient.GetQueueName()).
 						Str("receipt", message.Receipt).
 						Msg("error while processing message from queue, will be requeued")
 					if err != nil {
-						log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).
+						log.Ctx(ctx).Error().Err(err).Str("queueName", queueClient.GetQueueName()).
 							Str("receipt", message.Receipt).Msg("error while requeuing message")
 					}
 					// TODO: Add metrics for failed message processing
@@ -124,7 +142,7 @@ func startQueueMessageProcessing(
 			delErr := queueClient.DeleteMessage(message.Receipt)
 			if delErr != nil {
 				// TODO: Add metrics for failed message deletion
-				log.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).
+				log.Ctx(ctx).Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).
 					Str("receipt", message.Receipt).Msg("error while deleting message from queue")
 			}
 
