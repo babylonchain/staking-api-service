@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/babylonchain/staking-api-service/internal/utils"
 	queueClient "github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
 )
@@ -31,13 +30,6 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		return nil
 	}
 
-	// TODO: To be replaced with the epoch timestamp
-	activeStakingTimestamp, err := utils.ParseTimestampToIsoFormat(activeStakingEvent.StakingStartTimestamp)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to parse the active staking timestamp into ISO8601 format")
-		return err
-	}
-
 	// Perform the async stats calculation
 	err = h.Services.ProcessStakingStatsCalculation(ctx, activeStakingEvent)
 	if err != nil {
@@ -60,7 +52,7 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 	err = h.Services.SaveActiveStakingDelegation(
 		ctx, activeStakingEvent.StakingTxHashHex, activeStakingEvent.StakerPkHex,
 		activeStakingEvent.FinalityProviderPkHex, activeStakingEvent.StakingValue,
-		activeStakingEvent.StakingStartHeight, activeStakingTimestamp,
+		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingStartTimestamp,
 		activeStakingEvent.StakingTimeLock, activeStakingEvent.StakingOutputIndex,
 		activeStakingEvent.StakingTxHex,
 	)

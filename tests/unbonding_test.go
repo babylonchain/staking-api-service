@@ -159,7 +159,7 @@ func getTestActiveStakingEvent() client.ActiveStakingEvent {
 		StakerPkHex:           "f9bb4e86ad4e02faab0d40bb7f7161df5fe25908ba3a80a596cd358fbe26b099",
 		FinalityProviderPkHex: "03d5a0bb72d71993e435d6c5a70e2aa4db500a62cfaae33c56050deefee64ec0",
 		StakingValue:          64144337,
-		StakingStartTimestamp: "2024-04-03 19:34:38 +0800 CST",
+		StakingStartTimestamp: time.Now().Unix(),
 		StakingStartHeight:    111,
 		StakingTimeLock:       29337,
 		StakingOutputIndex:    1,
@@ -211,7 +211,7 @@ func TestProcessUnbondingStakingEvent(t *testing.T) {
 		UnbondingTxHashHex:      requestBody.UnbondingTxHashHex,
 		UnbondingTxHex:          requestBody.UnbondingTxHex,
 		UnbondingTimeLock:       10,
-		UnbondingStartTimestamp: time.Now().Format(time.RFC3339),
+		UnbondingStartTimestamp: time.Now().Unix(),
 		UnbondingStartHeight:    activeStakingEvent.StakingStartHeight + 100,
 		UnbondingOutputIndex:    1,
 	}
@@ -242,6 +242,9 @@ func TestProcessUnbondingStakingEvent(t *testing.T) {
 	// Make sure the unbonding tx exist in the response body
 	assert.NotNil(t, getStakerDelegationResponse.Data[0].UnbondingTx, "expected unbonding tx to be present in the response body")
 	assert.Equal(t, unbondingEvent.UnbondingTxHex, getStakerDelegationResponse.Data[0].UnbondingTx.TxHex, "expected unbonding tx to match")
+
+	_, err = time.Parse(time.RFC3339, getStakerDelegationResponse.Data[0].UnbondingTx.StartTimestamp)
+	assert.NoError(t, err, "expected timestamp to be in RFC3339 format")
 
 	// Let's also fetch the DB to make sure the expired check is processed
 	timeLockResults, err := inspectDbDocuments[model.TimeLockDocument](t, model.TimeLockCollection)
@@ -277,7 +280,7 @@ func TestProcessUnbondingStakingEventDuringBootstrap(t *testing.T) {
 		UnbondingTxHashHex:      requestBody.UnbondingTxHashHex,
 		UnbondingTxHex:          requestBody.UnbondingTxHex,
 		UnbondingTimeLock:       10,
-		UnbondingStartTimestamp: time.Now().Format(time.RFC3339),
+		UnbondingStartTimestamp: time.Now().Unix(),
 		UnbondingStartHeight:    activeStakingEvent.StakingStartHeight + 100,
 		UnbondingOutputIndex:    1,
 	}
@@ -341,7 +344,7 @@ func TestShouldIgnoreOutdatedUnbondingEvent(t *testing.T) {
 		UnbondingTxHashHex:      requestBody.UnbondingTxHashHex,
 		UnbondingTxHex:          requestBody.UnbondingTxHex,
 		UnbondingTimeLock:       10,
-		UnbondingStartTimestamp: time.Now().Format(time.RFC3339),
+		UnbondingStartTimestamp: time.Now().Unix(),
 		UnbondingStartHeight:    activeStakingEvent.StakingStartHeight + 100,
 		UnbondingOutputIndex:    1,
 	}
@@ -412,7 +415,7 @@ func TestProcessUnbondingStakingEventShouldTolerateEventMsgOutOfOrder(t *testing
 		UnbondingTxHashHex:      requestBody.UnbondingTxHashHex,
 		UnbondingTxHex:          requestBody.UnbondingTxHex,
 		UnbondingTimeLock:       10,
-		UnbondingStartTimestamp: time.Now().Format(time.RFC3339),
+		UnbondingStartTimestamp: time.Now().Unix(),
 		UnbondingStartHeight:    activeStakingEvent.StakingStartHeight + 100,
 		UnbondingOutputIndex:    1,
 	}

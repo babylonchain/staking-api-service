@@ -7,6 +7,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/babylonchain/staking-api-service/internal/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -38,7 +39,7 @@ func fromDelegationDocument(d model.DelegationDocument) DelegationPublic {
 		StakingTx: &TransactionPublic{
 			TxHex:          d.StakingTx.TxHex,
 			OutputIndex:    d.StakingTx.OutputIndex,
-			StartTimestamp: d.StakingTx.StartTimestamp,
+			StartTimestamp: utils.ParseTimestampToIsoFormat(d.StakingTx.StartTimestamp),
 			StartHeight:    d.StakingTx.StartHeight,
 			TimeLock:       d.StakingTx.TimeLock,
 		},
@@ -49,7 +50,7 @@ func fromDelegationDocument(d model.DelegationDocument) DelegationPublic {
 		delPublic.UnbondingTx = &TransactionPublic{
 			TxHex:          d.UnbondingTx.TxHex,
 			OutputIndex:    d.UnbondingTx.OutputIndex,
-			StartTimestamp: d.UnbondingTx.StartTimestamp,
+			StartTimestamp: utils.ParseTimestampToIsoFormat(d.UnbondingTx.StartTimestamp),
 			StartHeight:    d.UnbondingTx.StartHeight,
 			TimeLock:       d.UnbondingTx.TimeLock,
 		}
@@ -77,7 +78,7 @@ func (s *Services) DelegationsByStakerPk(ctx context.Context, stakerPk string, p
 // SaveActiveStakingDelegation saves the active staking delegation to the database.
 func (s *Services) SaveActiveStakingDelegation(
 	ctx context.Context, txHashHex, stakerPkHex, finalityProviderPkHex string,
-	value, startHeight uint64, stakingTimestamp string, timeLock, stakingOutputIndex uint64,
+	value, startHeight uint64, stakingTimestamp int64, timeLock, stakingOutputIndex uint64,
 	stakingTxHex string,
 ) error {
 	err := s.DbClient.SaveActiveStakingDelegation(

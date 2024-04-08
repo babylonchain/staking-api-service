@@ -53,7 +53,6 @@ func TestActiveStaking(t *testing.T) {
 	assert.Equal(t, activeStakingEvent[0].StakingTxHex, response.Data[0].StakingTx.TxHex, "expected response body to match")
 	assert.Equal(t, activeStakingEvent[0].StakingOutputIndex, response.Data[0].StakingTx.OutputIndex, "expected response body to match")
 	assert.Equal(t, activeStakingEvent[0].StakingStartHeight, response.Data[0].StakingTx.StartHeight, "expected response body to match")
-	assert.Equal(t, activeStakingEvent[0].StakingStartTimestamp, response.Data[0].StakingTx.StartTimestamp, "expected response body to match")
 	assert.Equal(t, activeStakingEvent[0].StakingTimeLock, response.Data[0].StakingTx.TimeLock, "expected response body to match")
 	assert.Equal(t, "active", response.Data[0].State, "expected response body to match")
 	assert.Nil(t, response.Data[0].UnbondingTx, "expected response body to match")

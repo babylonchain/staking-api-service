@@ -101,7 +101,7 @@ func (db *Database) SaveUnbondingTx(
 // Change the state to `unbonding` and save the unbondingTx data
 // Return not found error if the stakingTxHashHex is not found or the existing state is not eligible for unbonding
 func (db *Database) TransitionToUnbondingState(
-	ctx context.Context, txHashHex string, startHeight, timelock, outputIndex uint64, txHex, startTimestamp string,
+	ctx context.Context, txHashHex string, startHeight, timelock, outputIndex uint64, txHex string, startTimestamp int64,
 ) error {
 	unbondingTxMap := make(map[string]interface{})
 	unbondingTxMap["unbonding_tx"] = model.TimelockTransaction{

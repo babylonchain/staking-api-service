@@ -14,7 +14,7 @@ import (
 
 func (db *Database) SaveActiveStakingDelegation(
 	ctx context.Context, stakingTxHashHex, stakerPkHex, fpPkHex string, stakingTxHex string,
-	amount, startHeight, timelock, outputIndex uint64, startTimestamp string,
+	amount, startHeight, timelock, outputIndex uint64, startTimestamp int64,
 ) error {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 	document := model.DelegationDocument{

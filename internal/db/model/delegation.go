@@ -12,7 +12,7 @@ const DelegationCollection = "delegations"
 type TimelockTransaction struct {
 	TxHex          string `bson:"tx_hex"`
 	OutputIndex    uint64 `bson:"output_index"`
-	StartTimestamp string `bson:"start_timestamp"`
+	StartTimestamp int64  `bson:"start_timestamp"`
 	StartHeight    uint64 `bson:"start_height"`
 	TimeLock       uint64 `bson:"timelock"`
 }
