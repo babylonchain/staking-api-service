@@ -39,8 +39,12 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 
 	// Check that the response body is as expected
 	assert.NotEmpty(t, response.Data, "expected response body to have data")
-	assert.Equal(t, activeStakingEvent[0].StakerPkHex, response.Data[0].StakerPkHex, "expected response body to match")
 	assert.Equal(t, 10, len(response.Data), "expected contain 10 items in response")
+	assert.Equal(t, activeStakingEvent[0].StakerPkHex, response.Data[0].StakerPkHex, "expected response body to match")
+	// check the timestamp string is in ISO format
+	_, err = time.Parse(time.RFC3339, response.Data[0].StakingTx.StartTimestamp)
+	assert.NoError(t, err, "expected timestamp to be in RFC3339 format")
+
 	assert.NotEmpty(t, response.Pagination.NextKey, "should have pagination token")
 
 	// Also make sure the returned data is sorted by staking start height

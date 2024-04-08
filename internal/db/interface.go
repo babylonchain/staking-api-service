@@ -11,7 +11,7 @@ type DBClient interface {
 	Ping(ctx context.Context) error
 	SaveActiveStakingDelegation(
 		ctx context.Context, stakingTxHashHex, stakerPkHex, fpPkHex string, stakingTxHex string,
-		amount, startHeight, timelock, outputIndex uint64, startTimestamp string,
+		amount, startHeight, timelock, outputIndex uint64, startTimestamp int64,
 	) error
 	FindDelegationsByStakerPk(
 		ctx context.Context, stakerPk string, paginationToken string,
@@ -27,6 +27,6 @@ type DBClient interface {
 		ctx context.Context, stakingTxHashHex string, eligiblePreviousState []types.DelegationState,
 	) error
 	TransitionToUnbondingState(
-		ctx context.Context, txHashHex string, startHeight, timelock, outputIndex uint64, txHex, startTimestamp string,
+		ctx context.Context, txHashHex string, startHeight, timelock, outputIndex uint64, txHex string, startTimestamp int64,
 	) error
 }

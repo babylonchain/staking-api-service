@@ -89,8 +89,8 @@ github.com/aws/aws-sdk-go v1.44.224/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/babylonchain/babylon v0.8.5 h1:YOhcpWweW0LaueM16mnzL3XkbmUhLHzESrJzM0svR9w=
 github.com/babylonchain/babylon v0.8.5/go.mod h1:jR1b+5mA7BkRrXfd/PMHwk7W/RpoeQtunvjal+tKeHY=
-github.com/babylonchain/staking-queue-client v0.0.0-20240404120054-ab3c83476242 h1:7fPm7rOIP9SvuhGjYUKtQL8tYeTzEJ+IeRzleCQbXMo=
-github.com/babylonchain/staking-queue-client v0.0.0-20240404120054-ab3c83476242/go.mod h1:TpiAQWNlCiHcDp7eiu6FJZDLYElV8NdksI1TzUmf3og=
+github.com/babylonchain/staking-queue-client v0.0.0-20240405021545-21bf91bfa8af h1:gLiulZgJ72aDRSn7QdyDg2Mbp6ve16HJpFJc6guZ+Rs=
+github.com/babylonchain/staking-queue-client v0.0.0-20240405021545-21bf91bfa8af/go.mod h1:TpiAQWNlCiHcDp7eiu6FJZDLYElV8NdksI1TzUmf3og=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

@@ -87,7 +87,7 @@ func (s *Services) IsEligibleForUnbondingRequest(ctx context.Context, stakingTxH
 func (s *Services) TransitionToUnbondingState(
 	ctx context.Context, stakingTxHashHex string,
 	unbondingStartHeight, unbondingTimelock, unbondingOutputIndex uint64,
-	unbondingTxHex, unbondingStartTimestamp string,
+	unbondingTxHex string, unbondingStartTimestamp int64,
 ) *types.Error {
 	err := s.DbClient.TransitionToUnbondingState(ctx, stakingTxHashHex, unbondingStartHeight, unbondingTimelock, unbondingOutputIndex, unbondingTxHex, unbondingStartTimestamp)
 	if err != nil {

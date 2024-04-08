@@ -127,7 +127,7 @@ func (_m *DBClient) Ping(ctx context.Context) error {
 }
 
 // SaveActiveStakingDelegation provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp
-func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHashHex string, stakerPkHex string, fpPkHex string, stakingTxHex string, amount uint64, startHeight uint64, timelock uint64, outputIndex uint64, startTimestamp string) error {
+func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHashHex string, stakerPkHex string, fpPkHex string, stakingTxHex string, amount uint64, startHeight uint64, timelock uint64, outputIndex uint64, startTimestamp int64) error {
 	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp)
 
 	if len(ret) == 0 {
@@ -135,7 +135,7 @@ func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHa
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, uint64, uint64, uint64, uint64, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, uint64, uint64, uint64, uint64, int64) error); ok {
 		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp)
 	} else {
 		r0 = ret.Error(0)
@@ -217,7 +217,7 @@ func (_m *DBClient) TransitionToUnbondedState(ctx context.Context, stakingTxHash
 }
 
 // TransitionToUnbondingState provides a mock function with given fields: ctx, txHashHex, startHeight, timelock, outputIndex, txHex, startTimestamp
-func (_m *DBClient) TransitionToUnbondingState(ctx context.Context, txHashHex string, startHeight uint64, timelock uint64, outputIndex uint64, txHex string, startTimestamp string) error {
+func (_m *DBClient) TransitionToUnbondingState(ctx context.Context, txHashHex string, startHeight uint64, timelock uint64, outputIndex uint64, txHex string, startTimestamp int64) error {
 	ret := _m.Called(ctx, txHashHex, startHeight, timelock, outputIndex, txHex, startTimestamp)
 
 	if len(ret) == 0 {
@@ -225,7 +225,7 @@ func (_m *DBClient) TransitionToUnbondingState(ctx context.Context, txHashHex st
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, uint64, uint64, uint64, string, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint64, uint64, uint64, string, int64) error); ok {
 		r0 = rf(ctx, txHashHex, startHeight, timelock, outputIndex, txHex, startTimestamp)
 	} else {
 		r0 = ret.Error(0)
