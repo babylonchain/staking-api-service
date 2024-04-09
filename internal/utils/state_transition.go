@@ -38,6 +38,10 @@ func OutdatedStatesForUnbonded() []types.DelegationState {
 }
 
 // QualifiedStatesToWithdrawn returns the qualified exisitng states to transition to "withdrawn"
-func QualifiedStatesToWithdrawn() []types.DelegationState {
+func QualifiedStatesToWithdraw() []types.DelegationState {
 	return []types.DelegationState{types.Unbonded}
+}
+
+func OutdatedStatesForWithdraw() []types.DelegationState {
+	return []types.DelegationState{types.Withdrawn}
 }
