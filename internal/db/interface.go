@@ -29,4 +29,5 @@ type DBClient interface {
 	TransitionToUnbondingState(
 		ctx context.Context, txHashHex string, startHeight, timelock, outputIndex uint64, txHex string, startTimestamp int64,
 	) error
+	TransitionToWithdrawnState(ctx context.Context, txHashHex string) error
 }

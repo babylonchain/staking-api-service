@@ -18,6 +18,7 @@ type Queues struct {
 	ActiveStakingQueueClient    client.QueueClient
 	ExpiredStakingQueueClient   client.QueueClient
 	UnbondingStakingQueueClient client.QueueClient
+	WithdrawStakingQueueClient  client.QueueClient
 }
 
 func New(cfg queueConfig.QueueConfig, service *services.Services) *Queues {
@@ -42,6 +43,13 @@ func New(cfg queueConfig.QueueConfig, service *services.Services) *Queues {
 		log.Fatal().Err(err).Msg("error while creating UnbondingStakingQueueClient")
 	}
 
+	withdrawStakingQueueClient, err := client.NewQueueClient(
+		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.WithdrawStakingQueueName,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while creating WithdrawStakingQueueClient")
+	}
+
 	handlers := handlers.NewQueueHandler(service)
 	return &Queues{
 		Handlers:                    handlers,
@@ -50,6 +58,7 @@ func New(cfg queueConfig.QueueConfig, service *services.Services) *Queues {
 		ActiveStakingQueueClient:    activeStakingQueueClient,
 		ExpiredStakingQueueClient:   expiredStakingQueueClient,
 		UnbondingStakingQueueClient: unbondingStakingQueueClient,
+		WithdrawStakingQueueClient:  withdrawStakingQueueClient,
 	}
 }
 
@@ -71,6 +80,11 @@ func (q *Queues) StartReceivingMessages() {
 		q.Handlers.UnbondingStakingHandler, q.Handlers.HandleUnprocessedMessage,
 		q.maxRetryAttempts, q.processingTimeout,
 	)
+	startQueueMessageProcessing(
+		q.WithdrawStakingQueueClient,
+		q.Handlers.WithdrawStakingHandler, q.Handlers.HandleUnprocessedMessage,
+		q.maxRetryAttempts, q.processingTimeout,
+	)
 	// ...add more queues here
 }
 
@@ -87,6 +101,10 @@ func (q *Queues) StopReceivingMessages() {
 	unbondingQueueErr := q.UnbondingStakingQueueClient.Stop()
 	if unbondingQueueErr != nil {
 		log.Error().Err(unbondingQueueErr).Str("queueName", q.UnbondingStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+	}
+	withdrawnQueueErr := q.WithdrawStakingQueueClient.Stop()
+	if withdrawnQueueErr != nil {
+		log.Error().Err(withdrawnQueueErr).Str("queueName", q.WithdrawStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
 	}
 	// ...add more queues here
 }

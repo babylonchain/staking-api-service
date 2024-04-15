@@ -234,6 +234,24 @@ func (_m *DBClient) TransitionToUnbondingState(ctx context.Context, txHashHex st
 	return r0
 }
 
+// TransitionToWithdrawnState provides a mock function with given fields: ctx, txHashHex
+func (_m *DBClient) TransitionToWithdrawnState(ctx context.Context, txHashHex string) error {
+	ret := _m.Called(ctx, txHashHex)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TransitionToWithdrawnState")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, txHashHex)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewDBClient creates a new instance of DBClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewDBClient(t interface {
