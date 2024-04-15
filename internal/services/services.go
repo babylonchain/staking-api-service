@@ -9,8 +9,6 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/types"
-
-	queue "github.com/babylonchain/staking-queue-client/client"
 )
 
 // Service layer contains the business logic and is used to interact with
@@ -37,12 +35,6 @@ func New(ctx context.Context, cfg *config.Config, globalParams *types.GlobalPara
 // DoHealthCheck checks the health of the services by ping the database.
 func (s *Services) DoHealthCheck(ctx context.Context) error {
 	return s.DbClient.Ping(ctx)
-}
-
-// ProcessStakingStatsCalculation calculates the staking stats and updates the database.
-// This method tolerate duplicated calls, only the first call will be processed.
-func (s *Services) ProcessStakingStatsCalculation(ctx context.Context, eventMessage queue.EventMessage) error {
-	return nil
 }
 
 func (s *Services) SaveUnprocessableMessages(ctx context.Context, messageBody, receipt string) error {

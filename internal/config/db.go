@@ -11,6 +11,7 @@ type DbConfig struct {
 	Address            string `mapstructure:"address"`
 	MaxPaginationLimit int64  `mapstructure:"max-pagination-limit"`
 	DbBatchSizeLimist  int64  `mapstructure:"db-batch-size-limit"`
+	LogicalShardCount  int64  `mapstructure:"logical-shard-count"`
 }
 
 func (cfg *DbConfig) Validate() error {
@@ -55,6 +56,10 @@ func (cfg *DbConfig) Validate() error {
 
 	if cfg.DbBatchSizeLimist <= 0 {
 		return fmt.Errorf("db batch size limit must be greater than 0")
+	}
+
+	if cfg.LogicalShardCount <= 1 {
+		return fmt.Errorf("logical shard count must be greater than 1")
 	}
 
 	return nil

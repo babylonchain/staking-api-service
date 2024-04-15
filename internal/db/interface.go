@@ -30,4 +30,13 @@ type DBClient interface {
 		ctx context.Context, txHashHex string, startHeight, timelock, outputIndex uint64, txHex string, startTimestamp int64,
 	) error
 	TransitionToWithdrawnState(ctx context.Context, txHashHex string) error
+	GetOrCreateStatsLock(
+		ctx context.Context, stakingTxHashHex string, txType string,
+	) (*model.StatsLockDocument, error)
+	IncrementOverallStats(
+		ctx context.Context, stakingTxHashHex string, amount int64,
+	) error
+	SubtractOverallStats(
+		ctx context.Context, stakingTxHashHex string, amount int64,
+	) error
 }

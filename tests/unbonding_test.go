@@ -253,11 +253,11 @@ func TestProcessUnbondingStakingEvent(t *testing.T) {
 	assert.Equal(t, 2, len(timeLockResults), "expected 2 document in the DB")
 	// The first one is from the
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[0].StakingTxHashHex)
-	assert.Equal(t, types.ActiveType.ToString(), timeLockResults[0].TxType)
+	assert.Equal(t, types.ActiveTxType.ToString(), timeLockResults[0].TxType)
 	// Point to the same staking tx hash
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
 	assert.Equal(t, requestBody.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
-	assert.Equal(t, types.UnbondingType.ToString(), timeLockResults[1].TxType)
+	assert.Equal(t, types.UnbondingTxType.ToString(), timeLockResults[1].TxType)
 }
 
 func TestProcessUnbondingStakingEventDuringBootstrap(t *testing.T) {
@@ -320,11 +320,11 @@ func TestProcessUnbondingStakingEventDuringBootstrap(t *testing.T) {
 	assert.Equal(t, 2, len(timeLockResults), "expected 2 document in the DB")
 	// The first one is from the
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[0].StakingTxHashHex)
-	assert.Equal(t, types.ActiveType.ToString(), timeLockResults[0].TxType)
+	assert.Equal(t, types.ActiveTxType.ToString(), timeLockResults[0].TxType)
 	// Point to the same staking tx hash
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
 	assert.Equal(t, requestBody.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
-	assert.Equal(t, types.UnbondingType.ToString(), timeLockResults[1].TxType)
+	assert.Equal(t, types.UnbondingTxType.ToString(), timeLockResults[1].TxType)
 }
 
 func TestShouldIgnoreOutdatedUnbondingEvent(t *testing.T) {
@@ -384,11 +384,11 @@ func TestShouldIgnoreOutdatedUnbondingEvent(t *testing.T) {
 	assert.Equal(t, 2, len(timeLockResults), "expected 2 document in the DB")
 	// The first one is from the
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[0].StakingTxHashHex)
-	assert.Equal(t, types.ActiveType.ToString(), timeLockResults[0].TxType)
+	assert.Equal(t, types.ActiveTxType.ToString(), timeLockResults[0].TxType)
 	// Point to the same staking tx hash
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
 	assert.Equal(t, requestBody.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
-	assert.Equal(t, types.UnbondingType.ToString(), timeLockResults[1].TxType)
+	assert.Equal(t, types.UnbondingTxType.ToString(), timeLockResults[1].TxType)
 
 	// Let's send an outdated unbonding event
 	sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, []client.UnbondingStakingEvent{unbondingEvent})
@@ -464,9 +464,9 @@ func TestProcessUnbondingStakingEventShouldTolerateEventMsgOutOfOrder(t *testing
 	assert.Equal(t, 2, len(timeLockResults), "expected 2 document in the DB")
 	// The first one is from the
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[0].StakingTxHashHex)
-	assert.Equal(t, types.ActiveType.ToString(), timeLockResults[0].TxType)
+	assert.Equal(t, types.ActiveTxType.ToString(), timeLockResults[0].TxType)
 	// Point to the same staking tx hash
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
 	assert.Equal(t, requestBody.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
-	assert.Equal(t, types.UnbondingType.ToString(), timeLockResults[1].TxType)
+	assert.Equal(t, types.UnbondingTxType.ToString(), timeLockResults[1].TxType)
 }

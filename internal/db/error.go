@@ -43,3 +43,17 @@ func IsNotFoundError(err error) bool {
 	_, ok := err.(*NotFoundError)
 	return ok
 }
+
+type InvalidArgumentError struct {
+	Key     string
+	Message string
+}
+
+func (e *InvalidArgumentError) Error() string {
+	return e.Message
+}
+
+func IsInvalidArgumentError(err error) bool {
+	_, ok := err.(*InvalidArgumentError)
+	return ok
+}

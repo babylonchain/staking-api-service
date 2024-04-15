@@ -38,12 +38,6 @@ func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody s
 		return nil
 	}
 
-	// Perform stats calculation
-	if err := h.Services.ProcessStakingStatsCalculation(ctx, withdrawnStakingEvent); err != nil {
-		log.Ctx(ctx).Err(err).Msg("Failed to update stats while processing withdrawn staking event")
-		return err
-	}
-
 	// Transition to withdrawn state
 	// Please refer to the README.md for the details on the event processing workflow
 	transitionErr := h.Services.TransitionToWithdrawnState(

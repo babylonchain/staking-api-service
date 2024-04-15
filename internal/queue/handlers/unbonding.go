@@ -29,17 +29,11 @@ func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody 
 		return nil
 	}
 
-	// Perform stats calculation
-	if err := h.Services.ProcessStakingStatsCalculation(ctx, unbondingStakingEvent); err != nil {
-		log.Ctx(ctx).Err(err).Msg("Failed to update stats while processing unbonding staking event")
-		return err
-	}
-
 	err = h.Services.ProcessExpireCheck(
 		ctx, unbondingStakingEvent.StakingTxHashHex,
 		unbondingStakingEvent.UnbondingStartHeight,
 		unbondingStakingEvent.UnbondingTimeLock,
-		queueClient.UnbondingTxType.ToString(),
+		types.UnbondingTxType,
 	)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to process expire check")

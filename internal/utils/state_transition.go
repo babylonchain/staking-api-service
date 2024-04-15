@@ -21,11 +21,11 @@ func OutdatedStatesForUnbonding() []types.DelegationState {
 }
 
 // QualifiedStatesToUnbonded returns the qualified exisitng states to transition to "unbonded"
-func QualifiedStatesToUnbonded(unbondTxType types.ExpiredTxType) []types.DelegationState {
+func QualifiedStatesToUnbonded(unbondTxType types.StakingTxType) []types.DelegationState {
 	switch unbondTxType {
-	case types.ActiveType:
+	case types.ActiveTxType:
 		return []types.DelegationState{types.Active}
-	case types.UnbondingType:
+	case types.UnbondingTxType:
 		return []types.DelegationState{types.Unbonding}
 	default:
 		return nil

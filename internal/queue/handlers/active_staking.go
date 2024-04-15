@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/babylonchain/staking-api-service/internal/types"
 	queueClient "github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
 )
@@ -31,9 +32,15 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 	}
 
 	// Perform the async stats calculation
-	err = h.Services.ProcessStakingStatsCalculation(ctx, activeStakingEvent)
+	err = h.Services.ProcessStakingStatsCalculation(
+		ctx, activeStakingEvent.StakingTxHashHex,
+		activeStakingEvent.StakerPkHex,
+		activeStakingEvent.FinalityProviderPkHex,
+		types.ActiveTxType,
+		activeStakingEvent.StakingValue,
+	)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to process staking stats calculation")
+		log.Error().Err(err).Msg("Failed to process staking stats calculation for active staking")
 		return err
 	}
 
@@ -42,7 +49,7 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		ctx, activeStakingEvent.StakingTxHashHex,
 		activeStakingEvent.StakingStartHeight,
 		activeStakingEvent.StakingTimeLock,
-		queueClient.ActiveTxType.ToString(),
+		types.ActiveTxType,
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to process expire check")

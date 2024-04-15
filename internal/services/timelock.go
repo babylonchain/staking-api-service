@@ -14,11 +14,11 @@ import (
 // This method tolerate duplicated calls on the same stakingTxHashHex.
 func (s *Services) ProcessExpireCheck(
 	ctx context.Context, stakingTxHashHex string,
-	startHeight, timelock uint64, txType string,
+	startHeight, timelock uint64, txType types.StakingTxType,
 ) error {
 	expireHeight := startHeight + timelock
 	err := s.DbClient.SaveTimeLockExpireCheck(
-		ctx, stakingTxHashHex, expireHeight, txType,
+		ctx, stakingTxHashHex, expireHeight, txType.ToString(),
 	)
 	if err != nil {
 		log.Ctx(ctx).Err(err).Msg("Failed to save expire check")
@@ -30,10 +30,9 @@ func (s *Services) ProcessExpireCheck(
 // TransitionToUnbondedState transitions the staking delegation to unbonded state.
 // It returns true if the delegation is found and successfully transitioned to unbonded state.
 func (s *Services) TransitionToUnbondedState(
-	ctx context.Context, stakingType, stakingTxHashHex string,
+	ctx context.Context, stakingType types.StakingTxType, stakingTxHashHex string,
 ) *types.Error {
-	expiredTxType := types.ExpiredTxTypeFromString(stakingType)
-	err := s.DbClient.TransitionToUnbondedState(ctx, stakingTxHashHex, utils.QualifiedStatesToUnbonded(expiredTxType))
+	err := s.DbClient.TransitionToUnbondedState(ctx, stakingTxHashHex, utils.QualifiedStatesToUnbonded(stakingType))
 	if err != nil {
 		// If the delegation is not found, we can ignore the error, it just means the delegation is not in a state that we can transition to unbonded
 		if db.IsNotFoundError(err) {
