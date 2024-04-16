@@ -17,7 +17,7 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 	var activeStakingEvent queueClient.ActiveStakingEvent
 	err := json.Unmarshal([]byte(messageBody), &activeStakingEvent)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to unmarshal the message body into ActiveStakingEvent")
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to unmarshal the message body into ActiveStakingEvent")
 		return err
 	}
 
@@ -32,28 +32,28 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 	}
 
 	// Perform the async stats calculation
-	err = h.Services.ProcessStakingStatsCalculation(
+	statsError := h.Services.ProcessStakingStatsCalculation(
 		ctx, activeStakingEvent.StakingTxHashHex,
 		activeStakingEvent.StakerPkHex,
 		activeStakingEvent.FinalityProviderPkHex,
 		types.Active,
 		activeStakingEvent.StakingValue,
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to process staking stats calculation for active staking")
-		return err
+	if statsError != nil {
+		log.Ctx(ctx).Error().Err(statsError).Msg("Failed to process staking stats calculation for active staking")
+		return statsError
 	}
 
 	// Perform the async timelock expire check
-	err = h.Services.ProcessExpireCheck(
+	expireCheckError := h.Services.ProcessExpireCheck(
 		ctx, activeStakingEvent.StakingTxHashHex,
 		activeStakingEvent.StakingStartHeight,
 		activeStakingEvent.StakingTimeLock,
 		types.ActiveTxType,
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to process expire check")
-		return err
+	if expireCheckError != nil {
+		log.Ctx(ctx).Error().Err(expireCheckError).Msg("Failed to process expire check")
+		return expireCheckError
 	}
 
 	// Save the active staking delegation. This is the final step in the active staking event processing

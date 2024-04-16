@@ -32,6 +32,13 @@ definitions:
       pagination:
         $ref: '#/definitions/handlers.paginationResponse'
     type: object
+  handlers.PublicResponse-services_StatsPublic:
+    properties:
+      data:
+        $ref: '#/definitions/services.StatsPublic'
+      pagination:
+        $ref: '#/definitions/handlers.paginationResponse'
+    type: object
   handlers.UnbondDelegationRequestPayload:
     properties:
       staker_signed_signature_hex:
@@ -129,6 +136,19 @@ definitions:
       unbonding_time:
         type: integer
     type: object
+  services.StatsPublic:
+    properties:
+      active_delegations:
+        type: integer
+      active_tvl:
+        type: integer
+      total_delegations:
+        type: integer
+      total_stakers:
+        type: integer
+      total_tvl:
+        type: integer
+    type: object
   services.TransactionPublic:
     properties:
       output_index:
@@ -215,6 +235,18 @@ paths:
           description: 'Error: Bad Request'
           schema:
             $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
+  /v1/stats:
+    get:
+      description: Fetches overall stats for babylon staking including tvl, total
+        delegations, active tvl, active delegations and total stakers.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Overall stats for babylon staking
+          schema:
+            $ref: '#/definitions/handlers.PublicResponse-services_StatsPublic'
+      summary: Get Overall Stats
   /v1/unbonding:
     post:
       consumes:

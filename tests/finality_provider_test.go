@@ -48,10 +48,10 @@ func shouldGetFinalityProvidersSuccessfully(t *testing.T, testServer *TestServer
 	assert.Equal(t, 4, len(result))
 
 	// Default to 0 as we have not yet implemented the logic to calculate these values
-	assert.Equal(t, uint64(0), result[0].ActiveTvl)
-	assert.Equal(t, uint64(0), result[0].TotalTvl)
-	assert.Equal(t, uint64(0), result[0].ActiveDelegations)
-	assert.Equal(t, uint64(0), result[0].TotalDelegations)
+	assert.Equal(t, int64(0), result[0].ActiveTvl)
+	assert.Equal(t, int64(0), result[0].TotalTvl)
+	assert.Equal(t, int64(0), result[0].ActiveDelegations)
+	assert.Equal(t, int64(0), result[0].TotalDelegations)
 }
 
 func TestGetFinalityProvidersSuccessfully(t *testing.T) {
@@ -61,7 +61,7 @@ func TestGetFinalityProvidersSuccessfully(t *testing.T) {
 
 func TestGetFinalityProviderShouldNotFailInCaseOfDbFailure(t *testing.T) {
 	mockDB := new(testmock.DBClient)
-	mockDB.On("FindFinalityProvidersByPkHex", mock.Anything, mock.Anything).Return(nil, errors.New("just an error"))
+	mockDB.On("FindFinalityProviderStatsByPkHex", mock.Anything, mock.Anything).Return(nil, errors.New("just an error"))
 
 	testServer := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
 	shouldGetFinalityProvidersSuccessfully(t, testServer)

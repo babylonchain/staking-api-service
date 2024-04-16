@@ -62,5 +62,11 @@ func (cfg *DbConfig) Validate() error {
 		return fmt.Errorf("logical shard count must be greater than 1")
 	}
 
+	// Below is adding as a safety net to avoid performance issue.
+	// Changes to the logical shard count shall be discussed with the team
+	if cfg.LogicalShardCount > 100 {
+		return fmt.Errorf("large logical shard count will have significant performance impact, please inform the team before changing this value")
+	}
+
 	return nil
 }

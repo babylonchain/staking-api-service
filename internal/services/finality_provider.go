@@ -21,10 +21,10 @@ type FpDetailsPublic struct {
 	Description       FpDescriptionPublic `json:"description"`
 	Commission        string              `json:"commission"`
 	BtcPk             string              `json:"btc_pk"`
-	ActiveTvl         uint64              `json:"active_tvl"`
-	TotalTvl          uint64              `json:"total_tvl"`
-	ActiveDelegations uint64              `json:"active_delegations"`
-	TotalDelegations  uint64              `json:"total_delegations"`
+	ActiveTvl         int64               `json:"active_tvl"`
+	TotalTvl          int64               `json:"total_tvl"`
+	ActiveDelegations int64               `json:"active_delegations"`
+	TotalDelegations  int64               `json:"total_delegations"`
 }
 
 func (s *Services) GetActiveFinalityProviders(ctx context.Context) ([]FpDetailsPublic, *types.Error) {
@@ -39,7 +39,7 @@ func (s *Services) GetActiveFinalityProviders(ctx context.Context) ([]FpDetailsP
 		fpBtcPks = append(fpBtcPks, fp.BtcPk)
 	}
 
-	finalityProvidersMap, err := s.DbClient.FindFinalityProvidersByPkHex(ctx, fpBtcPks)
+	finalityProviderStatsMap, err := s.DbClient.FindFinalityProviderStatsByPkHex(ctx, fpBtcPks)
 	if err != nil {
 		// We don't want to return an error here in case of DB error.
 		// we will continue the process with the data we have from global params as a fallback.
@@ -62,7 +62,7 @@ func (s *Services) GetActiveFinalityProviders(ctx context.Context) ([]FpDetailsP
 			TotalDelegations:  0,
 		}
 
-		if finalityProvider, ok := finalityProvidersMap[fp.BtcPk]; ok {
+		if finalityProvider, ok := finalityProviderStatsMap[fp.BtcPk]; ok {
 			detail.ActiveTvl = finalityProvider.ActiveTvl
 			detail.TotalTvl = finalityProvider.TotalTvl
 			detail.ActiveDelegations = finalityProvider.ActiveDelegations

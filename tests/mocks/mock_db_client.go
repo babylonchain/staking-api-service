@@ -78,24 +78,24 @@ func (_m *DBClient) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 	return r0, r1
 }
 
-// FindFinalityProvidersByPkHex provides a mock function with given fields: ctx, pkHex
-func (_m *DBClient) FindFinalityProvidersByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderDocument, error) {
+// FindFinalityProviderStatsByPkHex provides a mock function with given fields: ctx, pkHex
+func (_m *DBClient) FindFinalityProviderStatsByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderStatsDocument, error) {
 	ret := _m.Called(ctx, pkHex)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindFinalityProvidersByPkHex")
+		panic("no return value specified for FindFinalityProviderStatsByPkHex")
 	}
 
-	var r0 map[string]model.FinalityProviderDocument
+	var r0 map[string]model.FinalityProviderStatsDocument
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []string) (map[string]model.FinalityProviderDocument, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []string) (map[string]model.FinalityProviderStatsDocument, error)); ok {
 		return rf(ctx, pkHex)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []string) map[string]model.FinalityProviderDocument); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []string) map[string]model.FinalityProviderStatsDocument); ok {
 		r0 = rf(ctx, pkHex)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]model.FinalityProviderDocument)
+			r0 = ret.Get(0).(map[string]model.FinalityProviderStatsDocument)
 		}
 	}
 
@@ -136,6 +136,54 @@ func (_m *DBClient) GetOrCreateStatsLock(ctx context.Context, stakingTxHashHex s
 	}
 
 	return r0, r1
+}
+
+// GetOverallStats provides a mock function with given fields: ctx
+func (_m *DBClient) GetOverallStats(ctx context.Context) (*model.OverallStatsDocument, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOverallStats")
+	}
+
+	var r0 *model.OverallStatsDocument
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*model.OverallStatsDocument, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *model.OverallStatsDocument); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.OverallStatsDocument)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IncrementFinalityProviderStats provides a mock function with given fields: ctx, stakingTxHashHex, fpPkHex, amount
+func (_m *DBClient) IncrementFinalityProviderStats(ctx context.Context, stakingTxHashHex string, fpPkHex string, amount uint64) error {
+	ret := _m.Called(ctx, stakingTxHashHex, fpPkHex, amount)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IncrementFinalityProviderStats")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, uint64) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, fpPkHex, amount)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // IncrementOverallStats provides a mock function with given fields: ctx, stakingTxHashHex, amount
@@ -239,6 +287,24 @@ func (_m *DBClient) SaveUnprocessableMessage(ctx context.Context, messageBody st
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
 		r0 = rf(ctx, messageBody, receipt)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SubtractFinalityProviderStats provides a mock function with given fields: ctx, stakingTxHashHex, fpPkHex, amount
+func (_m *DBClient) SubtractFinalityProviderStats(ctx context.Context, stakingTxHashHex string, fpPkHex string, amount uint64) error {
+	ret := _m.Called(ctx, stakingTxHashHex, fpPkHex, amount)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SubtractFinalityProviderStats")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, uint64) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, fpPkHex, amount)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -97,6 +97,23 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/stats": {
+            "get": {
+                "description": "Fetches overall stats for babylon staking including tvl, total delegations, active tvl, active delegations and total stakers.",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Overall Stats",
+                "responses": {
+                    "200": {
+                        "description": "Overall stats for babylon staking",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PublicResponse-services_StatsPublic"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/unbonding": {
             "post": {
                 "description": "Unbonds a delegation by processing the provided transaction details. This is an async operation.",
@@ -207,6 +224,17 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/services.GlobalParamsPublic"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/handlers.paginationResponse"
+                }
+            }
+        },
+        "handlers.PublicResponse-services_StatsPublic": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/services.StatsPublic"
                 },
                 "pagination": {
                     "$ref": "#/definitions/handlers.paginationResponse"
@@ -358,6 +386,26 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "unbonding_time": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.StatsPublic": {
+            "type": "object",
+            "properties": {
+                "active_delegations": {
+                    "type": "integer"
+                },
+                "active_tvl": {
+                    "type": "integer"
+                },
+                "total_delegations": {
+                    "type": "integer"
+                },
+                "total_stakers": {
+                    "type": "integer"
+                },
+                "total_tvl": {
                     "type": "integer"
                 }
             }

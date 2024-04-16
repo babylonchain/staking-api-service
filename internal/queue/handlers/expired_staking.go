@@ -37,16 +37,16 @@ func (h *QueueHandler) ExpiredStakingHandler(ctx context.Context, messageBody st
 	}
 
 	// Perform the stats calculation
-	err = h.Services.ProcessStakingStatsCalculation(
+	statsErr := h.Services.ProcessStakingStatsCalculation(
 		ctx, expiredStakingEvent.StakingTxHashHex,
 		del.StakerPkHex,
 		del.FinalityProviderPkHex,
 		types.Unbonded,
 		del.StakingValue,
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to process staking stats calculation after timelock expired")
-		return err
+	if statsErr != nil {
+		log.Error().Err(statsErr).Msg("Failed to process staking stats calculation after timelock expired")
+		return statsErr
 	}
 
 	transitionErr := h.Services.TransitionToUnbondedState(ctx, txType, expiredStakingEvent.StakingTxHashHex)
