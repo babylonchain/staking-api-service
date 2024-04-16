@@ -14,19 +14,19 @@ import (
 // This method tolerate duplicated calls, only the first call will be processed.
 func (s *Services) ProcessStakingStatsCalculation(
 	ctx context.Context, stakingTxHashHex, stakerPkHex, fpPkHex string,
-	txType types.StakingTxType, amount uint64,
+	state types.DelegationState, amount uint64,
 ) error {
 	// Fetch existing or initialize the stats lock document if not exist
-	statsLockDocument, err := s.DbClient.GetOrCreateStatsLock(ctx, stakingTxHashHex, txType.ToString())
+	statsLockDocument, err := s.DbClient.GetOrCreateStatsLock(ctx, stakingTxHashHex, state.ToString())
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Str("stakingTxHashHex", stakingTxHashHex).Msg("error while fetching stats lock document")
 		return types.NewInternalServiceError(err)
 	}
-	switch txType {
-	case types.ActiveTxType:
+	switch state {
+	case types.Active:
 		// Add to the overall stats
 		if !statsLockDocument.OverallStats {
-			err = s.DbClient.IncrementOverallStats(ctx, stakingTxHashHex, int64(amount))
+			err = s.DbClient.IncrementOverallStats(ctx, stakingTxHashHex, amount)
 			if err != nil {
 				if db.IsNotFoundError(err) {
 					// This is a duplicate call, ignore it
@@ -37,10 +37,10 @@ func (s *Services) ProcessStakingStatsCalculation(
 				return types.NewInternalServiceError(err)
 			}
 		}
-	case types.UnbondingTxType:
+	case types.Unbonded:
 		// Subtract from the overall stats
 		if !statsLockDocument.OverallStats {
-			err = s.DbClient.SubtractOverallStats(ctx, stakingTxHashHex, -int64(amount))
+			err = s.DbClient.SubtractOverallStats(ctx, stakingTxHashHex, amount)
 			if err != nil {
 				if db.IsNotFoundError(err) {
 					// This is a duplicate call, ignore it
@@ -56,7 +56,7 @@ func (s *Services) ProcessStakingStatsCalculation(
 		return types.NewErrorWithMsg(
 			http.StatusForbidden,
 			types.Forbidden,
-			fmt.Sprintf("staking tx type not regonised for performing stats calculation: %s", txType.ToString()),
+			fmt.Sprintf("invalid delegation state for stats calculation: %s", state),
 		)
 	}
 	return nil

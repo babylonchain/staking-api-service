@@ -41,7 +41,7 @@ func (h *QueueHandler) ExpiredStakingHandler(ctx context.Context, messageBody st
 		ctx, expiredStakingEvent.StakingTxHashHex,
 		del.StakerPkHex,
 		del.FinalityProviderPkHex,
-		txType,
+		types.Unbonded,
 		del.StakingValue,
 	)
 	if err != nil {

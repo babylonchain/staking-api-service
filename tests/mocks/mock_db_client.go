@@ -108,9 +108,9 @@ func (_m *DBClient) FindFinalityProvidersByPkHex(ctx context.Context, pkHex []st
 	return r0, r1
 }
 
-// GetOrCreateStatsLock provides a mock function with given fields: ctx, stakingTxHashHex, txType
-func (_m *DBClient) GetOrCreateStatsLock(ctx context.Context, stakingTxHashHex string, txType string) (*model.StatsLockDocument, error) {
-	ret := _m.Called(ctx, stakingTxHashHex, txType)
+// GetOrCreateStatsLock provides a mock function with given fields: ctx, stakingTxHashHex, state
+func (_m *DBClient) GetOrCreateStatsLock(ctx context.Context, stakingTxHashHex string, state string) (*model.StatsLockDocument, error) {
+	ret := _m.Called(ctx, stakingTxHashHex, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOrCreateStatsLock")
@@ -119,10 +119,10 @@ func (_m *DBClient) GetOrCreateStatsLock(ctx context.Context, stakingTxHashHex s
 	var r0 *model.StatsLockDocument
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*model.StatsLockDocument, error)); ok {
-		return rf(ctx, stakingTxHashHex, txType)
+		return rf(ctx, stakingTxHashHex, state)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) *model.StatsLockDocument); ok {
-		r0 = rf(ctx, stakingTxHashHex, txType)
+		r0 = rf(ctx, stakingTxHashHex, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.StatsLockDocument)
@@ -130,7 +130,7 @@ func (_m *DBClient) GetOrCreateStatsLock(ctx context.Context, stakingTxHashHex s
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, stakingTxHashHex, txType)
+		r1 = rf(ctx, stakingTxHashHex, state)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -139,7 +139,7 @@ func (_m *DBClient) GetOrCreateStatsLock(ctx context.Context, stakingTxHashHex s
 }
 
 // IncrementOverallStats provides a mock function with given fields: ctx, stakingTxHashHex, amount
-func (_m *DBClient) IncrementOverallStats(ctx context.Context, stakingTxHashHex string, amount int64) error {
+func (_m *DBClient) IncrementOverallStats(ctx context.Context, stakingTxHashHex string, amount uint64) error {
 	ret := _m.Called(ctx, stakingTxHashHex, amount)
 
 	if len(ret) == 0 {
@@ -147,7 +147,7 @@ func (_m *DBClient) IncrementOverallStats(ctx context.Context, stakingTxHashHex 
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) error); ok {
 		r0 = rf(ctx, stakingTxHashHex, amount)
 	} else {
 		r0 = ret.Error(0)
@@ -247,7 +247,7 @@ func (_m *DBClient) SaveUnprocessableMessage(ctx context.Context, messageBody st
 }
 
 // SubtractOverallStats provides a mock function with given fields: ctx, stakingTxHashHex, amount
-func (_m *DBClient) SubtractOverallStats(ctx context.Context, stakingTxHashHex string, amount int64) error {
+func (_m *DBClient) SubtractOverallStats(ctx context.Context, stakingTxHashHex string, amount uint64) error {
 	ret := _m.Called(ctx, stakingTxHashHex, amount)
 
 	if len(ret) == 0 {
@@ -255,7 +255,7 @@ func (_m *DBClient) SubtractOverallStats(ctx context.Context, stakingTxHashHex s
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) error); ok {
 		r0 = rf(ctx, stakingTxHashHex, amount)
 	} else {
 		r0 = ret.Error(0)

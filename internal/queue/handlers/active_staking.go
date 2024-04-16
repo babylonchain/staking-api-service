@@ -36,7 +36,7 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		ctx, activeStakingEvent.StakingTxHashHex,
 		activeStakingEvent.StakerPkHex,
 		activeStakingEvent.FinalityProviderPkHex,
-		types.ActiveTxType,
+		types.Active,
 		activeStakingEvent.StakingValue,
 	)
 	if err != nil {

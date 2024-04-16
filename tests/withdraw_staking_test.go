@@ -105,8 +105,6 @@ func TestWithdrawFromStakingHasUnbondingRequested(t *testing.T) {
 	assert.NoError(t, err, "making POST request to unbonding endpoint should not fail")
 	defer resp.Body.Close()
 
-	// Send unbonding event
-
 	// Let's send an unbonding event
 	unbondingEvent := client.UnbondingStakingEvent{
 		EventType:               client.UnbondingStakingEventType,

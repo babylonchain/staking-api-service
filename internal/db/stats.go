@@ -7,6 +7,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -40,24 +41,31 @@ func (db *Database) GetOrCreateStatsLock(
 // IncrementOverallStats increments the overall stats for the given staking tx hash.
 // This method is idempotent, only the first call will be processed. Otherwise it will return a notFoundError for duplicates
 func (db *Database) IncrementOverallStats(
-	ctx context.Context, stakingTxHashHex string, amount int64,
+	ctx context.Context, stakingTxHashHex string, amount uint64,
 ) error {
-	return db.updateOverallStats(ctx, types.ActiveTxType.ToString(), stakingTxHashHex, amount)
+	upsertUpdate := bson.M{
+		"$inc": bson.M{
+			"active_tvl":         int64(amount),
+			"total_tvl":          int64(amount),
+			"active_delegations": 1,
+			"total_delegations":  1,
+		},
+	}
+	return db.updateOverallStats(ctx, types.Active.ToString(), stakingTxHashHex, upsertUpdate)
 }
 
 // SubtractOverallStats decrements the overall stats for the given staking tx hash
 // This method is idempotent, only the first call will be processed. Otherwise it will return a notFoundError for duplicates
 func (db *Database) SubtractOverallStats(
-	ctx context.Context, stakingTxHashHex string, amount int64,
+	ctx context.Context, stakingTxHashHex string, amount uint64,
 ) error {
-	if amount > 0 {
-		return &InvalidArgumentError{
-			Key:     "amount",
-			Message: "amount should be negative for unbonding operation",
-		}
-
+	upsertUpdate := bson.M{
+		"$inc": bson.M{
+			"active_tvl":         -int64(amount),
+			"active_delegations": -1,
+		},
 	}
-	return db.updateOverallStats(ctx, types.UnbondingTxType.ToString(), stakingTxHashHex, amount)
+	return db.updateOverallStats(ctx, types.Unbonded.ToString(), stakingTxHashHex, upsertUpdate)
 }
 
 // Genrate the id for the overall stats document. Id is a random number ranged from 0-LogicalShardCount
@@ -67,7 +75,7 @@ func (db *Database) generateOverallStatsId() uint64 {
 	return uint64(rand.Intn(int(db.cfg.LogicalShardCount)))
 }
 
-func (db *Database) updateOverallStats(ctx context.Context, txType, stakingTxHashHex string, amount int64) error {
+func (db *Database) updateOverallStats(ctx context.Context, state, stakingTxHashHex string, upsertUpdate primitive.M) error {
 	overallStatsClient := db.Client.Database(db.DbName).Collection(model.OverallStatsCollection)
 
 	// Start a session
@@ -79,33 +87,13 @@ func (db *Database) updateOverallStats(ctx context.Context, txType, stakingTxHas
 
 	// Define the work to be done in the transaction
 	transactionWork := func(sessCtx mongo.SessionContext) (interface{}, error) {
-		err := db.updateStatsLockByFieldName(sessCtx, stakingTxHashHex, txType, "overall_stats")
+		err := db.updateStatsLockByFieldName(sessCtx, stakingTxHashHex, state, "overall_stats")
 		if err != nil {
 			return nil, err
 		}
 
 		upsertFilter := bson.M{"_id": db.generateOverallStatsId()}
 
-		var upsertUpdate bson.M
-		// If the amount is negative, it means we are unbonding.
-		// Only the active tvl and delegation numbers should be decremented
-		if amount < 0 {
-			upsertUpdate = bson.M{
-				"$inc": bson.M{
-					"active_tvl":         amount,
-					"active_delegations": -1,
-				},
-			}
-		} else {
-			upsertUpdate = bson.M{
-				"$inc": bson.M{
-					"active_tvl":         amount,
-					"total_tvl":          amount,
-					"active_delegations": 1,
-					"total_delegations":  1,
-				},
-			}
-		}
 		_, err = overallStatsClient.UpdateOne(sessCtx, upsertFilter, upsertUpdate, options.Update().SetUpsert(true))
 		if err != nil {
 			return nil, err
@@ -122,9 +110,9 @@ func (db *Database) updateOverallStats(ctx context.Context, txType, stakingTxHas
 	return nil
 }
 
-func (db *Database) updateStatsLockByFieldName(ctx context.Context, stakingTxHashHex, txType string, fieldName string) error {
+func (db *Database) updateStatsLockByFieldName(ctx context.Context, stakingTxHashHex, state string, fieldName string) error {
 	statsLockClient := db.Client.Database(db.DbName).Collection(model.StatsLockCollection)
-	filter := bson.M{"_id": constructStatsLockId(stakingTxHashHex, txType), fieldName: false}
+	filter := bson.M{"_id": constructStatsLockId(stakingTxHashHex, state), fieldName: false}
 	update := bson.M{"$set": bson.M{fieldName: true}}
 	result, err := statsLockClient.UpdateOne(ctx, filter, update)
 	if err != nil {
@@ -139,6 +127,6 @@ func (db *Database) updateStatsLockByFieldName(ctx context.Context, stakingTxHas
 	return nil
 }
 
-func constructStatsLockId(stakingTxHashHex, txType string) string {
-	return stakingTxHashHex + ":" + txType
+func constructStatsLockId(stakingTxHashHex, state string) string {
+	return stakingTxHashHex + ":" + state
 }
