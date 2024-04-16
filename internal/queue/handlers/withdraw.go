@@ -20,11 +20,12 @@ func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody s
 	}
 
 	// Check if the delegation is in the right state to process the withdrawn event.
-	state, stateErr := h.Services.GetDelegationState(ctx, withdrawnStakingEvent.StakingTxHashHex)
+	del, delErr := h.Services.GetDelegation(ctx, withdrawnStakingEvent.StakingTxHashHex)
 	// Requeue if found any error. Including not found error
-	if stateErr != nil {
-		return stateErr
+	if delErr != nil {
+		return delErr
 	}
+	state := del.State
 	// Requeue if the current state is not in the qualified states to transition to withdrawn
 	// We will wait for the unbonded message to be processed first.
 	if !utils.Contains(utils.QualifiedStatesToWithdraw(), state) {

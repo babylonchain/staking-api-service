@@ -113,19 +113,6 @@ func (s *Services) IsDelegationPresent(ctx context.Context, txHashHex string) (b
 	return false, nil
 }
 
-func (s *Services) GetDelegationState(ctx context.Context, txHashHex string) (types.DelegationState, *types.Error) {
-	delegation, err := s.DbClient.FindDelegationByTxHashHex(ctx, txHashHex)
-	if err != nil {
-		if db.IsNotFoundError(err) {
-			log.Ctx(ctx).Warn().Err(err).Str("stakingTxHash", txHashHex).Msg("Staking delegation not found")
-			return "", types.NewErrorWithMsg(http.StatusNotFound, types.NotFound, "staking delegation not found, please retry")
-		}
-		log.Ctx(ctx).Error().Err(err).Msg("Failed to find delegation by tx hash hex")
-		return "", types.NewInternalServiceError(err)
-	}
-	return delegation.State, nil
-}
-
 func (s *Services) GetDelegation(ctx context.Context, txHashHex string) (*model.DelegationDocument, *types.Error) {
 	delegation, err := s.DbClient.FindDelegationByTxHashHex(ctx, txHashHex)
 	if err != nil {
