@@ -33,7 +33,7 @@ func TestStatsShouldBeShardedInDb(t *testing.T) {
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
 	time.Sleep(2 * time.Second)
 	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, expiredEvents)
-	time.Sleep(5 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	// directly read from the db to check that we have more than 2 records in the overall stats collection
 	results, err := inspectDbDocuments[model.OverallStatsDocument](t, model.OverallStatsCollection)
@@ -66,7 +66,7 @@ func TestStatsShouldBeShardedInDb(t *testing.T) {
 	assert.Less(t, 10, len(shardedFinalityProviderStats), "we inserted 10 staking tx, we shall expect more than 10 in db as it's sharded")
 }
 
-func TestStatsCalculationShouldOnlyProcessActiveAndUnbondedEvenets(t *testing.T) {
+func TestStatsCalculationShouldOnlyProcessActiveAndUnbondedEvents(t *testing.T) {
 	activeStakingEvent := getTestActiveStakingEvent()
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()

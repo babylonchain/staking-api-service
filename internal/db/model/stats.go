@@ -9,20 +9,20 @@ const FinalityProviderStatsCollection = "finality_providers_stats"
 // As well as to prevent the same staking tx hash + txType to be processed multiple times
 // The already processed stats will be marked as true in the document
 type StatsLockDocument struct {
-	Id            string `bson:"_id"`
-	OverallStats  bool   `bson:"overall_stats"`
-	StakerStats   bool   `bson:"staker_stats"`
-	FinalityStats bool   `bson:"finality_stats"`
+	Id                    string `bson:"_id"`
+	OverallStats          bool   `bson:"overall_stats"`
+	StakerStats           bool   `bson:"staker_stats"`
+	FinalityProviderStats bool   `bson:"finality_provider_stats"`
 }
 
 func NewStatsLockDocument(
-	id string, overallStats, stakerStats, finalityStats bool,
+	id string, overallStats, stakerStats, finalityProviderStats bool,
 ) *StatsLockDocument {
 	return &StatsLockDocument{
-		Id:            id,
-		OverallStats:  overallStats,
-		StakerStats:   stakerStats,
-		FinalityStats: finalityStats,
+		Id:                    id,
+		OverallStats:          overallStats,
+		StakerStats:           stakerStats,
+		FinalityProviderStats: finalityProviderStats,
 	}
 }
 

@@ -14,6 +14,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// GetOrCreateStatsLock fetches the lock status for each stats type for the given staking tx hash.
+// If the document does not exist, it will create a new document with the default values
+// Refer to the README.md in this directory for more information on the stats lock
 func (db *Database) GetOrCreateStatsLock(
 	ctx context.Context, stakingTxHashHex string, txType string,
 ) (*model.StatsLockDocument, error) {
@@ -42,6 +45,7 @@ func (db *Database) GetOrCreateStatsLock(
 
 // IncrementOverallStats increments the overall stats for the given staking tx hash.
 // This method is idempotent, only the first call will be processed. Otherwise it will return a notFoundError for duplicates
+// Refer to the README.md in this directory for more information on the sharding logic
 func (db *Database) IncrementOverallStats(
 	ctx context.Context, stakingTxHashHex string, amount uint64,
 ) error {
@@ -58,6 +62,7 @@ func (db *Database) IncrementOverallStats(
 
 // SubtractOverallStats decrements the overall stats for the given staking tx hash
 // This method is idempotent, only the first call will be processed. Otherwise it will return a notFoundError for duplicates
+// Refer to the README.md in this directory for more information on the sharding logic
 func (db *Database) SubtractOverallStats(
 	ctx context.Context, stakingTxHashHex string, amount uint64,
 ) error {
@@ -70,6 +75,8 @@ func (db *Database) SubtractOverallStats(
 	return db.updateOverallStats(ctx, types.Unbonded.ToString(), stakingTxHashHex, upsertUpdate)
 }
 
+// GetOverallStats fetches the overall stats from all the shards and sums them up
+// Refer to the README.md in this directory for more information on the sharding logic
 func (db *Database) GetOverallStats(ctx context.Context) (*model.OverallStatsDocument, error) {
 	// The collection is sharded by the _id field, so we need to query all the shards
 	var shardsId []string
@@ -103,7 +110,7 @@ func (db *Database) GetOverallStats(ctx context.Context) (*model.OverallStatsDoc
 	return &result, nil
 }
 
-// Genrate the id for the overall stats document. Id is a random number ranged from 0-LogicalShardCount
+// Generate the id for the overall stats document. Id is a random number ranged from 0-LogicalShardCount-1
 // It's a logical shard to avoid locking the same field during concurrent writes
 // The sharding number should never be reduced after roll out
 func (db *Database) generateOverallStatsId() string {
@@ -168,6 +175,7 @@ func constructStatsLockId(stakingTxHashHex, state string) string {
 
 // IncrementFinalityProviderStats increments the finality provider stats for the given staking tx hash
 // This method is idempotent, only the first call will be processed. Otherwise it will return a notFoundError for duplicates
+// Refer to the README.md in this directory for more information on the sharding logic
 func (db *Database) IncrementFinalityProviderStats(
 	ctx context.Context, stakingTxHashHex, fpPkHex string, amount uint64,
 ) error {
@@ -184,6 +192,7 @@ func (db *Database) IncrementFinalityProviderStats(
 
 // SubtractFinalityProviderStats decrements the finality provider stats for the given provider pk hex
 // This method is idempotent, only the first call will be processed. Otherwise it will return a notFoundError for duplicates
+// Refer to the README.md in this directory for more information on the sharding logic
 func (db *Database) SubtractFinalityProviderStats(
 	ctx context.Context, stakingTxHashHex, fpPkHex string, amount uint64,
 ) error {
@@ -197,11 +206,13 @@ func (db *Database) SubtractFinalityProviderStats(
 }
 
 // FindFinalityProviderStatsByPkHex finds the finality provider stats for the given finality provider pk hex
+// This method queries all the shards and sums up the stats
+// Refer to the README.md in this directory for more information on the sharding logic
 func (db *Database) FindFinalityProviderStatsByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderStatsDocument, error) {
 	client := db.Client.Database(db.DbName).Collection(model.FinalityProviderStatsCollection)
 	finalityProvidersMap := make(map[string]model.FinalityProviderStatsDocument)
 
-	batchSize := int(db.cfg.DbBatchSizeLimist)
+	batchSize := int(db.cfg.DbBatchSizeLimit)
 	for i := 0; i < len(pkHex); i += batchSize {
 		end := i + batchSize
 		if end > len(pkHex) {
@@ -261,7 +272,7 @@ func (db *Database) updateFinalityProviderStats(ctx context.Context, state, stak
 	defer session.EndSession(ctx)
 
 	transactionWork := func(sessCtx mongo.SessionContext) (interface{}, error) {
-		err := db.updateStatsLockByFieldName(sessCtx, stakingTxHashHex, state, "finality_stats")
+		err := db.updateStatsLockByFieldName(sessCtx, stakingTxHashHex, state, "finality_provider_stats")
 		if err != nil {
 			return nil, err
 		}

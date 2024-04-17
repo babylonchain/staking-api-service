@@ -19,7 +19,7 @@ type StatsPublic struct {
 }
 
 // ProcessStakingStatsCalculation calculates the staking stats and updates the database.
-// This method tolerate duplicated calls, only the first call will be processed.
+// This method tolerates duplicated calls, only the first call will be processed.
 func (s *Services) ProcessStakingStatsCalculation(
 	ctx context.Context, stakingTxHashHex, stakerPkHex, fpPkHex string,
 	state types.DelegationState, amount uint64,
@@ -45,7 +45,7 @@ func (s *Services) ProcessStakingStatsCalculation(
 				return types.NewInternalServiceError(err)
 			}
 		}
-		if !statsLockDocument.FinalityStats {
+		if !statsLockDocument.FinalityProviderStats {
 			// Add to the finality stats
 			err = s.DbClient.IncrementFinalityProviderStats(ctx, stakingTxHashHex, fpPkHex, amount)
 			if err != nil {
@@ -71,7 +71,7 @@ func (s *Services) ProcessStakingStatsCalculation(
 			}
 		}
 		// Subtract from the finality stats
-		if !statsLockDocument.FinalityStats {
+		if !statsLockDocument.FinalityProviderStats {
 			err = s.DbClient.SubtractFinalityProviderStats(ctx, stakingTxHashHex, fpPkHex, amount)
 			if err != nil {
 				if db.IsNotFoundError(err) {
@@ -84,8 +84,8 @@ func (s *Services) ProcessStakingStatsCalculation(
 		}
 	default:
 		return types.NewErrorWithMsg(
-			http.StatusForbidden,
-			types.Forbidden,
+			http.StatusBadRequest,
+			types.BadRequest,
 			fmt.Sprintf("invalid delegation state for stats calculation: %s", state),
 		)
 	}

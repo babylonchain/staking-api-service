@@ -13,10 +13,10 @@ import (
 // @Success 200 {object} PublicResponse[services.StatsPublic] "Overall stats for babylon staking"
 // @Router /v1/stats [get]
 func (h *Handler) GetOverallStats(request *http.Request) (*Result, *types.Error) {
-	fps, err := h.services.GetOverallStats(request.Context())
+	stats, err := h.services.GetOverallStats(request.Context())
 	if err != nil {
 		return nil, err
 	}
 
-	return NewResult(fps), nil
+	return NewResult(stats), nil
 }
