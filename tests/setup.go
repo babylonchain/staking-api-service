@@ -91,7 +91,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 	r.Use(middlewares.CorsMiddleware(cfg))
 	apiServer.SetupRoutes(r)
 
-	queues, conn, ch, err := setUpTestQueue(cfg.Queue, services)
+	queues, conn, ch, err := setUpTestQueue(&cfg.Queue, services)
 	if err != nil {
 		t.Fatalf("Failed to setup test queue: %v", err)
 	}
@@ -160,7 +160,7 @@ func setupTestDB(cfg config.Config) *mongo.Client {
 	return client
 }
 
-func setUpTestQueue(cfg queueConfig.QueueConfig, service *services.Services) (*queue.Queues, *amqp091.Connection, *amqp091.Channel, error) {
+func setUpTestQueue(cfg *queueConfig.QueueConfig, service *services.Services) (*queue.Queues, *amqp091.Connection, *amqp091.Channel, error) {
 	amqpURI := fmt.Sprintf("amqp://%s:%s@%s", cfg.QueueUser, cfg.QueuePassword, cfg.Url)
 	conn, err := amqp091.Dial(amqpURI)
 	if err != nil {
