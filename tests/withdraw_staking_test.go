@@ -220,3 +220,61 @@ func TestProcessWithdrawStakingEventShouldTolerateEventMsgOutOfOrder(t *testing.
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, results[0].StakingTxHashHex, "expected address to be the same")
 	assert.Equal(t, types.Withdrawn, results[0].State, "expected state to be unbonded")
 }
+
+func TestShouldIgnoreWithdrawnEventIfAlreadyWithdrawn(t *testing.T) {
+	activeStakingEvent := getTestActiveStakingEvent()
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	// Wait for 2 seconds to make sure the message is processed
+	time.Sleep(2 * time.Second)
+
+	// Now, send the timelock expire event so that the state change to "unbonded"
+	expiredEvent := client.ExpiredStakingEvent{
+		EventType:        client.ExpiredStakingEventType,
+		StakingTxHashHex: activeStakingEvent.StakingTxHashHex,
+		TxType:           types.ActiveTxType.ToString(),
+	}
+
+	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredEvent})
+	time.Sleep(10 * time.Second)
+
+	// Send the withdraw event before timelock expire event which would change the state to unbonded
+	withdrawEvent := client.WithdrawStakingEvent{
+		EventType:        client.WithdrawStakingEventType,
+		StakingTxHashHex: activeStakingEvent.StakingTxHashHex,
+	}
+
+	sendTestMessage(testServer.Queues.WithdrawStakingQueueClient, []client.WithdrawStakingEvent{withdrawEvent})
+	time.Sleep(2 * time.Second)
+
+	// Check the DB after a while, now it shall be "withdrawn" state
+	results, err := inspectDbDocuments[model.DelegationDocument](t, model.DelegationCollection)
+	if err != nil {
+		t.Fatalf("Failed to inspect DB documents: %v", err)
+	}
+	assert.Equal(t, 1, len(results), "expected 1 document in the DB")
+
+	// Check the data
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, results[0].StakingTxHashHex, "expected address to be the same")
+	assert.Equal(t, types.Withdrawn, results[0].State, "expected state to be unbonded")
+
+	// Send again the withdraw event, it should be ignored
+	sendTestMessage(testServer.Queues.WithdrawStakingQueueClient, []client.WithdrawStakingEvent{withdrawEvent})
+	time.Sleep(2 * time.Second)
+
+	// Check the DB, nothing should be changed.
+	results, err = inspectDbDocuments[model.DelegationDocument](t, model.DelegationCollection)
+	if err != nil {
+		t.Fatalf("Failed to inspect DB documents: %v", err)
+	}
+	assert.Equal(t, 1, len(results), "expected 1 document in the DB")
+	assert.Equal(t, activeStakingEvent.StakingTxHashHex, results[0].StakingTxHashHex, "expected address to be the same")
+	assert.Equal(t, types.Withdrawn, results[0].State, "expected state to be unbonded")
+	// also checking the queue. Nothing should exist in the queue
+	count, err := inspectQueueMessageCount(t, testServer.Conn, client.WithdrawStakingQueueName)
+	if err != nil {
+		t.Fatalf("Failed to inspect queue: %v", err)
+	}
+	assert.Equal(t, 0, count, "expected no message in the queue")
+}
