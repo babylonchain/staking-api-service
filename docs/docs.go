@@ -108,7 +108,30 @@ const docTemplate = `{
                     "200": {
                         "description": "Overall stats for babylon staking",
                         "schema": {
-                            "$ref": "#/definitions/handlers.PublicResponse-services_StatsPublic"
+                            "$ref": "#/definitions/handlers.PublicResponse-services_OverallStatsPublic"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/stats/staker": {
+            "get": {
+                "description": "Fetches details of top stakers by their active total value locked (ActiveTvl) in descending order.",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Top Staker Stats by Active TVL",
+                "responses": {
+                    "200": {
+                        "description": "List of top stakers by active tvl",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PublicResponse-array_services_StakerStatsPublic"
+                        }
+                    },
+                    "400": {
+                        "description": "Error: Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error"
                         }
                     }
                 }
@@ -219,6 +242,20 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.PublicResponse-array_services_StakerStatsPublic": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.StakerStatsPublic"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/handlers.paginationResponse"
+                }
+            }
+        },
         "handlers.PublicResponse-services_GlobalParamsPublic": {
             "type": "object",
             "properties": {
@@ -230,11 +267,11 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.PublicResponse-services_StatsPublic": {
+        "handlers.PublicResponse-services_OverallStatsPublic": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/services.StatsPublic"
+                    "$ref": "#/definitions/services.OverallStatsPublic"
                 },
                 "pagination": {
                     "$ref": "#/definitions/handlers.paginationResponse"
@@ -390,7 +427,7 @@ const docTemplate = `{
                 }
             }
         },
-        "services.StatsPublic": {
+        "services.OverallStatsPublic": {
             "type": "object",
             "properties": {
                 "active_delegations": {
@@ -403,6 +440,26 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "total_stakers": {
+                    "type": "integer"
+                },
+                "total_tvl": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.StakerStatsPublic": {
+            "type": "object",
+            "properties": {
+                "active_delegations": {
+                    "type": "integer"
+                },
+                "active_tvl": {
+                    "type": "integer"
+                },
+                "staker_pk_hex": {
+                    "type": "string"
+                },
+                "total_delegations": {
                     "type": "integer"
                 },
                 "total_tvl": {

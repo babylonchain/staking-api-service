@@ -48,7 +48,8 @@ generate-mock-interface:
 
 tests:
 	./bin/local-startup.sh;
-	go test -v -cover -p 1 ./...
+	go test -v -cover -p 1 ./... -count=1
+
 
 build-swagger:
 	swag init --parseDependency --parseInternal -d cmd/staking-api-service,internal/api,internal/types

@@ -25,6 +25,15 @@ definitions:
       pagination:
         $ref: '#/definitions/handlers.paginationResponse'
     type: object
+  handlers.PublicResponse-array_services_StakerStatsPublic:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/services.StakerStatsPublic'
+        type: array
+      pagination:
+        $ref: '#/definitions/handlers.paginationResponse'
+    type: object
   handlers.PublicResponse-services_GlobalParamsPublic:
     properties:
       data:
@@ -32,10 +41,10 @@ definitions:
       pagination:
         $ref: '#/definitions/handlers.paginationResponse'
     type: object
-  handlers.PublicResponse-services_StatsPublic:
+  handlers.PublicResponse-services_OverallStatsPublic:
     properties:
       data:
-        $ref: '#/definitions/services.StatsPublic'
+        $ref: '#/definitions/services.OverallStatsPublic'
       pagination:
         $ref: '#/definitions/handlers.paginationResponse'
     type: object
@@ -136,7 +145,7 @@ definitions:
       unbonding_time:
         type: integer
     type: object
-  services.StatsPublic:
+  services.OverallStatsPublic:
     properties:
       active_delegations:
         type: integer
@@ -145,6 +154,19 @@ definitions:
       total_delegations:
         type: integer
       total_stakers:
+        type: integer
+      total_tvl:
+        type: integer
+    type: object
+  services.StakerStatsPublic:
+    properties:
+      active_delegations:
+        type: integer
+      active_tvl:
+        type: integer
+      staker_pk_hex:
+        type: string
+      total_delegations:
         type: integer
       total_tvl:
         type: integer
@@ -245,8 +267,24 @@ paths:
         "200":
           description: Overall stats for babylon staking
           schema:
-            $ref: '#/definitions/handlers.PublicResponse-services_StatsPublic'
+            $ref: '#/definitions/handlers.PublicResponse-services_OverallStatsPublic'
       summary: Get Overall Stats
+  /v1/stats/staker:
+    get:
+      description: Fetches details of top stakers by their active total value locked
+        (ActiveTvl) in descending order.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of top stakers by active tvl
+          schema:
+            $ref: '#/definitions/handlers.PublicResponse-array_services_StakerStatsPublic'
+        "400":
+          description: 'Error: Bad Request'
+          schema:
+            $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
+      summary: Get Top Staker Stats by Active TVL
   /v1/unbonding:
     post:
       consumes:

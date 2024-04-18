@@ -19,6 +19,7 @@ import (
 
 const (
 	overallStatsEndpoint = "/v1/stats"
+	topStakerStatsPath   = "/v1/stats/staker"
 )
 
 func TestStatsShouldBeShardedInDb(t *testing.T) {
@@ -143,7 +144,16 @@ func TestStatsEndpoints(t *testing.T) {
 	assert.Equal(t, int64(activeStakingEvent.StakingValue), overallStats.TotalTvl)
 	assert.Equal(t, int64(1), overallStats.ActiveDelegations)
 	assert.Equal(t, int64(1), overallStats.TotalDelegations)
-	assert.Equal(t, int64(0), overallStats.TotalStakers, "Should return default of 0 for unique number of staker. Yet to be implemented")
+	assert.Equal(t, uint64(1), overallStats.TotalStakers)
+
+	// Test the top staker stats endpoint
+	stakerStats, _ := fetchStakerStatsEndpoint(t, testServer)
+	assert.Equal(t, 1, len(stakerStats))
+	assert.Equal(t, activeStakingEvent.StakerPkHex, stakerStats[0].StakerPkHex)
+	assert.Equal(t, int64(activeStakingEvent.StakingValue), stakerStats[0].ActiveTvl)
+	assert.Equal(t, int64(activeStakingEvent.StakingValue), stakerStats[0].TotalTvl)
+	assert.Equal(t, int64(1), stakerStats[0].ActiveDelegations)
+	assert.Equal(t, int64(1), stakerStats[0].TotalDelegations)
 
 	// Now let's send an expired timelock event, this will affect the active stats only
 	expiredEvent := client.NewExpiredStakingEvent(activeStakingEvent.StakingTxHashHex, types.ActiveTxType.ToString())
@@ -162,7 +172,15 @@ func TestStatsEndpoints(t *testing.T) {
 	assert.Equal(t, int64(activeStakingEvent.StakingValue), overallStats.TotalTvl)
 	assert.Equal(t, int64(0), overallStats.ActiveDelegations)
 	assert.Equal(t, int64(1), overallStats.TotalDelegations)
-	assert.Equal(t, int64(0), overallStats.TotalStakers, "Should return default of 0 for unique number of staker. Yet to be implemented")
+	assert.Equal(t, uint64(1), overallStats.TotalStakers)
+
+	stakerStats, _ = fetchStakerStatsEndpoint(t, testServer)
+	assert.Equal(t, 1, len(stakerStats))
+	assert.Equal(t, activeStakingEvent.StakerPkHex, stakerStats[0].StakerPkHex)
+	assert.Equal(t, int64(0), stakerStats[0].ActiveTvl)
+	assert.Equal(t, int64(activeStakingEvent.StakingValue), stakerStats[0].TotalTvl)
+	assert.Equal(t, int64(0), stakerStats[0].ActiveDelegations)
+	assert.Equal(t, int64(1), stakerStats[0].TotalDelegations)
 
 	// Send two new active events, it will increment the stats
 	activeEvents := buildActiveStakingEvent(mockStakerHash, 2)
@@ -170,12 +188,22 @@ func TestStatsEndpoints(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	overallStats = fetchOverallStatsEndpoint(t, testServer)
+
 	expectedTvl := int64(activeEvents[0].StakingValue + activeEvents[1].StakingValue)
 	expectedTotalTvl := int64(expectedTvl) + int64(activeStakingEvent.StakingValue)
 	assert.Equal(t, expectedTvl, overallStats.ActiveTvl)
 	assert.Equal(t, expectedTotalTvl, overallStats.TotalTvl)
 	assert.Equal(t, int64(2), overallStats.ActiveDelegations)
 	assert.Equal(t, int64(3), overallStats.TotalDelegations)
+	assert.Equal(t, uint64(2), overallStats.TotalStakers, "expected 2 stakers as the last 2 belong to same staker")
+
+	stakerStats, _ = fetchStakerStatsEndpoint(t, testServer)
+	assert.Equal(t, 2, len(stakerStats))
+
+	// Also make sure the returned data is sorted by active TVL
+	for i := 0; i < len(stakerStats)-1; i++ {
+		assert.True(t, stakerStats[i].ActiveTvl >= stakerStats[i+1].ActiveTvl, "expected response body to be sorted")
+	}
 }
 
 func fetchFinalityEndpoint(t *testing.T, testServer *TestServer) []services.FpDetailsPublic {
@@ -199,7 +227,7 @@ func fetchFinalityEndpoint(t *testing.T, testServer *TestServer) []services.FpDe
 	return responseBody.Data
 }
 
-func fetchOverallStatsEndpoint(t *testing.T, testServer *TestServer) services.StatsPublic {
+func fetchOverallStatsEndpoint(t *testing.T, testServer *TestServer) services.OverallStatsPublic {
 	url := testServer.Server.URL + overallStatsEndpoint
 	// Make a GET request to the stats endpoint
 	resp, err := http.Get(url)
@@ -213,9 +241,28 @@ func fetchOverallStatsEndpoint(t *testing.T, testServer *TestServer) services.St
 	bodyBytes, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err, "reading response body should not fail")
 
-	var responseBody handlers.PublicResponse[services.StatsPublic]
+	var responseBody handlers.PublicResponse[services.OverallStatsPublic]
 	err = json.Unmarshal(bodyBytes, &responseBody)
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 
 	return responseBody.Data
+}
+
+func fetchStakerStatsEndpoint(t *testing.T, testServer *TestServer) ([]services.StakerStatsPublic, string) {
+	url := testServer.Server.URL + topStakerStatsPath
+	resp, err := http.Get(url)
+	assert.NoError(t, err, "making GET request to staker stats endpoint should not fail")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	var responseBody handlers.PublicResponse[[]services.StakerStatsPublic]
+	err = json.Unmarshal(bodyBytes, &responseBody)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
+
+	return responseBody.Data, responseBody.Pagination.NextKey
 }
