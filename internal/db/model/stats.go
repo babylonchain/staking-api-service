@@ -59,6 +59,8 @@ type StakerStatsDocument struct {
 	TotalDelegations  int64  `bson:"total_delegations"`
 }
 
+// StakerStatsByStakerPagination is used to paginate the top stakers by active tvl
+// ActiveTvl is used as the sorting key, whereas StakerPkHex is used as the secondary sorting key
 type StakerStatsByStakerPagination struct {
 	StakerPkHex string `json:"staker_pk_hex"`
 	ActiveTvl   int64  `json:"active_tvl"`

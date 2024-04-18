@@ -63,7 +63,8 @@ func (s *Services) ProcessStakingStatsCalculation(
 				return types.NewInternalServiceError(err)
 			}
 		}
-		// Add to the overall stats, this should be the last to be updated
+		// Add to the overall stats
+		// The overall stats should be the last to be updated as it has dependency on staker stats.
 		if !statsLockDocument.OverallStats {
 			err = s.DbClient.IncrementOverallStats(ctx, stakingTxHashHex, stakerPkHex, amount)
 			if err != nil {
@@ -100,7 +101,8 @@ func (s *Services) ProcessStakingStatsCalculation(
 				return types.NewInternalServiceError(err)
 			}
 		}
-		// Subtract from the overall stats. The overall stats should be the last to be updated
+		// Subtract from the overall stats.
+		// The overall stats should be the last to be updated as it has dependency on staker stats.
 		if !statsLockDocument.OverallStats {
 			err = s.DbClient.SubtractOverallStats(ctx, stakingTxHashHex, stakerPkHex, amount)
 			if err != nil {

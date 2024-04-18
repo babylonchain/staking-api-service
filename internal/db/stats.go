@@ -74,12 +74,14 @@ func (db *Database) IncrementOverallStats(
 			return nil, err
 		}
 
-		// Check if the staker stats exists and has only 1 delegation (the current one)
+		// The order of the overall stats and staker stats update is important.
+		// The staker stats colleciton will need to be processed first to determine if the staker is new
+		// If the staker stats is the first delegation for the staker, we need to increment the total stakers
 		var stakerStats model.StakerStatsDocument
 		stakerStatsFilter := bson.M{"_id": stakerPkHex}
-		err = stakerStatsClient.FindOne(ctx, stakerStatsFilter).Decode(&stakerStats)
-		if err != nil {
-			return nil, err
+		stakerErr := stakerStatsClient.FindOne(ctx, stakerStatsFilter).Decode(&stakerStats)
+		if stakerErr != nil {
+			return nil, stakerErr
 		}
 		if stakerStats.TotalDelegations == 1 {
 			upsertUpdate["$inc"].(bson.M)["total_stakers"] = 1
@@ -419,11 +421,7 @@ func (db *Database) updateStakerStats(ctx context.Context, state, stakingTxHashH
 
 	// Execute the transaction
 	_, txErr := session.WithTransaction(ctx, transactionWork)
-	if txErr != nil {
-		return txErr
-	}
-
-	return nil
+	return txErr
 }
 
 func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken string) (*DbResultMap[model.StakerStatsDocument], error) {
@@ -443,7 +441,7 @@ func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken str
 		filter = bson.M{
 			"$or": []bson.M{
 				{"active_tvl": bson.M{"$lt": decodedToken.ActiveTvl}},
-				{"active_tvl": decodedToken.ActiveTvl, "_id": bson.M{"$gt": decodedToken.StakerPkHex}},
+				{"active_tvl": decodedToken.ActiveTvl, "_id": bson.M{"$lt": decodedToken.StakerPkHex}},
 			},
 		}
 	}
