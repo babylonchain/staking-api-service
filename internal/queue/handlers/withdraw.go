@@ -26,17 +26,17 @@ func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody s
 		return delErr
 	}
 	state := del.State
+
+	if utils.Contains(utils.OutdatedStatesForWithdraw(), state) {
+		// Ignore the message as the delegation state is withdrawn. Nothing to do anymore
+		return nil
+	}
 	// Requeue if the current state is not in the qualified states to transition to withdrawn
 	// We will wait for the unbonded message to be processed first.
 	if !utils.Contains(utils.QualifiedStatesToWithdraw(), state) {
 		errMsg := "delegation is not in the qualified state to transition to withdrawn"
 		log.Ctx(ctx).Warn().Str("state", state.ToString()).Msg(errMsg)
 		return types.NewErrorWithMsg(http.StatusForbidden, types.Forbidden, errMsg)
-	}
-
-	if utils.Contains(utils.OutdatedStatesForWithdraw(), state) {
-		// Ignore the message as the delegation state is withdrawn. Nothing to do anymore
-		return nil
 	}
 
 	// Transition to withdrawn state
