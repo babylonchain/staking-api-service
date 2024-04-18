@@ -37,7 +37,7 @@ func TestWithdrawFromActiveStaking(t *testing.T) {
 	expiredEvent := client.ExpiredStakingEvent{
 		EventType:        client.ExpiredStakingEventType,
 		StakingTxHashHex: activeStakingEvent.StakingTxHashHex,
-		TxType:           client.ActiveTxType,
+		TxType:           types.ActiveTxType.ToString(),
 	}
 
 	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredEvent})
@@ -105,8 +105,6 @@ func TestWithdrawFromStakingHasUnbondingRequested(t *testing.T) {
 	assert.NoError(t, err, "making POST request to unbonding endpoint should not fail")
 	defer resp.Body.Close()
 
-	// Send unbonding event
-
 	// Let's send an unbonding event
 	unbondingEvent := client.UnbondingStakingEvent{
 		EventType:               client.UnbondingStakingEventType,
@@ -126,7 +124,7 @@ func TestWithdrawFromStakingHasUnbondingRequested(t *testing.T) {
 	expiredEvent := client.ExpiredStakingEvent{
 		EventType:        client.ExpiredStakingEventType,
 		StakingTxHashHex: activeStakingEvent.StakingTxHashHex,
-		TxType:           client.UnbondingTxType,
+		TxType:           types.UnbondingTxType.ToString(),
 	}
 
 	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredEvent})
@@ -205,7 +203,7 @@ func TestProcessWithdrawStakingEventShouldTolerateEventMsgOutOfOrder(t *testing.
 	expiredEvent := client.ExpiredStakingEvent{
 		EventType:        client.ExpiredStakingEventType,
 		StakingTxHashHex: activeStakingEvent.StakingTxHashHex,
-		TxType:           client.ActiveTxType,
+		TxType:           types.ActiveTxType.ToString(),
 	}
 
 	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredEvent})

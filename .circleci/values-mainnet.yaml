@@ -97,6 +97,7 @@ configFiles:
       db-name: staking-api-service
       max-pagination-limit: 50
       db-batch-size-limit: 100
+      logical-shard-count: 10
     queue:
       queue_user: USER
       queue_password: PASSWORD

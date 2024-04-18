@@ -21,7 +21,6 @@ type DBClient interface {
 	) error
 	FindDelegationByTxHashHex(ctx context.Context, txHashHex string) (*model.DelegationDocument, error)
 	SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64, txType string) error
-	FindFinalityProvidersByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderDocument, error)
 	SaveUnprocessableMessage(ctx context.Context, messageBody, receipt string) error
 	TransitionToUnbondedState(
 		ctx context.Context, stakingTxHashHex string, eligiblePreviousState []types.DelegationState,
@@ -30,4 +29,21 @@ type DBClient interface {
 		ctx context.Context, txHashHex string, startHeight, timelock, outputIndex uint64, txHex string, startTimestamp int64,
 	) error
 	TransitionToWithdrawnState(ctx context.Context, txHashHex string) error
+	GetOrCreateStatsLock(
+		ctx context.Context, stakingTxHashHex string, state string,
+	) (*model.StatsLockDocument, error)
+	SubtractOverallStats(
+		ctx context.Context, stakingTxHashHex string, amount uint64,
+	) error
+	IncrementOverallStats(
+		ctx context.Context, stakingTxHashHex string, amount uint64,
+	) error
+	GetOverallStats(ctx context.Context) (*model.OverallStatsDocument, error)
+	IncrementFinalityProviderStats(
+		ctx context.Context, stakingTxHashHex, fpPkHex string, amount uint64,
+	) error
+	SubtractFinalityProviderStats(
+		ctx context.Context, stakingTxHashHex, fpPkHex string, amount uint64,
+	) error
+	FindFinalityProviderStatsByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderStatsDocument, error)
 }

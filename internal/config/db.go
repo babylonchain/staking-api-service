@@ -6,11 +6,16 @@ import (
 	"strconv"
 )
 
+const (
+	maxLogicalShardCount = 100
+)
+
 type DbConfig struct {
 	DbName             string `mapstructure:"db-name"`
 	Address            string `mapstructure:"address"`
 	MaxPaginationLimit int64  `mapstructure:"max-pagination-limit"`
-	DbBatchSizeLimist  int64  `mapstructure:"db-batch-size-limit"`
+	DbBatchSizeLimit   int64  `mapstructure:"db-batch-size-limit"`
+	LogicalShardCount  int64  `mapstructure:"logical-shard-count"`
 }
 
 func (cfg *DbConfig) Validate() error {
@@ -53,8 +58,18 @@ func (cfg *DbConfig) Validate() error {
 		return fmt.Errorf("max pagination limit must be greater than 0")
 	}
 
-	if cfg.DbBatchSizeLimist <= 0 {
+	if cfg.DbBatchSizeLimit <= 0 {
 		return fmt.Errorf("db batch size limit must be greater than 0")
+	}
+
+	if cfg.LogicalShardCount <= 1 {
+		return fmt.Errorf("logical shard count must be greater than 1")
+	}
+
+	// Below is adding as a safety net to avoid performance issue.
+	// Changes to the logical shard count shall be discussed with the team
+	if cfg.LogicalShardCount > maxLogicalShardCount {
+		return fmt.Errorf("large logical shard count will have significant performance impact, please inform the team before changing this value")
 	}
 
 	return nil

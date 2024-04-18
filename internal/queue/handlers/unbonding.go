@@ -19,27 +19,22 @@ func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody 
 	}
 
 	// Check if the delegation is in the right state to process the unbonding event
-	state, stateErr := h.Services.GetDelegationState(ctx, unbondingStakingEvent.StakingTxHashHex)
+	del, delErr := h.Services.GetDelegation(ctx, unbondingStakingEvent.StakingTxHashHex)
 	// Requeue if found any error. Including not found error
-	if stateErr != nil {
-		return stateErr
+	if delErr != nil {
+		return delErr
 	}
+	state := del.State
 	if utils.Contains[types.DelegationState](utils.OutdatedStatesForUnbonding(), state) {
 		// Ignore the message as the delegation state already passed the unbonding state. This is an outdated duplication
 		return nil
-	}
-
-	// Perform stats calculation
-	if err := h.Services.ProcessStakingStatsCalculation(ctx, unbondingStakingEvent); err != nil {
-		log.Ctx(ctx).Err(err).Msg("Failed to update stats while processing unbonding staking event")
-		return err
 	}
 
 	err = h.Services.ProcessExpireCheck(
 		ctx, unbondingStakingEvent.StakingTxHashHex,
 		unbondingStakingEvent.UnbondingStartHeight,
 		unbondingStakingEvent.UnbondingTimeLock,
-		queueClient.UnbondingTxType.ToString(),
+		types.UnbondingTxType,
 	)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to process expire check")
