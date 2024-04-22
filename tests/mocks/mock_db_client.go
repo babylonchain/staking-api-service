@@ -108,6 +108,36 @@ func (_m *DBClient) FindFinalityProviderStatsByPkHex(ctx context.Context, pkHex 
 	return r0, r1
 }
 
+// FindTopStakersByTvl provides a mock function with given fields: ctx, paginationToken
+func (_m *DBClient) FindTopStakersByTvl(ctx context.Context, paginationToken string) (*db.DbResultMap[model.StakerStatsDocument], error) {
+	ret := _m.Called(ctx, paginationToken)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindTopStakersByTvl")
+	}
+
+	var r0 *db.DbResultMap[model.StakerStatsDocument]
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.DbResultMap[model.StakerStatsDocument], error)); ok {
+		return rf(ctx, paginationToken)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.DbResultMap[model.StakerStatsDocument]); ok {
+		r0 = rf(ctx, paginationToken)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.DbResultMap[model.StakerStatsDocument])
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, paginationToken)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetOrCreateStatsLock provides a mock function with given fields: ctx, stakingTxHashHex, state
 func (_m *DBClient) GetOrCreateStatsLock(ctx context.Context, stakingTxHashHex string, state string) (*model.StatsLockDocument, error) {
 	ret := _m.Called(ctx, stakingTxHashHex, state)
@@ -186,17 +216,35 @@ func (_m *DBClient) IncrementFinalityProviderStats(ctx context.Context, stakingT
 	return r0
 }
 
-// IncrementOverallStats provides a mock function with given fields: ctx, stakingTxHashHex, amount
-func (_m *DBClient) IncrementOverallStats(ctx context.Context, stakingTxHashHex string, amount uint64) error {
-	ret := _m.Called(ctx, stakingTxHashHex, amount)
+// IncrementOverallStats provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, amount
+func (_m *DBClient) IncrementOverallStats(ctx context.Context, stakingTxHashHex string, stakerPkHex string, amount uint64) error {
+	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, amount)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IncrementOverallStats")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) error); ok {
-		r0 = rf(ctx, stakingTxHashHex, amount)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, uint64) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, amount)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// IncrementStakerStats provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, amount
+func (_m *DBClient) IncrementStakerStats(ctx context.Context, stakingTxHashHex string, stakerPkHex string, amount uint64) error {
+	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, amount)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IncrementStakerStats")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, uint64) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, amount)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -312,17 +360,35 @@ func (_m *DBClient) SubtractFinalityProviderStats(ctx context.Context, stakingTx
 	return r0
 }
 
-// SubtractOverallStats provides a mock function with given fields: ctx, stakingTxHashHex, amount
-func (_m *DBClient) SubtractOverallStats(ctx context.Context, stakingTxHashHex string, amount uint64) error {
-	ret := _m.Called(ctx, stakingTxHashHex, amount)
+// SubtractOverallStats provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, amount
+func (_m *DBClient) SubtractOverallStats(ctx context.Context, stakingTxHashHex string, stakerPkHex string, amount uint64) error {
+	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, amount)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SubtractOverallStats")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) error); ok {
-		r0 = rf(ctx, stakingTxHashHex, amount)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, uint64) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, amount)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SubtractStakerStats provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, amount
+func (_m *DBClient) SubtractStakerStats(ctx context.Context, stakingTxHashHex string, stakerPkHex string, amount uint64) error {
+	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, amount)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SubtractStakerStats")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, uint64) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, amount)
 	} else {
 		r0 = ret.Error(0)
 	}

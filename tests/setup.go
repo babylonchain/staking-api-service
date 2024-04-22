@@ -135,7 +135,9 @@ func PurgeAllCollections(ctx context.Context, client *mongo.Client, databaseName
 	}
 
 	for _, collection := range collections {
-		if err := database.Collection(collection).Drop(ctx); err != nil {
+		// Use DeleteMany with an empty filter to delete all documents
+		_, err := database.Collection(collection).DeleteMany(ctx, bson.D{{}})
+		if err != nil {
 			return err
 		}
 	}

@@ -17,7 +17,7 @@ queue:
   queue_user: user
   queue_password: password
   url: "localhost:5672"
-  processing_timeout: 30
+  processing_timeout: 300
   msg_max_retry_attempts: 2
 metrics:
   host: 0.0.0.0

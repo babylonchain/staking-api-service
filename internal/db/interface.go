@@ -33,10 +33,10 @@ type DBClient interface {
 		ctx context.Context, stakingTxHashHex string, state string,
 	) (*model.StatsLockDocument, error)
 	SubtractOverallStats(
-		ctx context.Context, stakingTxHashHex string, amount uint64,
+		ctx context.Context, stakingTxHashHex, stakerPkHex string, amount uint64,
 	) error
 	IncrementOverallStats(
-		ctx context.Context, stakingTxHashHex string, amount uint64,
+		ctx context.Context, stakingTxHashHex, stakerPkHex string, amount uint64,
 	) error
 	GetOverallStats(ctx context.Context) (*model.OverallStatsDocument, error)
 	IncrementFinalityProviderStats(
@@ -46,4 +46,11 @@ type DBClient interface {
 		ctx context.Context, stakingTxHashHex, fpPkHex string, amount uint64,
 	) error
 	FindFinalityProviderStatsByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderStatsDocument, error)
+	IncrementStakerStats(
+		ctx context.Context, stakingTxHashHex, stakerPkHex string, amount uint64,
+	) error
+	SubtractStakerStats(
+		ctx context.Context, stakingTxHashHex, stakerPkHex string, amount uint64,
+	) error
+	FindTopStakersByTvl(ctx context.Context, paginationToken string) (*DbResultMap[model.StakerStatsDocument], error)
 }
