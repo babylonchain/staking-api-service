@@ -4,7 +4,7 @@ go 1.21.6
 
 require (
 	github.com/babylonchain/babylon v0.8.5
-	github.com/babylonchain/staking-queue-client v0.0.0-20240417153106-dcffcc4bec74
+	github.com/babylonchain/staking-queue-client v0.0.0-20240424061128-3ac950ef5f27
 	github.com/btcsuite/btcd v0.24.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcd/btcutil v1.1.5
