@@ -32,7 +32,7 @@ deployment:
     prometheus.io/scrape: "true"
     configmap.reloader.stakater.com/reload: "staking-api-service"
   nodeSelector:
-    workload: "webservices"
+    workload: "tooling"
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
