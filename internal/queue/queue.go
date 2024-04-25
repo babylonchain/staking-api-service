@@ -21,30 +21,30 @@ type Queues struct {
 	WithdrawStakingQueueClient  client.QueueClient
 }
 
-func New(cfg queueConfig.QueueConfig, service *services.Services) *Queues {
+func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
 	activeStakingQueueClient, err := client.NewQueueClient(
-		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ActiveStakingQueueName,
+		cfg, client.ActiveStakingQueueName,
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while creating ActiveStakingQueueClient")
 	}
 
 	expiredStakingQueueClient, err := client.NewQueueClient(
-		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ExpiredStakingQueueName,
+		cfg, client.ExpiredStakingQueueName,
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while creating ExpiredStakingQueueClient")
 	}
 
 	unbondingStakingQueueClient, err := client.NewQueueClient(
-		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.UnbondingStakingQueueName,
+		cfg, client.UnbondingStakingQueueName,
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while creating UnbondingStakingQueueClient")
 	}
 
 	withdrawStakingQueueClient, err := client.NewQueueClient(
-		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.WithdrawStakingQueueName,
+		cfg, client.WithdrawStakingQueueName,
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while creating WithdrawStakingQueueClient")
@@ -140,9 +140,6 @@ func startQueueMessageProcessing(
 						continue
 					}
 				} else {
-					// TODO: Below requeue is a workaround
-					// it need to be handled by https://github.com/babylonchain/staking-api-service/issues/38
-					time.Sleep(5 * time.Second)
 					err = queueClient.ReQueueMessage(ctx, message)
 					log.Ctx(ctx).Error().Err(err).Str("queueName", queueClient.GetQueueName()).
 						Str("receipt", message.Receipt).

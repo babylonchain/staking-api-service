@@ -51,7 +51,7 @@ func main() {
 		log.Fatal().Err(err).Msg("error while setting up staking services layer")
 	}
 	// Start the event queue processing
-	queues := queue.New(cfg.Queue, services)
+	queues := queue.New(&cfg.Queue, services)
 	queues.StartReceivingMessages()
 
 	apiServer, err := api.New(ctx, cfg, services)
