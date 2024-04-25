@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
@@ -51,7 +50,7 @@ func TestGlobalParams(t *testing.T) {
 
 	assert.Equal(t, uint64(3), result.CovenantQuorum)
 	assert.Equal(t, uint64(1000), result.UnbondingTime)
-	assert.Equal(t, btcutil.Amount(10000), result.UnbondingFee)
+	assert.Equal(t, uint64(10000), result.UnbondingFee)
 	assert.Equal(t, uint64(300000), result.MaxStakingAmount)
 	assert.Equal(t, uint64(3000), result.MinStakingAmount)
 	assert.Equal(t, uint64(10000), result.MaxStakingTime)

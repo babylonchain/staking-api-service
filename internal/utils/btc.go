@@ -100,10 +100,10 @@ func VerifyUnbondingRequest(
 		return fmt.Errorf("failed to decode finality provider public key from hex: %w", err)
 	}
 
-	expectedUnbondingOutputValue := btcutil.Amount(stakingValue) - params.UnbondingFee
+	expectedUnbondingOutputValue := btcutil.Amount(stakingValue) - btcutil.Amount(params.UnbondingFee)
 	if expectedUnbondingOutputValue <= 0 {
-		return fmt.Errorf("staking output value is too low, got %v, unbonding fee: %d",
-			btcutil.Amount(stakingValue), params.UnbondingFee)
+		return fmt.Errorf("staking output value is too low, got %v, unbonding fee: %v",
+			btcutil.Amount(stakingValue), btcutil.Amount(params.UnbondingFee))
 	}
 
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
