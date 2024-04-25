@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -40,4 +41,13 @@ func WrapWithSpan[Result any](ctx context.Context, name string, next func() (Res
 	}()
 
 	return next()
+}
+
+func AttachTracingIntoContext(ctx context.Context) context.Context {
+	// Attach traceId into context
+	traceID := uuid.New().String()
+	ctx = context.WithValue(ctx, TraceIdKey, traceID)
+
+	// Start tracingInfo
+	return context.WithValue(ctx, TracingInfoKey, &TracingInfo{})
 }
