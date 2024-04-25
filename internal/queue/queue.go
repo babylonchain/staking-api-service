@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/babylonchain/staking-api-service/internal/observability/tracing"
 	"github.com/babylonchain/staking-api-service/internal/queue/handlers"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-queue-client/client"
@@ -124,29 +125,32 @@ func startQueueMessageProcessing(
 		for message := range messagesChan {
 			// For each message, create a new context with a deadline or timeout
 			ctx, cancel := context.WithTimeout(context.Background(), processingTimeout)
-			err := handler(ctx, message.Body)
+			ctx = attachLoggerContext(ctx, message, queueClient)
+			// Attach the tracingInfo for the message processing
+			_, err := tracing.WrapWithSpan[any](ctx, "message_processing", func() (any, error) {
+				return nil, handler(ctx, message.Body)
+			})
 			if err != nil {
 				attempts := message.GetRetryAttempts()
 				// We will retry the message if it has not exceeded the max retry attempts
 				// otherwise, we will dump the message into db for manual inspection and remove from the queue
 				if attempts > maxRetryAttempts {
-					log.Ctx(ctx).Error().Err(err).Str("queueName", queueClient.GetQueueName()).
-						Str("receipt", message.Receipt).Msg("exceeded retry attempts, message will be dumped into db for manual inspection")
+					log.Ctx(ctx).Error().Err(err).
+						Msg("exceeded retry attempts, message will be dumped into db for manual inspection")
 					saveUnprocessableMsgErr := unprocessableHandler(ctx, message.Body, message.Receipt)
 					if saveUnprocessableMsgErr != nil {
-						log.Ctx(ctx).Error().Err(saveUnprocessableMsgErr).Str("queueName", queueClient.GetQueueName()).
-							Str("receipt", message.Receipt).Msg("error while saving unprocessable message")
+						log.Ctx(ctx).Error().Err(saveUnprocessableMsgErr).
+							Msg("error while saving unprocessable message")
 						cancel()
 						continue
 					}
 				} else {
 					err = queueClient.ReQueueMessage(ctx, message)
-					log.Ctx(ctx).Error().Err(err).Str("queueName", queueClient.GetQueueName()).
-						Str("receipt", message.Receipt).
+					log.Ctx(ctx).Error().Err(err).
 						Msg("error while processing message from queue, will be requeued")
 					if err != nil {
-						log.Ctx(ctx).Error().Err(err).Str("queueName", queueClient.GetQueueName()).
-							Str("receipt", message.Receipt).Msg("error while requeuing message")
+						log.Ctx(ctx).Error().Err(err).
+							Msg("error while requeuing message")
 					}
 					// TODO: Add metrics for failed message processing
 					cancel()
@@ -157,13 +161,31 @@ func startQueueMessageProcessing(
 			delErr := queueClient.DeleteMessage(message.Receipt)
 			if delErr != nil {
 				// TODO: Add metrics for failed message deletion
-				log.Ctx(ctx).Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).
-					Str("receipt", message.Receipt).Msg("error while deleting message from queue")
+				log.Ctx(ctx).Error().Err(delErr).
+					Msg("error while deleting message from queue")
 			}
+
+			tracingInfo := ctx.Value(tracing.TracingInfoKey)
+			logEvent := log.Ctx(ctx).Info()
+			if tracingInfo != nil {
+				logEvent = logEvent.Interface("tracingInfo", tracingInfo)
+			}
+			logEvent.Msg("message processed successfully")
 
 			// TODO: Add metrics for successful message processing
 			cancel()
 		}
 		log.Info().Str("queueName", queueClient.GetQueueName()).Msg("stopped receiving messages from queue")
 	}()
+}
+
+func attachLoggerContext(ctx context.Context, message client.QueueMessage, queueClient client.QueueClient) context.Context {
+	ctx = tracing.AttachTracingIntoContext(ctx)
+
+	traceId := ctx.Value(tracing.TraceIdKey)
+	return log.With().
+		Str("receipt", message.Receipt).
+		Str("queueName", queueClient.GetQueueName()).
+		Interface("traceId", traceId).
+		Logger().WithContext(ctx)
 }

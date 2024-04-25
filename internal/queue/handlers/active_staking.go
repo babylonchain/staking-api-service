@@ -66,6 +66,7 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		activeStakingEvent.StakingTxHex,
 	)
 	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to save active staking delegation")
 		return err
 	}
 
