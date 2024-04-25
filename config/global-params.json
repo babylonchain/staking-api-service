@@ -55,6 +55,7 @@
     ],
     "covenant_quorum": 3,
     "unbonding_time": 1000,
+    "unbonding_fee": 10000,
     "max_staking_amount": 300000,
     "min_staking_amount": 3000,
     "max_staking_time": 10000,

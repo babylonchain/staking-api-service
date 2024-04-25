@@ -12,6 +12,7 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
@@ -83,7 +84,7 @@ func VerifyUnbondingRequest(
 		)
 	}
 
-	// 3. validate that output commits to proper taproot script tree
+	// 3. verify that the unbonding output is constructed as expected
 	covenantPks, err := GetBtcPksFromStrings(params.CovenantPks)
 	if err != nil {
 		return fmt.Errorf("failed to decode coveant public keys from strings: %w", err)
@@ -99,25 +100,30 @@ func VerifyUnbondingRequest(
 		return fmt.Errorf("failed to decode finality provider public key from hex: %w", err)
 	}
 
-	expectedUnbondingOutput, err := btcstaking.BuildUnbondingInfo(
+	expectedUnbondingOutputValue := btcutil.Amount(stakingValue) - params.UnbondingFee
+	if expectedUnbondingOutputValue <= 0 {
+		return fmt.Errorf("staking output value is too low, got %v, unbonding fee: %d",
+			btcutil.Amount(stakingValue), params.UnbondingFee)
+	}
+
+	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		stakerPk,
 		[]*btcec.PublicKey{finalityProviderPk},
 		covenantPks,
 		uint32(params.CovenantQuorum),
 		uint16(params.UnbondingTime),
-		// unbondingAmount does not affect taproot script
-		0,
+		expectedUnbondingOutputValue,
 		btcNetParam,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to build unbonding info")
 	}
 
-	if !bytes.Equal(unbondingTx.TxOut[0].PkScript, expectedUnbondingOutput.UnbondingOutput.PkScript) {
-		return fmt.Errorf("invalid unbonding output script")
+	if !outputsAreEqual(unbondingInfo.UnbondingOutput, unbondingTx.TxOut[0]) {
+		return fmt.Errorf("unbonding output does not match expected output")
 	}
 
-	// 5. verify the signature
+	// 4. verify the signature
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		stakerPk,
 		[]*btcec.PublicKey{finalityProviderPk},
@@ -148,11 +154,19 @@ func VerifyUnbondingRequest(
 	); err != nil {
 		return fmt.Errorf("invalid unbonding signature")
 	}
-
-	// 6. validate that un-bonding output has most of the value of staking output
-	// TODO global parameter TBD
-
 	return nil
+}
+
+func outputsAreEqual(a *wire.TxOut, b *wire.TxOut) bool {
+	if a.Value != b.Value {
+		return false
+	}
+
+	if !bytes.Equal(a.PkScript, b.PkScript) {
+		return false
+	}
+
+	return true
 }
 
 func GetBtcNetParamesFromString(net string) (*chaincfg.Params, error) {
