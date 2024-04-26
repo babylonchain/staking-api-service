@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
 	queueClient "github.com/babylonchain/staking-queue-client/client"
@@ -12,13 +13,13 @@ import (
 // ActiveStakingHandler handles the active staking event
 // This handler is designed to be idempotent, capable of handling duplicate messages gracefully.
 // It can also resume from the next step if a previous step fails, ensuring robustness in the event processing workflow.
-func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody string) error {
+func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody string) *types.Error {
 	// Parse the message body into ActiveStakingEvent
 	var activeStakingEvent queueClient.ActiveStakingEvent
 	err := json.Unmarshal([]byte(messageBody), &activeStakingEvent)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to unmarshal the message body into ActiveStakingEvent")
-		return err
+		return types.NewError(http.StatusBadRequest, types.BadRequest, err)
 	}
 
 	// Check if delegation already exists
@@ -28,6 +29,8 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 	}
 	if exist {
 		// Ignore the message as the delegation already exists. This is a duplicate message
+		log.Ctx(ctx).Debug().Str("StakingTxHashHex", activeStakingEvent.StakingTxHashHex).
+			Msg("delegation already exists")
 		return nil
 	}
 
@@ -52,22 +55,20 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		types.ActiveTxType,
 	)
 	if expireCheckError != nil {
-		log.Ctx(ctx).Error().Err(expireCheckError).Msg("Failed to process expire check")
 		return expireCheckError
 	}
 
 	// Save the active staking delegation. This is the final step in the active staking event processing
 	// Please refer to the README.md for the details on the active staking event processing workflow
-	err = h.Services.SaveActiveStakingDelegation(
+	saveErr := h.Services.SaveActiveStakingDelegation(
 		ctx, activeStakingEvent.StakingTxHashHex, activeStakingEvent.StakerPkHex,
 		activeStakingEvent.FinalityProviderPkHex, activeStakingEvent.StakingValue,
 		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingStartTimestamp,
 		activeStakingEvent.StakingTimeLock, activeStakingEvent.StakingOutputIndex,
 		activeStakingEvent.StakingTxHex,
 	)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Failed to save active staking delegation")
-		return err
+	if saveErr != nil {
+		return saveErr
 	}
 
 	return nil

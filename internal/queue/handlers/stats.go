@@ -3,24 +3,25 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
 	queueClient "github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
 )
 
-func (h *QueueHandler) StatsHandler(ctx context.Context, messageBody string) error {
+func (h *QueueHandler) StatsHandler(ctx context.Context, messageBody string) *types.Error {
 	var statsEvent queueClient.StatsEvent
 	err := json.Unmarshal([]byte(messageBody), &statsEvent)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to unmarshal the message body into statsEvent")
-		return err
+		return types.NewError(http.StatusBadRequest, types.BadRequest, err)
 	}
 
 	state, err := types.FromStringToDelegationState(statsEvent.State)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to convert statsEvent.State to DelegationState")
-		return err
+		return types.NewError(http.StatusBadRequest, types.BadRequest, err)
 	}
 
 	// Perform the stats calculation

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/babylonchain/staking-api-service/internal/utils"
@@ -10,12 +11,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody string) error {
+func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody string) *types.Error {
 	var unbondingStakingEvent queueClient.UnbondingStakingEvent
 	err := json.Unmarshal([]byte(messageBody), &unbondingStakingEvent)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to unmarshal the message body into unbondingStakingEvent")
-		return err
+		return types.NewError(http.StatusBadRequest, types.BadRequest, err)
 	}
 
 	// Check if the delegation is in the right state to process the unbonding event
@@ -25,20 +26,21 @@ func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody 
 		return delErr
 	}
 	state := del.State
-	if utils.Contains[types.DelegationState](utils.OutdatedStatesForUnbonding(), state) {
+	if utils.Contains(utils.OutdatedStatesForUnbonding(), state) {
 		// Ignore the message as the delegation state already passed the unbonding state. This is an outdated duplication
+		log.Ctx(ctx).Debug().Str("StakingTxHashHex", unbondingStakingEvent.StakingTxHashHex).
+			Msg("delegation state is outdated for unbonding event")
 		return nil
 	}
 
-	err = h.Services.ProcessExpireCheck(
+	expireCheckErr := h.Services.ProcessExpireCheck(
 		ctx, unbondingStakingEvent.StakingTxHashHex,
 		unbondingStakingEvent.UnbondingStartHeight,
 		unbondingStakingEvent.UnbondingTimeLock,
 		types.UnbondingTxType,
 	)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Failed to process expire check")
-		return err
+	if expireCheckErr != nil {
+		return expireCheckErr
 	}
 
 	// Save the unbonding staking delegation. This is the final step in the unbonding staking event processing
@@ -49,7 +51,6 @@ func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody 
 		unbondingStakingEvent.UnbondingTxHex, unbondingStakingEvent.UnbondingStartTimestamp,
 	)
 	if transitionErr != nil {
-		log.Ctx(ctx).Err(transitionErr).Msg("Failed to transition to unbonding state")
 		return transitionErr
 	}
 

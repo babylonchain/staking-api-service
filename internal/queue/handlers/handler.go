@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/babylonchain/staking-api-service/internal/services"
+	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
 )
@@ -14,8 +15,8 @@ type QueueHandler struct {
 	emitStatsEvent func(ctx context.Context, messageBody string) error
 }
 
-type MessageHandler func(ctx context.Context, messageBody string) error
-type UnprocessableMessageHandler func(ctx context.Context, messageBody, receipt string) error
+type MessageHandler func(ctx context.Context, messageBody string) *types.Error
+type UnprocessableMessageHandler func(ctx context.Context, messageBody, receipt string) *types.Error
 
 func NewQueueHandler(
 	services *services.Services,
@@ -27,7 +28,7 @@ func NewQueueHandler(
 	}
 }
 
-func (qh *QueueHandler) HandleUnprocessedMessage(ctx context.Context, messageBody, receipt string) error {
+func (qh *QueueHandler) HandleUnprocessedMessage(ctx context.Context, messageBody, receipt string) *types.Error {
 	return qh.Services.SaveUnprocessableMessages(ctx, messageBody, receipt)
 }
 

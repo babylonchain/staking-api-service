@@ -44,7 +44,7 @@ func (s *Services) DoHealthCheck(ctx context.Context) error {
 	return s.DbClient.Ping(ctx)
 }
 
-func (s *Services) SaveUnprocessableMessages(ctx context.Context, messageBody, receipt string) error {
+func (s *Services) SaveUnprocessableMessages(ctx context.Context, messageBody, receipt string) *types.Error {
 	err := s.DbClient.SaveUnprocessableMessage(ctx, messageBody, receipt)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("error while saving unprocessable message")
