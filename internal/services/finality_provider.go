@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 	"net/http"
-	"sort"
 
+	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/rs/zerolog/log"
 )
@@ -17,43 +17,89 @@ type FpDescriptionPublic struct {
 	Details         string `json:"details"`
 }
 
-type FpDetailsPublic struct {
-	Description       FpDescriptionPublic `json:"description"`
-	Commission        string              `json:"commission"`
-	BtcPk             string              `json:"btc_pk"`
-	ActiveTvl         int64               `json:"active_tvl"`
-	TotalTvl          int64               `json:"total_tvl"`
-	ActiveDelegations int64               `json:"active_delegations"`
-	TotalDelegations  int64               `json:"total_delegations"`
+func EmptyFpDescriptionPublic() FpDescriptionPublic {
+	return FpDescriptionPublic{
+		Moniker:         "",
+		Identity:        "",
+		Website:         "",
+		SecurityContact: "",
+		Details:         "",
+	}
 }
 
-func (s *Services) GetActiveFinalityProviders(ctx context.Context) ([]FpDetailsPublic, *types.Error) {
+type FpDetailsPublic struct {
+	Description       *FpDescriptionPublic `json:"description"`
+	Commission        string               `json:"commission"`
+	BtcPk             string               `json:"btc_pk"`
+	ActiveTvl         int64                `json:"active_tvl"`
+	TotalTvl          int64                `json:"total_tvl"`
+	ActiveDelegations int64                `json:"active_delegations"`
+	TotalDelegations  int64                `json:"total_delegations"`
+}
+
+func (s *Services) GetFinalityProviders(ctx context.Context, page string) ([]FpDetailsPublic, string, *types.Error) {
 	fpParams := s.GetFinalityProvidersFromGlobalParams()
 	if len(fpParams) == 0 {
 		log.Ctx(ctx).Error().Msg("No finality providers found from global params")
-		return nil, types.NewErrorWithMsg(http.StatusInternalServerError, types.InternalServiceError, "No finality providers found from global params")
+		return nil, "", types.NewErrorWithMsg(http.StatusInternalServerError, types.InternalServiceError, "No finality providers found from global params")
 	}
-
-	var fpBtcPks []string
+	// Convert the fpParams slice to a map with the BtcPk as the key
+	fpParamsMap := make(map[string]*FpParamsPublic)
 	for _, fp := range fpParams {
-		fpBtcPks = append(fpBtcPks, fp.BtcPk)
+		fpParamsMap[fp.BtcPk] = &fp
 	}
 
-	finalityProviderStatsMap, err := s.DbClient.FindFinalityProviderStatsByPkHex(ctx, fpBtcPks)
+	resultMap, err := s.DbClient.FindFinalityProviderStats(ctx, page)
 	if err != nil {
+		if db.IsInvalidPaginationTokenError(err) {
+			log.Ctx(ctx).Warn().Err(err).Msg("Invalid pagination token when fetching finality providers")
+			return nil, "", types.NewError(http.StatusBadRequest, types.BadRequest, err)
+		}
 		// We don't want to return an error here in case of DB error.
 		// we will continue the process with the data we have from global params as a fallback.
+		// TODO: Add metric for this error and alerting
 		log.Ctx(ctx).Error().Err(err).Msg("Error while fetching finality providers from DB")
-		// TODO: Metric for this error and alerting
+		// Return the finality providers from global params as a fallback
+		return buildFallbackFpDetailsPublic(fpParams), "", nil
+	}
+	// If no finality providers are found in the DB,
+	// return the finality providers from global params as a fallback
+	if len(resultMap.Data) == 0 {
+		return buildFallbackFpDetailsPublic(fpParams), "", nil
 	}
 
 	var finalityProviderDetailsPublic []FpDetailsPublic
-
-	for _, fp := range fpParams {
-		// Default values being set for ActiveTvl, TotalTvl, ActiveDelegations, TotalDelegations
-		// This could happen if our system has never processed any staking tx events associated to this finality provider
+	for _, fp := range resultMap.Data {
+		var paramsPublic *FpParamsPublic
+		if fpParamsMap[fp.FinalityProviderPkHex] != nil {
+			paramsPublic = fpParamsMap[fp.FinalityProviderPkHex]
+		} else {
+			paramsPublic = &FpParamsPublic{
+				Description: EmptyFpDescriptionPublic(),
+				Commission:  "",
+				BtcPk:       fp.FinalityProviderPkHex,
+			}
+		}
 		detail := FpDetailsPublic{
-			Description:       fp.Description,
+			Description:       &paramsPublic.Description,
+			Commission:        paramsPublic.Commission,
+			BtcPk:             fp.FinalityProviderPkHex,
+			ActiveTvl:         fp.ActiveTvl,
+			TotalTvl:          fp.TotalTvl,
+			ActiveDelegations: fp.ActiveDelegations,
+			TotalDelegations:  fp.TotalDelegations,
+		}
+		finalityProviderDetailsPublic = append(finalityProviderDetailsPublic, detail)
+	}
+
+	return finalityProviderDetailsPublic, resultMap.PaginationToken, nil
+}
+
+func buildFallbackFpDetailsPublic(fpParams []FpParamsPublic) []FpDetailsPublic {
+	var finalityProviderDetailsPublic []FpDetailsPublic
+	for _, fp := range fpParams {
+		detail := FpDetailsPublic{
+			Description:       &fp.Description,
 			Commission:        fp.Commission,
 			BtcPk:             fp.BtcPk,
 			ActiveTvl:         0,
@@ -61,22 +107,7 @@ func (s *Services) GetActiveFinalityProviders(ctx context.Context) ([]FpDetailsP
 			ActiveDelegations: 0,
 			TotalDelegations:  0,
 		}
-
-		if finalityProvider, ok := finalityProviderStatsMap[fp.BtcPk]; ok {
-			detail.ActiveTvl = finalityProvider.ActiveTvl
-			detail.TotalTvl = finalityProvider.TotalTvl
-			detail.ActiveDelegations = finalityProvider.ActiveDelegations
-			detail.TotalDelegations = finalityProvider.TotalDelegations
-		} else if !ok {
-			log.Ctx(ctx).Warn().Str("btc_pk", fp.BtcPk).Msg("Finality provider not found in DB")
-		}
 		finalityProviderDetailsPublic = append(finalityProviderDetailsPublic, detail)
 	}
-
-	// Sort the finalityProviderDetailsPublic slice by ActiveTvl in descending order
-	sort.SliceStable(finalityProviderDetailsPublic, func(i, j int) bool {
-		return finalityProviderDetailsPublic[i].ActiveTvl > finalityProviderDetailsPublic[j].ActiveTvl
-	})
-
-	return finalityProviderDetailsPublic, nil
+	return finalityProviderDetailsPublic
 }

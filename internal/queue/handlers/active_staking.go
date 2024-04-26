@@ -31,16 +31,16 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		return nil
 	}
 
-	// Perform the async stats calculation
-	statsError := h.Services.ProcessStakingStatsCalculation(
-		ctx, activeStakingEvent.StakingTxHashHex,
+	// Perform the async stats calculation by emit the stats event
+	statsError := h.EmitStatsEvent(ctx, queueClient.NewStatsEvent(
+		activeStakingEvent.StakingTxHashHex,
 		activeStakingEvent.StakerPkHex,
 		activeStakingEvent.FinalityProviderPkHex,
-		types.Active,
 		activeStakingEvent.StakingValue,
-	)
+		types.Active.ToString(),
+	))
 	if statsError != nil {
-		log.Ctx(ctx).Error().Err(statsError).Msg("Failed to process staking stats calculation for active staking")
+		log.Ctx(ctx).Error().Err(statsError).Msg("Failed to emit stats event for active staking")
 		return statsError
 	}
 

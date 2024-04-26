@@ -58,13 +58,6 @@ func TestStatsShouldBeShardedInDb(t *testing.T) {
 	assert.Equal(t, int64(0), totalActiveDelegations)
 	assert.NotZero(t, totalTvl)
 	assert.Equal(t, int64(10), totalDelegations)
-
-	// We also check the finality provider stats, make sure it's sharded as well
-	shardedFinalityProviderStats, err := inspectDbDocuments[model.FinalityProviderStatsDocument](t, model.FinalityProviderStatsCollection)
-	if err != nil {
-		t.Fatalf("Failed to inspect DB documents: %v", err)
-	}
-	assert.Less(t, 10, len(shardedFinalityProviderStats), "we inserted 10 staking tx, we shall expect more than 10 in db as it's sharded")
 }
 
 func TestStatsCalculationShouldOnlyProcessActiveAndUnbondedEvents(t *testing.T) {
@@ -133,6 +126,7 @@ func TestStatsEndpoints(t *testing.T) {
 
 	// Test the finality endpoint first
 	result := fetchFinalityEndpoint(t, testServer)
+	assert.Equal(t, 1, len(result))
 	assert.Equal(t, int64(activeStakingEvent.StakingValue), result[0].ActiveTvl)
 	assert.Equal(t, int64(activeStakingEvent.StakingValue), result[0].TotalTvl)
 	assert.Equal(t, int64(1), result[0].ActiveDelegations)
@@ -162,6 +156,7 @@ func TestStatsEndpoints(t *testing.T) {
 
 	// Make a GET request to the finality providers endpoint
 	result = fetchFinalityEndpoint(t, testServer)
+	assert.Equal(t, 1, len(result))
 	assert.Equal(t, int64(0), result[0].ActiveTvl)
 	assert.Equal(t, int64(activeStakingEvent.StakingValue), result[0].TotalTvl)
 	assert.Equal(t, int64(0), result[0].ActiveDelegations)
@@ -186,6 +181,14 @@ func TestStatsEndpoints(t *testing.T) {
 	activeEvents := buildActiveStakingEvent(mockStakerHash, 2)
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeEvents)
 	time.Sleep(2 * time.Second)
+
+	// Make a GET request to the finality providers endpoint
+	finalityProviderStats := fetchFinalityEndpoint(t, testServer)
+	assert.Equal(t, 3, len(finalityProviderStats))
+	// Make sure sorted by active TVL
+	for i := 0; i < len(finalityProviderStats)-1; i++ {
+		assert.True(t, finalityProviderStats[i].ActiveTvl >= finalityProviderStats[i+1].ActiveTvl, "expected response body to be sorted")
+	}
 
 	overallStats = fetchOverallStatsEndpoint(t, testServer)
 

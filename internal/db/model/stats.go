@@ -1,10 +1,5 @@
 package model
 
-import (
-	"encoding/base64"
-	"encoding/json"
-)
-
 const (
 	StatsLockCollection             = "stats_lock"
 	OverallStatsCollection          = "overall_stats"
@@ -44,11 +39,28 @@ type OverallStatsDocument struct {
 }
 
 type FinalityProviderStatsDocument struct {
-	Id                string `bson:"_id"` // FinalityProviderPkHex:shard-number
-	ActiveTvl         int64  `bson:"active_tvl"`
-	TotalTvl          int64  `bson:"total_tvl"`
-	ActiveDelegations int64  `bson:"active_delegations"`
-	TotalDelegations  int64  `bson:"total_delegations"`
+	FinalityProviderPkHex string `bson:"_id"` // FinalityProviderPkHex
+	ActiveTvl             int64  `bson:"active_tvl"`
+	TotalTvl              int64  `bson:"total_tvl"`
+	ActiveDelegations     int64  `bson:"active_delegations"`
+	TotalDelegations      int64  `bson:"total_delegations"`
+}
+
+type FinalityProviderStatsPagination struct {
+	FinalityProviderPkHex string `json:"finality_provider_pk_hex"`
+	ActiveTvl             int64  `json:"active_tvl"`
+}
+
+func BuildFinalityProviderStatsPaginationToken(d FinalityProviderStatsDocument) (string, error) {
+	page := FinalityProviderStatsPagination{
+		ActiveTvl:             d.ActiveTvl,
+		FinalityProviderPkHex: d.FinalityProviderPkHex,
+	}
+	token, err := GetPaginationToken(page)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
 type StakerStatsDocument struct {
@@ -66,33 +78,12 @@ type StakerStatsByStakerPagination struct {
 	ActiveTvl   int64  `json:"active_tvl"`
 }
 
-func DecodeStakerStatsByStakerPaginationToken(token string) (*StakerStatsByStakerPagination, error) {
-	tokenBytes, err := base64.URLEncoding.DecodeString(token)
-	if err != nil {
-		return nil, err
-	}
-	var d StakerStatsByStakerPagination
-	err = json.Unmarshal(tokenBytes, &d)
-	if err != nil {
-		return nil, err
-	}
-	return &d, nil
-}
-
-func (d *StakerStatsByStakerPagination) GetPaginationToken() (string, error) {
-	tokenBytes, err := json.Marshal(d)
-	if err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(tokenBytes), nil
-}
-
 func BuildStakerStatsByStakerPaginationToken(d StakerStatsDocument) (string, error) {
-	page := &StakerStatsByStakerPagination{
+	page := StakerStatsByStakerPagination{
 		StakerPkHex: d.StakerPkHex,
 		ActiveTvl:   d.ActiveTvl,
 	}
-	token, err := page.GetPaginationToken()
+	token, err := GetPaginationToken(page)
 	if err != nil {
 		return "", err
 	}

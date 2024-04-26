@@ -89,8 +89,8 @@ github.com/aws/aws-sdk-go v1.44.312/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/babylonchain/babylon v0.8.6-0.20240426101001-7778c798e236 h1:Ydna4VcP56xu1+zdgygqHdSCeMduZjuznVhr4exO5do=
 github.com/babylonchain/babylon v0.8.6-0.20240426101001-7778c798e236/go.mod h1:lfeASLNJgcUsX7LEns3HRUv0k+MjzcB2q2AMasfz38M=
-github.com/babylonchain/staking-queue-client v0.0.0-20240424061128-3ac950ef5f27 h1:qVf88e5VrG4Rq1AZm188h3alXwB4d0YYs0eyHo+9BWw=
-github.com/babylonchain/staking-queue-client v0.0.0-20240424061128-3ac950ef5f27/go.mod h1:mEgA6N3SnwFwGEOsUYr/HdjpKa13Wck08MS7VY/Icvo=
+github.com/babylonchain/staking-queue-client v0.0.0-20240426081310-59f3af4f7fa9 h1:O5TwaV7Jqsuzre6z5U+q/3iKnfk6f49euq2QzwcAHLY=
+github.com/babylonchain/staking-queue-client v0.0.0-20240426081310-59f3af4f7fa9/go.mod h1:mEgA6N3SnwFwGEOsUYr/HdjpKa13Wck08MS7VY/Icvo=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=

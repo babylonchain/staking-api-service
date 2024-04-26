@@ -78,29 +78,29 @@ func (_m *DBClient) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 	return r0, r1
 }
 
-// FindFinalityProviderStatsByPkHex provides a mock function with given fields: ctx, pkHex
-func (_m *DBClient) FindFinalityProviderStatsByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderStatsDocument, error) {
-	ret := _m.Called(ctx, pkHex)
+// FindFinalityProviderStats provides a mock function with given fields: ctx, paginationToken
+func (_m *DBClient) FindFinalityProviderStats(ctx context.Context, paginationToken string) (*db.DbResultMap[model.FinalityProviderStatsDocument], error) {
+	ret := _m.Called(ctx, paginationToken)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindFinalityProviderStatsByPkHex")
+		panic("no return value specified for FindFinalityProviderStats")
 	}
 
-	var r0 map[string]model.FinalityProviderStatsDocument
+	var r0 *db.DbResultMap[model.FinalityProviderStatsDocument]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []string) (map[string]model.FinalityProviderStatsDocument, error)); ok {
-		return rf(ctx, pkHex)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.DbResultMap[model.FinalityProviderStatsDocument], error)); ok {
+		return rf(ctx, paginationToken)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []string) map[string]model.FinalityProviderStatsDocument); ok {
-		r0 = rf(ctx, pkHex)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.DbResultMap[model.FinalityProviderStatsDocument]); ok {
+		r0 = rf(ctx, paginationToken)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]model.FinalityProviderStatsDocument)
+			r0 = ret.Get(0).(*db.DbResultMap[model.FinalityProviderStatsDocument])
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
-		r1 = rf(ctx, pkHex)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, paginationToken)
 	} else {
 		r1 = ret.Error(1)
 	}

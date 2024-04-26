@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"strings"
 
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/types"
@@ -247,60 +246,41 @@ func (db *Database) SubtractFinalityProviderStats(
 	return db.updateFinalityProviderStats(ctx, types.Unbonded.ToString(), stakingTxHashHex, fpPkHex, upsertUpdate)
 }
 
-// FindFinalityProviderStatsByPkHex finds the finality provider stats for the given finality provider pk hex
-// This method queries all the shards and sums up the stats
-// Refer to the README.md in this directory for more information on the sharding logic
-func (db *Database) FindFinalityProviderStatsByPkHex(ctx context.Context, pkHex []string) (map[string]model.FinalityProviderStatsDocument, error) {
+// FindFinalityProviderStats fetches the finality provider stats from the database
+func (db *Database) FindFinalityProviderStats(ctx context.Context, paginationToken string) (*DbResultMap[model.FinalityProviderStatsDocument], error) {
 	client := db.Client.Database(db.DbName).Collection(model.FinalityProviderStatsCollection)
-	finalityProvidersMap := make(map[string]model.FinalityProviderStatsDocument)
+	options := options.Find().SetSort(bson.D{{Key: "active_tvl", Value: -1}}) // Sorting in descending order
+	options.SetLimit(db.cfg.MaxPaginationLimit)
+	var filter bson.M
 
-	batchSize := int(db.cfg.DbBatchSizeLimit)
-	for i := 0; i < len(pkHex); i += batchSize {
-		end := i + batchSize
-		if end > len(pkHex) {
-			end = len(pkHex)
-		}
-		batch := pkHex[i:end]
-
-		filter := bson.M{"_id": bson.M{"$in": db.getAllShardedFinalityProviderId(batch)}}
-		cursor, err := client.Find(ctx, filter)
+	// Decode the pagination token first if it exist
+	if paginationToken != "" {
+		decodedToken, err := model.DecodePaginationToken[model.FinalityProviderStatsPagination](paginationToken)
 		if err != nil {
-			return nil, err
-		}
-
-		var shardedFinalityProvidersStats []model.FinalityProviderStatsDocument
-		if err = cursor.All(ctx, &shardedFinalityProvidersStats); err != nil {
-			cursor.Close(ctx)
-			return nil, err
-		}
-		cursor.Close(ctx)
-
-		// Sum up the stats for the finality provider
-		for _, fp := range shardedFinalityProvidersStats {
-			// Retrieve the finality provider pk hex from the id.
-			fpPkHex, err := extractFinalityProviderPkHexFromStatsId(fp.Id)
-			if err != nil {
-				return nil, err
+			return nil, &InvalidPaginationTokenError{
+				Message: "Invalid pagination token",
 			}
-			if existingFp, ok := finalityProvidersMap[fpPkHex]; ok {
-				existingFp.ActiveTvl += fp.ActiveTvl
-				existingFp.TotalTvl += fp.TotalTvl
-				existingFp.ActiveDelegations += fp.ActiveDelegations
-				existingFp.TotalDelegations += fp.TotalDelegations
-
-				finalityProvidersMap[fpPkHex] = existingFp
-			} else {
-				finalityProvidersMap[fpPkHex] = model.FinalityProviderStatsDocument{
-					ActiveTvl:         fp.ActiveTvl,
-					TotalTvl:          fp.TotalTvl,
-					ActiveDelegations: fp.ActiveDelegations,
-					TotalDelegations:  fp.TotalDelegations,
-				}
-			}
+		}
+		filter = bson.M{
+			"$or": []bson.M{
+				{"active_tvl": bson.M{"$lt": decodedToken.ActiveTvl}},
+				{"active_tvl": decodedToken.ActiveTvl, "_id": bson.M{"$lt": decodedToken.FinalityProviderPkHex}},
+			},
 		}
 	}
 
-	return finalityProvidersMap, nil
+	cursor, err := client.Find(ctx, filter, options)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var delegations []model.FinalityProviderStatsDocument
+	if err = cursor.All(ctx, &delegations); err != nil {
+		return nil, err
+	}
+
+	return toResultMapWithPaginationToken(db.cfg, delegations, model.BuildFinalityProviderStatsPaginationToken)
 }
 
 func (db *Database) updateFinalityProviderStats(ctx context.Context, state, stakingTxHashHex, fpPkHex string, upsertUpdate primitive.M) error {
@@ -319,7 +299,7 @@ func (db *Database) updateFinalityProviderStats(ctx context.Context, state, stak
 			return nil, err
 		}
 
-		upsertFilter := bson.M{"_id": db.generateFinalityProviderStatsId(fpPkHex)}
+		upsertFilter := bson.M{"_id": fpPkHex}
 
 		_, err = client.UpdateOne(sessCtx, upsertFilter, upsertUpdate, options.Update().SetUpsert(true))
 		if err != nil {
@@ -335,33 +315,6 @@ func (db *Database) updateFinalityProviderStats(ctx context.Context, state, stak
 	}
 
 	return nil
-}
-
-// Genrate the id for the finality provider stats document.
-// Id is a combination of finality provider pk hex and a random number ranged from 0-LogicalShardCount
-// This is designed to avoid locking the same field during concurrent writes
-func (db *Database) generateFinalityProviderStatsId(finalityProviderPkHex string) string {
-	randomShardNum := uint64(rand.Intn(int(db.cfg.LogicalShardCount)))
-	return fmt.Sprintf("%s:%d", finalityProviderPkHex, randomShardNum)
-}
-
-func extractFinalityProviderPkHexFromStatsId(id string) (string, error) {
-	parts := strings.Split(id, ":")
-	if len(parts) != 2 {
-		return "", fmt.Errorf("invalid id format: %s", id)
-	}
-	return parts[0], nil
-}
-
-// Get the finality provider stats document id for all the shards
-func (db *Database) getAllShardedFinalityProviderId(finalityProviderPkHex []string) []string {
-	var ids []string
-	for _, fpPkHex := range finalityProviderPkHex {
-		for i := 0; i < int(db.cfg.LogicalShardCount); i++ {
-			ids = append(ids, fmt.Sprintf("%s:%d", fpPkHex, i))
-		}
-	}
-	return ids
 }
 
 // IncrementStakerStats increments the staker stats for the given staking tx hash
@@ -432,7 +385,7 @@ func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken str
 	var filter bson.M
 	// Decode the pagination token first if it exist
 	if paginationToken != "" {
-		decodedToken, err := model.DecodeStakerStatsByStakerPaginationToken(paginationToken)
+		decodedToken, err := model.DecodePaginationToken[model.StakerStatsByStakerPagination](paginationToken)
 		if err != nil {
 			return nil, &InvalidPaginationTokenError{
 				Message: "Invalid pagination token",

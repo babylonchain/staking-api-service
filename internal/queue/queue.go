@@ -20,6 +20,7 @@ type Queues struct {
 	ExpiredStakingQueueClient   client.QueueClient
 	UnbondingStakingQueueClient client.QueueClient
 	WithdrawStakingQueueClient  client.QueueClient
+	StatsQueueClient            client.QueueClient
 }
 
 func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
@@ -51,7 +52,14 @@ func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
 		log.Fatal().Err(err).Msg("error while creating WithdrawStakingQueueClient")
 	}
 
-	handlers := handlers.NewQueueHandler(service)
+	statsQueueClient, err := client.NewQueueClient(
+		cfg, client.StakingStatsQueueName,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while creating StatsQueueClient")
+	}
+
+	handlers := handlers.NewQueueHandler(service, statsQueueClient.SendMessage)
 	return &Queues{
 		Handlers:                    handlers,
 		processingTimeout:           time.Duration(cfg.QueueProcessingTimeout) * time.Second,
@@ -60,6 +68,7 @@ func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
 		ExpiredStakingQueueClient:   expiredStakingQueueClient,
 		UnbondingStakingQueueClient: unbondingStakingQueueClient,
 		WithdrawStakingQueueClient:  withdrawStakingQueueClient,
+		StatsQueueClient:            statsQueueClient,
 	}
 }
 
@@ -86,6 +95,11 @@ func (q *Queues) StartReceivingMessages() {
 		q.Handlers.WithdrawStakingHandler, q.Handlers.HandleUnprocessedMessage,
 		q.maxRetryAttempts, q.processingTimeout,
 	)
+	startQueueMessageProcessing(
+		q.StatsQueueClient,
+		q.Handlers.StatsHandler, q.Handlers.HandleUnprocessedMessage,
+		q.maxRetryAttempts, q.processingTimeout,
+	)
 	// ...add more queues here
 }
 
@@ -106,6 +120,10 @@ func (q *Queues) StopReceivingMessages() {
 	withdrawnQueueErr := q.WithdrawStakingQueueClient.Stop()
 	if withdrawnQueueErr != nil {
 		log.Error().Err(withdrawnQueueErr).Str("queueName", q.WithdrawStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+	}
+	statsQueueErr := q.StatsQueueClient.Stop()
+	if statsQueueErr != nil {
+		log.Error().Err(statsQueueErr).Str("queueName", q.StatsQueueClient.GetQueueName()).Msg("error while stopping queue")
 	}
 	// ...add more queues here
 }
