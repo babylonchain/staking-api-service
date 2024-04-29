@@ -425,6 +425,9 @@ const docTemplate = `{
                 "unbonding_time": {
                     "type": "integer"
                 }
+                "unbonding_fee": {
+                    "type": "integer"
+                }
             }
         },
         "services.OverallStatsPublic": {
