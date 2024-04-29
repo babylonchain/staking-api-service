@@ -191,7 +191,7 @@ jobs:
           command: |
             PVC_MANIFEST=/home/circleci/project/.circleci/pvc-mongodb.yaml
             SNAPSHOT_DATE=$(date -d "yesterday" +"%Y%m%d")
-            SNAPSHOT_NAME=datadir-mongodb-0-mongodb-daily-${SNAPSHOT_DATE}1200
+            SNAPSHOT_NAME=datadir-mongodb-0-mongodb-staking-api-daily-${SNAPSHOT_DATE}1200
             sed -i "s/REPLACEME/$SNAPSHOT_NAME/g" $PVC_MANIFEST
             kubectl apply -f $PVC_MANIFEST
       - run:
