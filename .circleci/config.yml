@@ -223,9 +223,9 @@ workflows:
           filters:
             tags:
               only: /.*/
-            branches:
-              only:
-                - main
+            # branches:
+            #   only:
+            #     - main
       - deploy_mainnet:
           requires:
             - push_docker
