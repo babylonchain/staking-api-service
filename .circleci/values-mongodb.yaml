@@ -1,5 +1,5 @@
 nodeSelector:
-  workload: "mongodb"
+  workload: "staging"
 arbiter:
   enabled: false
 global:
