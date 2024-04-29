@@ -124,6 +124,91 @@ jobs:
               --set deployment.version=$CIRCLE_SHA1 \
               staking-api-service $HELM_CHART_REPO
 
+  deploy_staging:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      resource_class: large
+    steps:
+      - checkout
+      - aws-ecr/ecr-login:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          region: "$AWS_REGION"
+      - kubernetes/install-kubeconfig:
+          kubeconfig: MAINNET_KUBECONFIG
+      - helm/install-helm-client
+      - run:
+          name: Fetch and replace RabbitMQ credentials from CircleCi env vars
+          command: |
+            HELM_VALUES=/home/circleci/project/.circleci/values-staging.yaml
+            sed -i "s/USER/$RABBITMQ_USER_STAGING/g" $HELM_VALUES
+            sed -i "s/PASSWORD/$RABBITMQ_PASSWORD_STAGING/g" $HELM_VALUES
+      - run:
+          name: Perform a dry run of the new release
+          command: |
+            helm upgrade --install --debug --dry-run \
+              -n $DEPLOY_STAGING_NAMESPACE \
+              --values /home/circleci/project/.circleci/values-staging.yaml \
+              --version $HELM_CHART_VERSION \
+              --set deployment.version=$CIRCLE_SHA1 \
+              staking-api-service $HELM_CHART_REPO
+      - run:
+          name: Release new service version in an atomic way
+          command: |
+            helm upgrade --install --debug --atomic --wait \
+              -n $DEPLOY_STAGING_NAMESPACE --create-namespace \
+              --values /home/circleci/project/.circleci/values-staging.yaml \
+              --version $HELM_CHART_VERSION \
+              --set deployment.version=$CIRCLE_SHA1 \
+              staking-api-service $HELM_CHART_REPO
+
+  redeploy_staging_mongodb:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      resource_class: large
+    steps:
+      - checkout
+      - aws-ecr/ecr-login:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          region: "$AWS_REGION"
+      - kubernetes/install-kubeconfig:
+          kubeconfig: MAINNET_KUBECONFIG
+      - kubernetes/install-kubectl
+      - helm/install-helm-client
+      - run:
+          name: Tear down staging MongoDB and data
+          command: |
+            if [ -n "$(helm ls --all --short -n $MONGODB_STAGING_NAMESPACE | grep mongodb-staging)" ]
+            then
+              helm uninstall --wait --debug \
+                -n $MONGODB_STAGING_NAMESPACE mongodb-staging
+              kubectl delete pvc --wait \
+                datadir-mongodb-staging-0 -n $MONGODB_STAGING_NAMESPACE
+            fi
+      - run:
+          name: Clone production data from latest MongoDB primary node dump
+          command: |
+            PVC_MANIFEST=/home/circleci/project/.circleci/pvc-mongodb.yaml
+            SNAPSHOT_DATE=$(date -d "yesterday" +"%Y%m%d")
+            SNAPSHOT_NAME=datadir-mongodb-0-mongodb-staking-api-daily-${SNAPSHOT_DATE}1200
+            sed -i "s/REPLACEME/$SNAPSHOT_NAME/g" $PVC_MANIFEST
+            kubectl apply -f $PVC_MANIFEST
+      - run:
+          name: Boot standalone staging mongodb cluster with production data
+          command: |
+            helm upgrade --install --debug --atomic --wait \
+              -n $MONGODB_STAGING_NAMESPACE --create-namespace \
+              --values /home/circleci/project/.circleci/values-mongodb.yaml \
+              --version $MONGODB_HELM_CHART_VERSION \
+              mongodb-staging $MONGODB_HELM_CHART_REPO
+      - run:
+          name: Overwrite the existing replica set configuration
+          command: |
+            sleep 10s
+            kubectl exec mongodb-staging-0 -n $MONGODB_STAGING_NAMESPACE \
+            -- mongosh \
+            --eval "rs.reconfig({'_id': 'rs0', 'members': [{'_id': 0, 'host': 'mongodb-staging-0.mongodb-staging-headless.mongodb-staking-api.svc.cluster.local:27017', 'priority': 10}]}, {force: true})"
 workflows:
   CICD:
     jobs:
@@ -142,6 +227,24 @@ workflows:
               only:
                 - main
       - deploy_mainnet:
+          requires:
+            - push_docker
+            - build_lint_tests
+          filters:
+            branches:
+              only:
+                - main
+                - dev
+      - deploy_staging:
+          requires:
+            - push_docker
+            - build_lint_tests
+          filters:
+            branches:
+              only:
+                - main
+                - dev
+      - redeploy_staging_mongodb:
           requires:
             - push_docker
             - build_lint_tests

@@ -1,0 +1,17 @@
+nodeSelector:
+  workload: "staging"
+arbiter:
+  enabled: false
+global:
+  storageClass: ebs-sc
+architecture: replicaset
+replicaCount: 1
+persistence:
+  size: 100Gi
+auth:
+  enabled: false
+metrics:
+  enabled: false
+persistentVolumeClaimRetentionPolicy:
+  enabled: true
+  whenDeleted: Delete
