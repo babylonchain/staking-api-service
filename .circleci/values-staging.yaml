@@ -55,9 +55,9 @@ service:
       name: prom
 ingress:
   enabled: true
-  groupName: "mainnet-internal"
+  groupName: "mainnet-public"
   tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/2c6cb5ad-8899-4871-9206-ea8e978aebae
-  scheme: "internal"
+  scheme: "internet-facing"
   hosts:
     - host: staking-api-staging.mainnet.babylonchain.io
       http:
