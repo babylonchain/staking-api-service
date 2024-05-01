@@ -12,7 +12,7 @@ type GlobalParamsPublic struct {
 	FinalityProviders []FpParamsPublic `json:"finality_providers"`
 	CovenantQuorum    uint64           `json:"covenant_quorum"`
 	UnbondingTime     uint64           `json:"unbonding_time"`
-	UnbondingFee      uint64           `jsong:"unbonding_fee"`
+	UnbondingFee      uint64           `json:"unbonding_fee"`
 	MaxStakingAmount  uint64           `json:"max_staking_amount"`
 	MinStakingAmount  uint64           `json:"min_staking_amount"`
 	MaxStakingTime    uint64           `json:"max_staking_time"`
