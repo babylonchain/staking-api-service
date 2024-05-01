@@ -30,7 +30,7 @@ deployment:
     prometheus.io/port: "2112"
     prometheus.io/scheme: http
     prometheus.io/scrape: "true"
-    configmap.reloader.stakater.com/reload: "staking-api-service"
+    configmap.reloader.stakater.com/reload: "staking-api-service,phase1-global-config"
   nodeSelector:
     workload: "staging"
   affinity:
