@@ -5,7 +5,10 @@ import (
 	"os"
 )
 
-type GlobalParams struct {
+type VersionedGlobalParams struct {
+	Version          uint64   `json:"version"`
+	ActivationHeight uint64   `json:"activation_height"`
+	StakingCap       uint64   `json:"staking_cap"`
 	Tag              string   `json:"tag"`
 	CovenantPks      []string `json:"covenant_pks"`
 	CovenantQuorum   uint64   `json:"covenant_quorum"`
@@ -15,6 +18,10 @@ type GlobalParams struct {
 	MinStakingAmount uint64   `json:"min_staking_amount"`
 	MaxStakingTime   uint64   `json:"max_staking_time"`
 	MinStakingTime   uint64   `json:"min_staking_time"`
+}
+
+type GlobalParams struct {
+	Versions []VersionedGlobalParams `json:"versions"`
 }
 
 func NewGlobalParams(filePath string) (*GlobalParams, error) {

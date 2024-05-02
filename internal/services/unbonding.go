@@ -31,6 +31,15 @@ func (s *Services) UnbondDelegation(ctx context.Context, stakingTxHashHex, unbon
 		return types.NewErrorWithMsg(http.StatusForbidden, types.Forbidden, "delegation state is not active")
 	}
 
+	versionedParams := s.GetVersionedGlobalParamsByHeight(delegationDoc.StakingTx.StartHeight)
+	if versionedParams == nil {
+		log.Ctx(ctx).Error().Msg("failed to get global params")
+		return types.NewErrorWithMsg(
+			http.StatusInternalServerError, types.InternalServiceError,
+			"failed to get global params based on the staking tx height",
+		)
+	}
+
 	// 2. verify the unbonding request
 	if err := utils.VerifyUnbondingRequest(
 		delegationDoc.StakingTxHashHex,
@@ -41,7 +50,7 @@ func (s *Services) UnbondDelegation(ctx context.Context, stakingTxHashHex, unbon
 		delegationDoc.StakingTx.TimeLock,
 		delegationDoc.StakingTx.OutputIndex,
 		delegationDoc.StakingValue,
-		s.params,
+		versionedParams,
 		s.cfg.Server.BTCNetParam,
 	); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msg("did not pass unbonding request verification")

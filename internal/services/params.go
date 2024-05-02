@@ -1,6 +1,15 @@
 package services
 
-type GlobalParamsPublic struct {
+import (
+	"sort"
+
+	"github.com/babylonchain/staking-api-service/internal/types"
+)
+
+type VersionedGlobalParamsPublic struct {
+	Version          uint64   `json:"version"`
+	ActivationHeight uint64   `json:"activation_height"`
+	StakingCap       uint64   `json:"staking_cap"`
 	Tag              string   `json:"tag"`
 	CovenantPks      []string `json:"covenant_pks"`
 	CovenantQuorum   uint64   `json:"covenant_quorum"`
@@ -12,16 +21,48 @@ type GlobalParamsPublic struct {
 	MinStakingTime   uint64   `json:"min_staking_time"`
 }
 
+type GlobalParamsPublic struct {
+	Versions []VersionedGlobalParamsPublic `json:"versions"`
+}
+
 func (s *Services) GetGlobalParamsPublic() *GlobalParamsPublic {
-	return &GlobalParamsPublic{
-		Tag:              s.params.Tag,
-		CovenantPks:      s.params.CovenantPks,
-		CovenantQuorum:   s.params.CovenantQuorum,
-		UnbondingTime:    s.params.UnbondingTime,
-		UnbondingFee:     s.params.UnbondingFee,
-		MaxStakingAmount: s.params.MaxStakingAmount,
-		MinStakingAmount: s.params.MinStakingAmount,
-		MaxStakingTime:   s.params.MaxStakingTime,
-		MinStakingTime:   s.params.MinStakingTime,
+	var versionedParams []VersionedGlobalParamsPublic
+	for _, version := range s.params.Versions {
+		versionedParams = append(versionedParams, VersionedGlobalParamsPublic{
+			Version:          version.Version,
+			ActivationHeight: version.ActivationHeight,
+			StakingCap:       version.StakingCap,
+			Tag:              version.Tag,
+			CovenantPks:      version.CovenantPks,
+			CovenantQuorum:   version.CovenantQuorum,
+			UnbondingTime:    version.UnbondingTime,
+			UnbondingFee:     version.UnbondingFee,
+			MaxStakingAmount: version.MaxStakingAmount,
+			MinStakingAmount: version.MinStakingAmount,
+			MaxStakingTime:   version.MaxStakingTime,
+			MinStakingTime:   version.MinStakingTime,
+		})
 	}
+	return &GlobalParamsPublic{
+		Versions: versionedParams,
+	}
+}
+
+func (s *Services) GetVersionedGlobalParamsByHeight(height uint64) *types.VersionedGlobalParams {
+	// The method try to find the params by height to the cloest activation height.
+
+	sortedGlobalParams := s.params.Versions
+	// Sort the versions by activation height from high to low
+	sort.Slice(sortedGlobalParams, func(i, j int) bool {
+		return sortedGlobalParams[i].ActivationHeight > sortedGlobalParams[j].ActivationHeight
+	})
+
+	// Find the version by height
+	for _, version := range sortedGlobalParams {
+		if version.ActivationHeight <= height {
+			return &version
+		}
+	}
+
+	return nil
 }
