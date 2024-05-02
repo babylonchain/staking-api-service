@@ -275,12 +275,12 @@ func (db *Database) FindFinalityProviderStats(ctx context.Context, paginationTok
 	}
 	defer cursor.Close(ctx)
 
-	var delegations []model.FinalityProviderStatsDocument
-	if err = cursor.All(ctx, &delegations); err != nil {
+	var finalityProviders []model.FinalityProviderStatsDocument
+	if err = cursor.All(ctx, &finalityProviders); err != nil {
 		return nil, err
 	}
 
-	return toResultMapWithPaginationToken(db.cfg, delegations, model.BuildFinalityProviderStatsPaginationToken)
+	return toResultMapWithPaginationToken(db.cfg, finalityProviders, model.BuildFinalityProviderStatsPaginationToken)
 }
 
 func (db *Database) updateFinalityProviderStats(ctx context.Context, state, stakingTxHashHex, fpPkHex string, upsertUpdate primitive.M) error {
