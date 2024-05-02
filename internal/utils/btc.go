@@ -152,10 +152,9 @@ func VerifyUnbondingRequest(
 	if err != nil {
 		return fmt.Errorf("failed to build unbonding path spend info")
 	}
-	if err := btcstaking.VerifyTransactionSigWithOutputData(
+	if err := btcstaking.VerifyTransactionSigWithOutput(
 		unbondingTx,
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		unbondingSpendInfo.GetPkScriptPath(),
 		stakerPk,
 		sigBytes,
