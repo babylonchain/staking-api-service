@@ -5,6 +5,7 @@ set -x
 BINARY=${BINARY:-/bin/staking-api-service}
 CONFIG=${CONFIG:-/home/staking-api-service/config.yml}
 PARAMS=${PARAMS:-/home/staking-api-service/global-params.json}
+FINALITY_PROVIDERS=${PARAMS:-/home/staking-api-service/finality-providers.json}
 
 if ! [ -f "${BINARY}" ]; then
 	echo "The binary $(basename "${BINARY}") cannot be found."
@@ -21,4 +22,9 @@ if ! [ -f "${PARAMS}" ]; then
 	exit 1
 fi
 
-$BINARY --config "$CONFIG" --params "$PARAMS" 2>&1
+if ! [ -f "${FINALITY_PROVIDERS}" ]; then
+	echo "The finality providers file $(basename "${FINALITY_PROVIDERS}") cannot be found. Please add the finality providers file to the shared folder. Use the FINALITY_PROVIDERS environment variable if the name of the finality providers file is not 'finality-providers.json'"
+	exit 1
+fi
+
+$BINARY --config "$CONFIG" --params "$PARAMS" --finality_providers "$FINALITY_PROVIDERS" 2>&1

@@ -43,10 +43,6 @@ func TestGlobalParams(t *testing.T) {
 	assert.NotEmpty(t, result, "expected response body to be non-empty")
 	assert.Equal(t, "bbt4", result.Tag)
 	assert.Equal(t, 5, len(result.CovenantPks))
-	assert.Equal(t, 4, len(result.FinalityProviders))
-	assert.Equal(t, "Babylon Foundation 2", result.FinalityProviders[2].Description.Moniker)
-	assert.Equal(t, "0.060000000000000000", result.FinalityProviders[1].Commission)
-	assert.Equal(t, "0d2f9728abc45c0cdeefdd73f52a0e0102470e35fb689fc5bc681959a61b021f", result.FinalityProviders[3].BtcPk)
 
 	assert.Equal(t, uint64(3), result.CovenantQuorum)
 	assert.Equal(t, uint64(1000), result.UnbondingTime)

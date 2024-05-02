@@ -111,15 +111,6 @@ definitions:
       total_tvl:
         type: integer
     type: object
-  services.FpParamsPublic:
-    properties:
-      btc_pk:
-        type: string
-      commission:
-        type: string
-      description:
-        $ref: '#/definitions/services.FpDescriptionPublic'
-    type: object
   services.GlobalParamsPublic:
     properties:
       covenant_pks:
@@ -128,10 +119,6 @@ definitions:
         type: array
       covenant_quorum:
         type: integer
-      finality_providers:
-        items:
-          $ref: '#/definitions/services.FpParamsPublic'
-        type: array
       max_staking_amount:
         type: integer
       max_staking_time:
@@ -142,6 +129,8 @@ definitions:
         type: integer
       tag:
         type: string
+      unbonding_fee:
+        type: integer
       unbonding_time:
         type: integer
     type: object

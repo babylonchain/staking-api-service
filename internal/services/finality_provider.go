@@ -37,6 +37,33 @@ type FpDetailsPublic struct {
 	TotalDelegations  int64                `json:"total_delegations"`
 }
 
+type FpParamsPublic struct {
+	Description FpDescriptionPublic `json:"description"`
+	Commission  string              `json:"commission"`
+	BtcPk       string              `json:"btc_pk"`
+}
+
+// GetFinalityProvidersFromGlobalParams returns the finality providers from the global params.
+// Those FP are treated as "active" finality providers.
+func (s *Services) GetFinalityProvidersFromGlobalParams() []FpParamsPublic {
+	var fpDetails []FpParamsPublic
+	for _, finalityProvider := range s.finalityProviders {
+		description := FpDescriptionPublic{
+			Moniker:         finalityProvider.Description.Moniker,
+			Identity:        finalityProvider.Description.Identity,
+			Website:         finalityProvider.Description.Website,
+			SecurityContact: finalityProvider.Description.SecurityContact,
+			Details:         finalityProvider.Description.Details,
+		}
+		fpDetails = append(fpDetails, FpParamsPublic{
+			Description: description,
+			Commission:  finalityProvider.Commission,
+			BtcPk:       finalityProvider.BtcPk,
+		})
+	}
+	return fpDetails
+}
+
 func (s *Services) GetFinalityProviders(ctx context.Context, page string) ([]FpDetailsPublic, string, *types.Error) {
 	fpParams := s.GetFinalityProvidersFromGlobalParams()
 	if len(fpParams) == 0 {

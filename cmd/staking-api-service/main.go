@@ -42,11 +42,17 @@ func main() {
 		log.Fatal().Err(err).Msg(fmt.Sprintf("error while loading global params file: %s", paramsPath))
 	}
 
+	finalityProviderPath := cli.GetFinalityProvidersPath()
+	finalityProviders, err := types.NewFinalityProviders(finalityProviderPath)
+	if err != nil {
+		log.Fatal().Err(err).Msg(fmt.Sprintf("error while loading finality providers file: %s", finalityProviderPath))
+	}
+
 	// initialize metrics with the metrics port from config
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
 
-	services, err := services.New(ctx, cfg, params)
+	services, err := services.New(ctx, cfg, params, finalityProviders)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up staking services layer")
 	}
