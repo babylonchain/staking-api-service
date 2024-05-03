@@ -42,10 +42,10 @@ func main() {
 		log.Fatal().Err(err).Msg(fmt.Sprintf("error while loading global params file: %s", paramsPath))
 	}
 
-	finalityProviderPath := cli.GetFinalityProvidersPath()
-	finalityProviders, err := types.NewFinalityProviders(finalityProviderPath)
+	finalityProvidersPath := cli.GetFinalityProvidersPath()
+	finalityProviders, err := types.NewFinalityProviders(finalityProvidersPath)
 	if err != nil {
-		log.Fatal().Err(err).Msg(fmt.Sprintf("error while loading finality providers file: %s", finalityProviderPath))
+		log.Fatal().Err(err).Msg(fmt.Sprintf("error while loading finality providers file: %s", finalityProvidersPath))
 	}
 
 	// initialize metrics with the metrics port from config

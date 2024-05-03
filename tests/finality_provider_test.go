@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	finalityProviderPath = "/v1/finality-providers"
+	finalityProvidersPath = "/v1/finality-providers"
 )
 
 func shouldGetFinalityProvidersSuccessfully(t *testing.T, testServer *TestServer) {
-	url := testServer.Server.URL + finalityProviderPath
+	url := testServer.Server.URL + finalityProvidersPath
 	defer testServer.Close()
 	// Make a GET request to the finality providers endpoint
 	resp, err := http.Get(url)
@@ -86,7 +86,7 @@ func TestGetFinalityProviderReturn4xxErrorIfPageTokenInvalid(t *testing.T) {
 	mockDB.On("FindFinalityProviderStats", mock.Anything, mock.Anything).Return(nil, &db.InvalidPaginationTokenError{})
 
 	testServer := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
-	url := testServer.Server.URL + finalityProviderPath
+	url := testServer.Server.URL + finalityProvidersPath
 	defer testServer.Close()
 	// Make a GET request to the finality providers endpoint
 	resp, err := http.Get(url)

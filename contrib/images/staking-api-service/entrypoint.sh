@@ -27,4 +27,4 @@ if ! [ -f "${FINALITY_PROVIDERS}" ]; then
 	exit 1
 fi
 
-$BINARY --config "$CONFIG" --params "$PARAMS" --finality_providers "$FINALITY_PROVIDERS" 2>&1
+$BINARY --config "$CONFIG" --params "$PARAMS" --finality-providers "$FINALITY_PROVIDERS" 2>&1

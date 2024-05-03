@@ -47,7 +47,7 @@ func Setup() error {
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&finalityProvidersPath,
-		"finality_providers",
+		"finality-providers",
 		defaultFinalityProvidersPath,
 		fmt.Sprintf("finality providers file (default %s)", defaultFinalityProvidersPath),
 	)
