@@ -375,20 +375,6 @@ const docTemplate = `{
                 }
             }
         },
-        "services.FpParamsPublic": {
-            "type": "object",
-            "properties": {
-                "btc_pk": {
-                    "type": "string"
-                },
-                "commission": {
-                    "type": "string"
-                },
-                "description": {
-                    "$ref": "#/definitions/services.FpDescriptionPublic"
-                }
-            }
-        },
         "services.GlobalParamsPublic": {
             "type": "object",
             "properties": {
@@ -400,12 +386,6 @@ const docTemplate = `{
                 },
                 "covenant_quorum": {
                     "type": "integer"
-                },
-                "finality_providers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/services.FpParamsPublic"
-                    }
                 },
                 "max_staking_amount": {
                     "type": "integer"
@@ -422,10 +402,10 @@ const docTemplate = `{
                 "tag": {
                     "type": "string"
                 },
-                "unbonding_time": {
-                    "type": "integer"
-                }
                 "unbonding_fee": {
+                    "type": "integer"
+                },
+                "unbonding_time": {
                     "type": "integer"
                 }
             }

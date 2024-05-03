@@ -14,21 +14,28 @@ import (
 // Service layer contains the business logic and is used to interact with
 // the database and other external clients (if any).
 type Services struct {
-	DbClient db.DBClient
-	cfg      *config.Config
-	params   *types.GlobalParams
+	DbClient          db.DBClient
+	cfg               *config.Config
+	params            *types.GlobalParams
+	finalityProviders []types.FinalityProviderDetails
 }
 
-func New(ctx context.Context, cfg *config.Config, globalParams *types.GlobalParams) (*Services, error) {
+func New(
+	ctx context.Context,
+	cfg *config.Config,
+	globalParams *types.GlobalParams,
+	finalityProviders []types.FinalityProviderDetails,
+) (*Services, error) {
 	dbClient, err := db.New(ctx, cfg.Db)
 	if err != nil {
 		log.Ctx(ctx).Fatal().Err(err).Msg("error while creating db client")
 		return nil, err
 	}
 	return &Services{
-		DbClient: dbClient,
-		cfg:      cfg,
-		params:   globalParams,
+		DbClient:          dbClient,
+		cfg:               cfg,
+		params:            globalParams,
+		finalityProviders: finalityProviders,
 	}, nil
 }
 

@@ -9,14 +9,16 @@ import (
 )
 
 const (
-	defaultConfigFileName       = "config.yml"
-	defaultGlobalParamsFileName = "global_params.json"
+	defaultConfigFileName            = "config.yml"
+	defaultGlobalParamsFileName      = "global_params.json"
+	defaultFinalityProvidersFileName = "finality_providers.json"
 )
 
 var (
-	cfgPath          string
-	globalParamsPath string
-	rootCmd          = &cobra.Command{
+	cfgPath               string
+	globalParamsPath      string
+	finalityProvidersPath string
+	rootCmd               = &cobra.Command{
 		Use: "start-server",
 	}
 )
@@ -29,9 +31,26 @@ func Setup() error {
 
 	defaultConfigPath := getDefaultConfigFile(homePath, defaultConfigFileName)
 	defaultGlobalParamsPath := getDefaultConfigFile(homePath, defaultGlobalParamsFileName)
+	defaultFinalityProvidersPath := getDefaultConfigFile(homePath, defaultFinalityProvidersFileName)
 
-	rootCmd.PersistentFlags().StringVar(&cfgPath, "config", defaultConfigPath, fmt.Sprintf("config file (default %s)", defaultConfigPath))
-	rootCmd.PersistentFlags().StringVar(&globalParamsPath, "params", defaultGlobalParamsPath, fmt.Sprintf("global params file (default %s)", defaultGlobalParamsPath))
+	rootCmd.PersistentFlags().StringVar(
+		&cfgPath,
+		"config",
+		defaultConfigPath,
+		fmt.Sprintf("config file (default %s)", defaultConfigPath),
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&globalParamsPath,
+		"params",
+		defaultGlobalParamsPath,
+		fmt.Sprintf("global params file (default %s)", defaultGlobalParamsPath),
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&finalityProvidersPath,
+		"finality-providers",
+		defaultFinalityProvidersPath,
+		fmt.Sprintf("finality providers file (default %s)", defaultFinalityProvidersPath),
+	)
 	if err := rootCmd.Execute(); err != nil {
 		return err
 	}
@@ -49,4 +68,8 @@ func GetConfigPath() string {
 
 func GetGlobalParamsPath() string {
 	return globalParamsPath
+}
+
+func GetFinalityProvidersPath() string {
+	return finalityProvidersPath
 }

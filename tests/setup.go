@@ -52,23 +52,28 @@ func (ts *TestServer) Close() {
 }
 
 func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
-	cfg, err := config.New("./config-test.yml")
+	cfg, err := config.New("./config/config-test.yml")
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
 	}
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
 
-	params, err := types.NewGlobalParams("./global-params-test.json")
+	params, err := types.NewGlobalParams("./config/global-params-test.json")
 	if err != nil {
 		t.Fatalf("Failed to load global params: %v", err)
+	}
+
+	fps, err := types.NewFinalityProviders("./config/finality-providers-test.json")
+	if err != nil {
+		t.Fatalf("Failed to load finality providers: %v", err)
 	}
 
 	if dep != nil && dep.ConfigOverrides != nil {
 		applyConfigOverrides(cfg, dep.ConfigOverrides)
 	}
 
-	services, err := services.New(context.Background(), cfg, params)
+	services, err := services.New(context.Background(), cfg, params, fps)
 	if err != nil {
 		t.Fatalf("Failed to initialize services: %v", err)
 	}
@@ -245,7 +250,7 @@ func sendTestMessage[T any](client client.QueueClient, data []T) error {
 
 // Inspect the items in the real database
 func inspectDbDocuments[T any](t *testing.T, collectionName string) ([]T, error) {
-	cfg, err := config.New("./config-test.yml")
+	cfg, err := config.New("./config/config-test.yml")
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
 	}

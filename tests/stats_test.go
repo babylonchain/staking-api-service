@@ -210,7 +210,7 @@ func TestStatsEndpoints(t *testing.T) {
 }
 
 func fetchFinalityEndpoint(t *testing.T, testServer *TestServer) []services.FpDetailsPublic {
-	url := testServer.Server.URL + finalityProviderPath
+	url := testServer.Server.URL + finalityProvidersPath
 	// Make a GET request to the finality providers endpoint
 	resp, err := http.Get(url)
 	assert.NoError(t, err, "making GET request to finality providers endpoint should not fail")
