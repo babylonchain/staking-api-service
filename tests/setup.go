@@ -177,11 +177,13 @@ func setUpTestQueue(cfg *queueConfig.QueueConfig, service *services.Services) (*
 		client.UnbondingStakingQueueName,
 		client.WithdrawStakingQueueName,
 		client.ExpiredStakingQueueName,
+		client.StakingStatsQueueName,
 		// purge delay queues as well
 		client.ActiveStakingQueueName + "_delay",
 		client.UnbondingStakingQueueName + "_delay",
 		client.WithdrawStakingQueueName + "_delay",
 		client.ExpiredStakingQueueName + "_delay",
+		client.StakingStatsQueueName + "_delay",
 	})
 	if purgeError != nil {
 		log.Fatal("failed to purge queues in test: ", purgeError)

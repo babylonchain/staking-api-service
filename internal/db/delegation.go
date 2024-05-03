@@ -59,7 +59,7 @@ func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 	options.SetLimit(db.cfg.MaxPaginationLimit)
 	// Decode the pagination token first if it exist
 	if paginationToken != "" {
-		decodedToken, err := model.DecodeDelegationByStakerPaginationToken(paginationToken)
+		decodedToken, err := model.DecodePaginationToken[model.DelegationByStakerPagination](paginationToken)
 		if err != nil {
 			return nil, &InvalidPaginationTokenError{
 				Message: "Invalid pagination token",
