@@ -2,11 +2,14 @@ package queue
 
 import (
 	"context"
+	"net/http"
 	"time"
 
+	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
 	"github.com/babylonchain/staking-api-service/internal/observability/tracing"
 	"github.com/babylonchain/staking-api-service/internal/queue/handlers"
 	"github.com/babylonchain/staking-api-service/internal/services"
+	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/babylonchain/staking-queue-client/client"
 	queueConfig "github.com/babylonchain/staking-queue-client/config"
 	"github.com/rs/zerolog/log"
@@ -141,36 +144,47 @@ func startQueueMessageProcessing(
 
 	go func() {
 		for message := range messagesChan {
+			attempts := message.GetRetryAttempts()
 			// For each message, create a new context with a deadline or timeout
 			ctx, cancel := context.WithTimeout(context.Background(), processingTimeout)
 			ctx = attachLoggerContext(ctx, message, queueClient)
 			// Attach the tracingInfo for the message processing
-			_, err := tracing.WrapWithSpan[any](ctx, "message_processing", func() (any, error) {
-				return nil, handler(ctx, message.Body)
+			_, err := tracing.WrapWithSpan[any](ctx, "message_processing", func() (any, *types.Error) {
+				timer := metrics.StartEventProcessingDurationTimer(queueClient.GetQueueName(), attempts)
+				// Process the message
+				err := handler(ctx, message.Body)
+				if err != nil {
+					timer(err.StatusCode)
+				} else {
+					timer(http.StatusOK)
+				}
+				return nil, err
 			})
 			if err != nil {
-				attempts := message.GetRetryAttempts()
+				recordErrorLog(err)
 				// We will retry the message if it has not exceeded the max retry attempts
 				// otherwise, we will dump the message into db for manual inspection and remove from the queue
 				if attempts > maxRetryAttempts {
 					log.Ctx(ctx).Error().Err(err).
 						Msg("exceeded retry attempts, message will be dumped into db for manual inspection")
+					metrics.RecordUnprocessableEntity(queueClient.GetQueueName())
 					saveUnprocessableMsgErr := unprocessableHandler(ctx, message.Body, message.Receipt)
 					if saveUnprocessableMsgErr != nil {
 						log.Ctx(ctx).Error().Err(saveUnprocessableMsgErr).
 							Msg("error while saving unprocessable message")
+						metrics.RecordQueueOperationFailure("unprocessableHandler", queueClient.GetQueueName())
 						cancel()
 						continue
 					}
 				} else {
-					err = queueClient.ReQueueMessage(ctx, message)
 					log.Ctx(ctx).Error().Err(err).
 						Msg("error while processing message from queue, will be requeued")
-					if err != nil {
-						log.Ctx(ctx).Error().Err(err).
+					reQueueErr := queueClient.ReQueueMessage(ctx, message)
+					if reQueueErr != nil {
+						log.Ctx(ctx).Error().Err(reQueueErr).
 							Msg("error while requeuing message")
+						metrics.RecordQueueOperationFailure("reQueueMessage", queueClient.GetQueueName())
 					}
-					// TODO: Add metrics for failed message processing
 					cancel()
 					continue
 				}
@@ -178,9 +192,9 @@ func startQueueMessageProcessing(
 
 			delErr := queueClient.DeleteMessage(message.Receipt)
 			if delErr != nil {
-				// TODO: Add metrics for failed message deletion
 				log.Ctx(ctx).Error().Err(delErr).
 					Msg("error while deleting message from queue")
+				metrics.RecordQueueOperationFailure("deleteMessage", queueClient.GetQueueName())
 			}
 
 			tracingInfo := ctx.Value(tracing.TracingInfoKey)
@@ -189,8 +203,6 @@ func startQueueMessageProcessing(
 				logEvent = logEvent.Interface("tracingInfo", tracingInfo)
 			}
 			logEvent.Msg("message processed successfully")
-
-			// TODO: Add metrics for successful message processing
 			cancel()
 		}
 		log.Info().Str("queueName", queueClient.GetQueueName()).Msg("stopped receiving messages from queue")
@@ -206,4 +218,12 @@ func attachLoggerContext(ctx context.Context, message client.QueueMessage, queue
 		Str("queueName", queueClient.GetQueueName()).
 		Interface("traceId", traceId).
 		Logger().WithContext(ctx)
+}
+
+func recordErrorLog(err *types.Error) {
+	if err.StatusCode >= http.StatusInternalServerError {
+		log.Error().Err(err).Msg("event processing failed with 5xx error")
+	} else {
+		log.Warn().Err(err).Msg("event processing failed with 4xx error")
+	}
 }

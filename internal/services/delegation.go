@@ -80,7 +80,7 @@ func (s *Services) SaveActiveStakingDelegation(
 	ctx context.Context, txHashHex, stakerPkHex, finalityProviderPkHex string,
 	value, startHeight uint64, stakingTimestamp int64, timeLock, stakingOutputIndex uint64,
 	stakingTxHex string,
-) error {
+) *types.Error {
 	err := s.DbClient.SaveActiveStakingDelegation(
 		ctx, txHashHex, stakerPkHex, finalityProviderPkHex, stakingTxHex,
 		value, startHeight, timeLock, stakingOutputIndex, stakingTimestamp,
@@ -88,7 +88,6 @@ func (s *Services) SaveActiveStakingDelegation(
 	if err != nil {
 		if ok := db.IsDuplicateKeyError(err); ok {
 			log.Ctx(ctx).Warn().Err(err).Msg("Skip the active staking event as it already exists in the database")
-			// TODO: Add metrics for duplicate active staking events
 			return nil
 		}
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to save active staking delegation")

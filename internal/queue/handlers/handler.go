@@ -3,8 +3,10 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/services"
+	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
 )
@@ -14,8 +16,8 @@ type QueueHandler struct {
 	emitStatsEvent func(ctx context.Context, messageBody string) error
 }
 
-type MessageHandler func(ctx context.Context, messageBody string) error
-type UnprocessableMessageHandler func(ctx context.Context, messageBody, receipt string) error
+type MessageHandler func(ctx context.Context, messageBody string) *types.Error
+type UnprocessableMessageHandler func(ctx context.Context, messageBody, receipt string) *types.Error
 
 func NewQueueHandler(
 	services *services.Services,
@@ -27,15 +29,20 @@ func NewQueueHandler(
 	}
 }
 
-func (qh *QueueHandler) HandleUnprocessedMessage(ctx context.Context, messageBody, receipt string) error {
+func (qh *QueueHandler) HandleUnprocessedMessage(ctx context.Context, messageBody, receipt string) *types.Error {
 	return qh.Services.SaveUnprocessableMessages(ctx, messageBody, receipt)
 }
 
-func (qh *QueueHandler) EmitStatsEvent(ctx context.Context, statsEvent client.StatsEvent) error {
+func (qh *QueueHandler) EmitStatsEvent(ctx context.Context, statsEvent client.StatsEvent) *types.Error {
 	jsonData, err := json.Marshal(statsEvent)
 	if err != nil {
 		log.Ctx(ctx).Err(err).Msg("Failed to marshal the stats event")
-		return err
+		return types.NewError(http.StatusBadRequest, types.BadRequest, err)
 	}
-	return qh.emitStatsEvent(ctx, string(jsonData))
+	err = qh.emitStatsEvent(ctx, string(jsonData))
+	if err != nil {
+		log.Ctx(ctx).Err(err).Msg("Failed to emit the stats event")
+		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, err)
+	}
+	return nil
 }
