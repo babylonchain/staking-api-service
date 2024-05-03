@@ -55,24 +55,24 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	assert.NoError(t, err, "expected timestamp to be in RFC3339 format")
 
 	t.Log("Checking pagination token and data...")
-    if response.Pagination.NextKey == "" {
-        t.Log("Warning: NextKey is empty. Pagination may not be available or is finished.")
-    } else {
-        decodedToken, err := model.DecodePaginationToken[model.DelegationByStakerPagination](response.Pagination.NextKey)
-        assert.NoError(t, err, "decoding next page pagination token should not fail")
-        if err != nil {
-            t.Logf("Error decoding pagination token: %v", err)
-            return
-        }
-
-        assert.True(t, decodedToken.StakingStartHeight > 100, "expected the next page start height to be greater than 100")
-        if decodedToken.StakingStartHeight <= 100 {
-            t.Logf("Unexpected start height: %d", decodedToken.StakingStartHeight)
-        }
-    }
-
-		// Also make sure the returned data is sorted by staking start height
-		for i := 0; i < len(response.Data)-1; i++ {
-			assert.True(t, response.Data[i].StakingTx.StartHeight >= response.Data[i+1].StakingTx.StartHeight, "expected response body to be sorted")
+	if response.Pagination.NextKey == "" {
+		t.Log("Warning: NextKey is empty. Pagination may not be available or is finished.")
+	} else {
+		decodedToken, err := model.DecodePaginationToken[model.DelegationByStakerPagination](response.Pagination.NextKey)
+		assert.NoError(t, err, "decoding next page pagination token should not fail")
+		if err != nil {
+			t.Logf("Error decoding pagination token: %v", err)
+			return
 		}
+
+		assert.True(t, decodedToken.StakingStartHeight > 100, "expected the next page start height to be greater than 100")
+		if decodedToken.StakingStartHeight <= 100 {
+			t.Logf("Unexpected start height: %d", decodedToken.StakingStartHeight)
+		}
+	}
+
+	// Also make sure the returned data is sorted by staking start height
+	for i := 0; i < len(response.Data)-1; i++ {
+		assert.True(t, response.Data[i].StakingTx.StartHeight >= response.Data[i+1].StakingTx.StartHeight, "expected response body to be sorted")
+	}
 }
