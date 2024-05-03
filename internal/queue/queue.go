@@ -226,5 +226,4 @@ func recordErrorLog(err *types.Error) {
 	} else {
 		log.Warn().Err(err).Msg("event processing failed with 4xx error")
 	}
-
 }

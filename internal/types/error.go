@@ -33,12 +33,6 @@ func (e *Error) Error() string {
 	return e.Err.Error()
 }
 
-// Check if the error is the service custom error type
-func IsServiceError(err error) bool {
-	_, ok := err.(*Error)
-	return ok
-}
-
 // NewError creates a new Error with the provided status code, error code, and underlying error.
 // If the status code is not provided (0), it defaults to http.StatusInternalServerError(500).
 // If the error code is empty, it defaults to INTERNAL_SERVICE_ERROR.

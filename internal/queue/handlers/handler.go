@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
@@ -32,11 +33,16 @@ func (qh *QueueHandler) HandleUnprocessedMessage(ctx context.Context, messageBod
 	return qh.Services.SaveUnprocessableMessages(ctx, messageBody, receipt)
 }
 
-func (qh *QueueHandler) EmitStatsEvent(ctx context.Context, statsEvent client.StatsEvent) error {
+func (qh *QueueHandler) EmitStatsEvent(ctx context.Context, statsEvent client.StatsEvent) *types.Error {
 	jsonData, err := json.Marshal(statsEvent)
 	if err != nil {
 		log.Ctx(ctx).Err(err).Msg("Failed to marshal the stats event")
-		return err
+		return types.NewError(http.StatusBadRequest, types.BadRequest, err)
 	}
-	return qh.emitStatsEvent(ctx, string(jsonData))
+	err = qh.emitStatsEvent(ctx, string(jsonData))
+	if err != nil {
+		log.Ctx(ctx).Err(err).Msg("Failed to emit the stats event")
+		return types.NewError(http.StatusInternalServerError, types.InternalServiceError, err)
+	}
+	return nil
 }
