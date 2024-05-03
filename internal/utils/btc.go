@@ -17,7 +17,8 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
-func GetBtcPkFromHex(pkHex string) (*btcec.PublicKey, error) {
+// GetSchnorrPkFromHex parses Schnorr public keys in 32 bytes
+func GetSchnorrPkFromHex(pkHex string) (*btcec.PublicKey, error) {
 	pkBytes, err := hex.DecodeString(pkHex)
 	if err != nil {
 		return nil, err
@@ -26,13 +27,20 @@ func GetBtcPkFromHex(pkHex string) (*btcec.PublicKey, error) {
 	return schnorr.ParsePubKey(pkBytes)
 }
 
-func GetBtcPksFromStrings(pkStrings []string) ([]*btcec.PublicKey, error) {
+// GetCovenantPksFromStrings parses BTC public keys in 33 bytes
+func GetCovenantPksFromStrings(pkStrings []string) ([]*btcec.PublicKey, error) {
 	pks := make([]*btcec.PublicKey, len(pkStrings))
 	for i, pkStr := range pkStrings {
-		pk, err := GetBtcPkFromHex(pkStr)
+		pkBytes, err := hex.DecodeString(pkStr)
 		if err != nil {
 			return nil, err
 		}
+
+		pk, err := btcec.ParsePubKey(pkBytes)
+		if err != nil {
+			return nil, err
+		}
+
 		pks[i] = pk
 	}
 
@@ -85,17 +93,17 @@ func VerifyUnbondingRequest(
 	}
 
 	// 3. verify that the unbonding output is constructed as expected
-	covenantPks, err := GetBtcPksFromStrings(params.CovenantPks)
+	covenantPks, err := GetCovenantPksFromStrings(params.CovenantPks)
 	if err != nil {
 		return fmt.Errorf("failed to decode coveant public keys from strings: %w", err)
 	}
 
-	stakerPk, err := GetBtcPkFromHex(stakerPkHex)
+	stakerPk, err := GetSchnorrPkFromHex(stakerPkHex)
 	if err != nil {
 		return fmt.Errorf("failed to decode staker public key from hex: %w", err)
 	}
 
-	finalityProviderPk, err := GetBtcPkFromHex(finalityProviderPkHex)
+	finalityProviderPk, err := GetSchnorrPkFromHex(finalityProviderPkHex)
 	if err != nil {
 		return fmt.Errorf("failed to decode finality provider public key from hex: %w", err)
 	}
@@ -144,10 +152,9 @@ func VerifyUnbondingRequest(
 	if err != nil {
 		return fmt.Errorf("failed to build unbonding path spend info")
 	}
-	if err := btcstaking.VerifyTransactionSigWithOutputData(
+	if err := btcstaking.VerifyTransactionSigWithOutput(
 		unbondingTx,
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		unbondingSpendInfo.GetPkScriptPath(),
 		stakerPk,
 		sigBytes,
