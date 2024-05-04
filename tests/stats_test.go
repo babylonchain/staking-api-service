@@ -11,7 +11,6 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/services"
-	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,16 +23,24 @@ const (
 
 func TestStatsShouldBeShardedInDb(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 10)
-	// build the expired staking event based on the active staking event
-	var expiredEvents []client.ExpiredStakingEvent
+	// build the unbonding event based on the active staking event
+	var unbondingEvents []client.UnbondingStakingEvent
 	for _, event := range activeStakingEvent {
-		expiredEvents = append(expiredEvents, client.NewExpiredStakingEvent(event.StakingTxHashHex, types.ActiveTxType.ToString()))
+		unbondingEvents = append(unbondingEvents, client.NewUnbondingStakingEvent(
+			event.StakingTxHashHex,
+			event.StakingStartHeight+100,
+			time.Now().Unix(),
+			10,
+			1,
+			event.StakingTxHex,     // mocked data, it doesn't matter in stats calculation
+			event.StakingTxHashHex, // mocked data, it doesn't matter in stats calculation
+		))
 	}
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
 	time.Sleep(2 * time.Second)
-	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, expiredEvents)
+	sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, unbondingEvents)
 	time.Sleep(2 * time.Second)
 
 	// directly read from the db to check that we have more than 2 records in the overall stats collection
@@ -60,12 +67,14 @@ func TestStatsShouldBeShardedInDb(t *testing.T) {
 	assert.Equal(t, int64(10), totalDelegations)
 }
 
-func TestStatsCalculationShouldOnlyProcessActiveAndUnbondedEvents(t *testing.T) {
+func TestShouldSkipStatsCalculationForOverflowedStakingEvent(t *testing.T) {
 	activeStakingEvent := getTestActiveStakingEvent()
+	// Set the overflow flag to true
+	activeStakingEvent.IsOverflow = true
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 
-	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{*activeStakingEvent})
 	require.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -108,20 +117,69 @@ func TestStatsCalculationShouldOnlyProcessActiveAndUnbondedEvents(t *testing.T) 
 	if err != nil {
 		t.Fatalf("Failed to inspect DB documents: %v", err)
 	}
-	assert.Equal(t, 1, len(stats), "expected 1 logical shards in the overall stats collection")
+	assert.Equal(t, 0, len(stats))
+}
 
-	// The stats should equal to the active staking event. Unbonding event should not affect the stats
-	assert.NotZero(t, stats[0].ActiveTvl)
-	assert.Equal(t, int64(1), stats[0].ActiveDelegations)
-	assert.NotZero(t, stats[0].TotalTvl)
-	assert.Equal(t, int64(1), stats[0].TotalDelegations)
+func TestShouldNotPerformStatsCalculationForUnbondingTxWhenDelegationIsOverflowed(t *testing.T) {
+	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 10)
+	// Let's pick a random staking event and set the overflow flag to true
+	event := activeStakingEvent[6]
+	event.IsOverflow = true
+	// build the unbonding event based on the active staking event
+	var unbondingEvents []client.UnbondingStakingEvent
+	unbondingEvents = append(unbondingEvents, client.NewUnbondingStakingEvent(
+		event.StakingTxHashHex,
+		event.StakingStartHeight+100,
+		time.Now().Unix(),
+		10,
+		1,
+		event.StakingTxHex,     // mocked data, it doesn't matter in stats calculation
+		event.StakingTxHashHex, // mocked data, it doesn't matter in stats calculation
+	))
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
+	time.Sleep(2 * time.Second)
+	sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, unbondingEvents)
+	time.Sleep(2 * time.Second)
+
+	// directly read from the db to check that we have more than 2 records in the overall stats collection
+	results, err := inspectDbDocuments[model.OverallStatsDocument](t, model.OverallStatsCollection)
+	if err != nil {
+		t.Fatalf("Failed to inspect DB documents: %v", err)
+	}
+	assert.Equal(t, 2, len(results), "expected 2 logical shards in the overall stats collection")
+
+	// Sum it up, we shall get 0 active tvl and 0 active delegations. the total should remain positive number
+	var totalActiveTvl int64
+	var totalActiveDelegations int64
+	var totalTvl int64
+	var totalDelegations int64
+	for _, r := range results {
+		totalActiveTvl += r.ActiveTvl
+		totalActiveDelegations += r.ActiveDelegations
+		totalTvl += r.TotalTvl
+		totalDelegations += r.TotalDelegations
+	}
+
+	// calculate the total expect tvl from the active staking events
+	var expectedTotalTvl int64
+	for _, e := range activeStakingEvent {
+		if !e.IsOverflow {
+			expectedTotalTvl += int64(e.StakingValue)
+		}
+	}
+	assert.Equal(t, expectedTotalTvl, totalActiveTvl)
+	assert.Equal(t, int64(9), totalActiveDelegations)
+	assert.Equal(t, expectedTotalTvl, totalTvl)
+	assert.Equal(t, int64(9), totalDelegations)
 }
 
 func TestStatsEndpoints(t *testing.T) {
 	activeStakingEvent := getTestActiveStakingEvent()
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
-	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{*activeStakingEvent})
 	time.Sleep(2 * time.Second)
 
 	// Test the finality endpoint first
@@ -149,9 +207,17 @@ func TestStatsEndpoints(t *testing.T) {
 	assert.Equal(t, int64(1), stakerStats[0].ActiveDelegations)
 	assert.Equal(t, int64(1), stakerStats[0].TotalDelegations)
 
-	// Now let's send an expired timelock event, this will affect the active stats only
-	expiredEvent := client.NewExpiredStakingEvent(activeStakingEvent.StakingTxHashHex, types.ActiveTxType.ToString())
-	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredEvent})
+	// Now let's send an unbonding event
+	unbondingEvent := client.NewUnbondingStakingEvent(
+		activeStakingEvent.StakingTxHashHex,
+		activeStakingEvent.StakingStartHeight+100,
+		time.Now().Unix(),
+		10,
+		1,
+		activeStakingEvent.StakingTxHex,     // mocked data, it doesn't matter in stats calculation
+		activeStakingEvent.StakingTxHashHex, // mocked data, it doesn't matter in stats calculation
+	)
+	sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, []client.UnbondingStakingEvent{unbondingEvent})
 	time.Sleep(2 * time.Second)
 
 	// Make a GET request to the finality providers endpoint

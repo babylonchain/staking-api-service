@@ -34,17 +34,20 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		return nil
 	}
 
-	// Perform the async stats calculation by emit the stats event
-	statsError := h.EmitStatsEvent(ctx, queueClient.NewStatsEvent(
-		activeStakingEvent.StakingTxHashHex,
-		activeStakingEvent.StakerPkHex,
-		activeStakingEvent.FinalityProviderPkHex,
-		activeStakingEvent.StakingValue,
-		types.Active.ToString(),
-	))
-	if statsError != nil {
-		log.Ctx(ctx).Error().Err(statsError).Msg("Failed to emit stats event for active staking")
-		return statsError
+	// We only emit the stats event for the active staking if it is not an overflow event
+	if !activeStakingEvent.IsOverflow {
+		// Perform the async stats calculation by emit the stats event
+		statsError := h.EmitStatsEvent(ctx, queueClient.NewStatsEvent(
+			activeStakingEvent.StakingTxHashHex,
+			activeStakingEvent.StakerPkHex,
+			activeStakingEvent.FinalityProviderPkHex,
+			activeStakingEvent.StakingValue,
+			types.Active.ToString(),
+		))
+		if statsError != nil {
+			log.Ctx(ctx).Error().Err(statsError).Msg("Failed to emit stats event for active staking")
+			return statsError
+		}
 	}
 
 	// Perform the async timelock expire check
@@ -65,7 +68,7 @@ func (h *QueueHandler) ActiveStakingHandler(ctx context.Context, messageBody str
 		activeStakingEvent.FinalityProviderPkHex, activeStakingEvent.StakingValue,
 		activeStakingEvent.StakingStartHeight, activeStakingEvent.StakingStartTimestamp,
 		activeStakingEvent.StakingTimeLock, activeStakingEvent.StakingOutputIndex,
-		activeStakingEvent.StakingTxHex,
+		activeStakingEvent.StakingTxHex, activeStakingEvent.IsOverflow,
 	)
 	if saveErr != nil {
 		return saveErr

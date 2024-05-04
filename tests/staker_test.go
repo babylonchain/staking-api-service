@@ -14,6 +14,9 @@ import (
 
 func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 11)
+	// randomly set one of the staking tx to be overflow
+	activeStakingEvent[7].IsOverflow = true
+
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
@@ -50,5 +53,15 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	// Also make sure the returned data is sorted by staking start height
 	for i := 0; i < len(response.Data)-1; i++ {
 		assert.True(t, response.Data[i].StakingTx.StartHeight >= response.Data[i+1].StakingTx.StartHeight, "expected response body to be sorted")
+	}
+
+	// Check the overflow is returned correctly
+	for _, d := range response.Data {
+
+		if d.StakingTxHashHex == activeStakingEvent[7].StakingTxHashHex {
+			assert.Equal(t, true, d.IsOverflow)
+		} else {
+			assert.Equal(t, false, d.IsOverflow)
+		}
 	}
 }

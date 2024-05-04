@@ -282,14 +282,14 @@ func inspectDbDocuments[T any](t *testing.T, collectionName string) ([]T, error)
 	return results, nil
 }
 
-func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []client.ActiveStakingEvent {
-	var activeStakingEvents []client.ActiveStakingEvent
+func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []*client.ActiveStakingEvent {
+	var activeStakingEvents []*client.ActiveStakingEvent
 
 	// To be replaced with https://github.com/babylonchain/staking-api-service/issues/21
 	rand.New(rand.NewSource(time.Now().Unix()))
 
 	for i := 0; i < numOfEvenet; i++ {
-		activeStakingEvent := client.ActiveStakingEvent{
+		activeStakingEvent := &client.ActiveStakingEvent{
 			EventType:             client.ActiveStakingEventType,
 			StakingTxHashHex:      "0x1234567890abcdef" + fmt.Sprint(i),
 			StakerPkHex:           stakerHash,
@@ -300,6 +300,7 @@ func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []client.Active
 			StakingTimeLock:       uint64(rand.Intn(100)),
 			StakingOutputIndex:    uint64(rand.Intn(100)),
 			StakingTxHex:          "0xabcdef1234567890" + fmt.Sprint(i),
+			IsOverflow:            false,
 		}
 		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
 	}

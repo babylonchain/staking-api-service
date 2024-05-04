@@ -38,19 +38,6 @@ func (h *QueueHandler) ExpiredStakingHandler(ctx context.Context, messageBody st
 		return types.NewError(http.StatusBadRequest, types.BadRequest, err)
 	}
 
-	// Perform the async stats calculation by emit the stats event
-	statsError := h.EmitStatsEvent(ctx, queueClient.NewStatsEvent(
-		expiredStakingEvent.StakingTxHashHex,
-		del.StakerPkHex,
-		del.FinalityProviderPkHex,
-		del.StakingValue,
-		types.Unbonded.ToString(),
-	))
-	if statsError != nil {
-		log.Ctx(ctx).Error().Err(statsError).Msg("Failed to emit stats event after timelock expired")
-		return statsError
-	}
-
 	transitionErr := h.Services.TransitionToUnbondedState(ctx, txType, expiredStakingEvent.StakingTxHashHex)
 	if transitionErr != nil {
 		return transitionErr

@@ -29,7 +29,7 @@ func TestUnbondingRequest(t *testing.T) {
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 
-	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{*activeStakingEvent})
 	require.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -152,8 +152,8 @@ func TestUnbondingRequestEligibilityWhenNoMatchingDelegation(t *testing.T) {
 	assert.Equal(t, "NOT_FOUND", response.ErrorCode, "expected error code to be NOT_FOUND")
 }
 
-func getTestActiveStakingEvent() client.ActiveStakingEvent {
-	return client.ActiveStakingEvent{
+func getTestActiveStakingEvent() *client.ActiveStakingEvent {
+	return &client.ActiveStakingEvent{
 		EventType:             client.ActiveStakingEventType,
 		StakingTxHashHex:      "379155a9a081771ca64b5f73d3bf9d7611eb767d5a9f5c40aa6d769576fd35bc",
 		StakerPkHex:           "b0f61bfae41af83d851a8211f82df861e93b3d39fd40a9b0e7f83bb655dad70b",
@@ -164,6 +164,7 @@ func getTestActiveStakingEvent() client.ActiveStakingEvent {
 		StakingTimeLock:       10000,
 		StakingOutputIndex:    1,
 		StakingTxHex:          "010000000001019c867aa13a8562bc3bc53e1c59d2b4a83a9013557df575c44329d26105312d4c0000000000ffffffff030000000000000000496a476262743400b0f61bfae41af83d851a8211f82df861e93b3d39fd40a9b0e7f83bb655dad70b03d5a0bb72d71993e435d6c5a70e2aa4db500a62cfaae33c56050deefee64ec02710a0860100000000002251209e18982db19feae01b8dc208eca14b9dd7272774f0c06abc8c136b4783646fe2756a042a0100000016001403bff551edfca4d8eaaf0e5df31e391a9ed2c0360247304402204999ab524edc59ad93e6d96774f80c1dd6802f8efa53ad1f34bbcf56aa0ce889022014563a81ff980236f00c62bbf945093551f995beb806d37429729a4b998c8bd5012102b0f61bfae41af83d851a8211f82df861e93b3d39fd40a9b0e7f83bb655dad70b00000000",
+		IsOverflow:            false,
 	}
 }
 
@@ -181,7 +182,7 @@ func TestProcessUnbondingStakingEvent(t *testing.T) {
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 
-	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []*client.ActiveStakingEvent{activeStakingEvent})
 	require.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -265,7 +266,7 @@ func TestProcessUnbondingStakingEventDuringBootstrap(t *testing.T) {
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 
-	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []*client.ActiveStakingEvent{activeStakingEvent})
 	require.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -332,7 +333,7 @@ func TestShouldIgnoreOutdatedUnbondingEvent(t *testing.T) {
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 
-	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []*client.ActiveStakingEvent{activeStakingEvent})
 	require.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -428,7 +429,7 @@ func TestProcessUnbondingStakingEventShouldTolerateEventMsgOutOfOrder(t *testing
 	assert.Empty(t, results, "expected no unbonding document in the DB")
 
 	// Send the active event
-	err = sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	err = sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []*client.ActiveStakingEvent{activeStakingEvent})
 	require.NoError(t, err)
 
 	time.Sleep(10 * time.Second)

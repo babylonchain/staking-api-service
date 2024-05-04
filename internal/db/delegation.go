@@ -14,7 +14,7 @@ import (
 
 func (db *Database) SaveActiveStakingDelegation(
 	ctx context.Context, stakingTxHashHex, stakerPkHex, fpPkHex string, stakingTxHex string,
-	amount, startHeight, timelock, outputIndex uint64, startTimestamp int64,
+	amount, startHeight, timelock, outputIndex uint64, startTimestamp int64, isOverflow bool,
 ) error {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 	document := model.DelegationDocument{
@@ -30,6 +30,7 @@ func (db *Database) SaveActiveStakingDelegation(
 			StartHeight:    startHeight,
 			TimeLock:       timelock,
 		},
+		IsOverflow: isOverflow,
 	}
 	_, err := client.InsertOne(ctx, document)
 	if err != nil {
