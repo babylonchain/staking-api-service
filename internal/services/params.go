@@ -46,8 +46,9 @@ func (s *Services) GetGlobalParamsPublic() *GlobalParamsPublic {
 	}
 }
 
+// It returns the versioned global params if the height is greater than or equal to the activation height
 func (s *Services) GetVersionedGlobalParamsByHeight(height uint64) *types.VersionedGlobalParams {
-	// Find the version by height
+	// It is assumed the versions are sorted by activation height in ascending order
 	for _, version := range s.params.Versions {
 		if version.ActivationHeight <= height {
 			return version

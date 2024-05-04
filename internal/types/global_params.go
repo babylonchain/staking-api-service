@@ -84,13 +84,11 @@ func Validate(g *GlobalParams) error {
 			return fmt.Errorf("covenant quorum cannot be more than the amount of covenants")
 		}
 
-		covPks := make([]*btcec.PublicKey, len(p.CovenantPks))
-		for i, covPk := range p.CovenantPks {
-			pk, err := parseCovenantPubKeyFromHex(covPk)
+		for _, covPk := range p.CovenantPks {
+			_, err := parseCovenantPubKeyFromHex(covPk)
 			if err != nil {
 				return fmt.Errorf("invalid covenant public key %s: %w", covPk, err)
 			}
-			covPks[i] = pk
 		}
 		if p.MaxStakingAmount <= p.MinStakingAmount {
 			return fmt.Errorf("max-staking-amount must be larger than min-staking-amount")
