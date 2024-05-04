@@ -255,6 +255,7 @@ workflows:
               only:
                 - main
                 - dev
+                - staging-fps-configmap
       - redeploy_staging_mongodb:
           requires:
             - push_docker
