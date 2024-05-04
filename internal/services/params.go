@@ -1,8 +1,6 @@
 package services
 
 import (
-	"sort"
-
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
@@ -49,18 +47,10 @@ func (s *Services) GetGlobalParamsPublic() *GlobalParamsPublic {
 }
 
 func (s *Services) GetVersionedGlobalParamsByHeight(height uint64) *types.VersionedGlobalParams {
-	// The method try to find the params by height to the cloest activation height.
-
-	sortedGlobalParams := s.params.Versions
-	// Sort the versions by activation height from high to low
-	sort.Slice(sortedGlobalParams, func(i, j int) bool {
-		return sortedGlobalParams[i].ActivationHeight > sortedGlobalParams[j].ActivationHeight
-	})
-
 	// Find the version by height
-	for _, version := range sortedGlobalParams {
+	for _, version := range s.params.Versions {
 		if version.ActivationHeight <= height {
-			return &version
+			return version
 		}
 	}
 
