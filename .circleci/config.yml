@@ -246,6 +246,7 @@ workflows:
             branches:
               only:
                 - main
+                - dev
       - deploy_staging:
           requires:
             - push_docker
