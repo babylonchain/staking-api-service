@@ -246,6 +246,8 @@ workflows:
             branches:
               only:
                 - main
+                - dev
+                - staging-fps-configmap
       - deploy_staging:
           requires:
             - push_docker
