@@ -1,17 +1,24 @@
 {
-    "tag": "bbt4",
-    "covenant_pks": [
-        "03ffeaec52a9b407b355ef6967a7ffc15fd6c3fe07de2844d61550475e7a5233e5",
-        "03a5c60c2188e833d39d0fa798ab3f69aa12ed3dd2f3bad659effa252782de3c31",
-        "0359d3532148a597a2d05c0395bf5f7176044b1cd312f37701a9b4d0aad70bc5a4",
-        "0357349e985e742d5131e1e2b227b5170f6350ac2e2feb72254fcc25b3cee21a18",
-        "03c8ccb03c379e452f10c81232b41a1ca8b63d0baf8387e57d302c987e5abb8527"
-    ],
-    "covenant_quorum": 3,
-    "unbonding_time": 1000,
-    "unbonding_fee": 10000,
-    "max_staking_amount": 300000,
-    "min_staking_amount": 3000,
-    "max_staking_time": 10000,
-    "min_staking_time": 100
+    "versions": [
+        {
+            "version": 0,
+            "activation_height": 192840,
+            "staking_cap": 50000000000,
+            "tag": "bbt4",
+            "covenant_pks": [
+                "05149a0c7a95320adf210e47bca8b363b7bd966be86be6392dd6cf4f96995869",
+                "e8d503cb52715249f32f3ee79cee88dfd48c2565cb0c79cf9640d291f46fd518",
+                "fe81b2409a32ddfd8ec1556557e8dd949b6e4fd37047523cb7f5fefca283d542",
+                "bc4a1ff485d7b44faeec320b81ad31c3cad4d097813c21fcf382b4305e4cfc82",
+                "001e50601a4a1c003716d7a1ee7fe25e26e55e24e909b3642edb60d30e3c40c1"
+            ],
+            "covenant_quorum": 3,
+            "unbonding_time": 1000,
+            "unbonding_fee": 20000,
+            "max_staking_amount": 1000000000,
+            "min_staking_amount": 1000000,
+            "max_staking_time": 64000,
+            "min_staking_time": 64000
+        }
+    ]
 }

@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -303,4 +304,24 @@ func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []client.Active
 		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
 	}
 	return activeStakingEvents
+}
+
+func createJsonFile(t *testing.T, jsonData []byte) string {
+	// Generate a random file name
+	rand.Seed(time.Now().UnixNano())
+	fileName := fmt.Sprintf("test-%d.json", rand.Intn(1000))
+
+	// Create a temporary file
+	tempFile, err := os.CreateTemp("", fileName)
+	if err != nil {
+		t.Fatalf("error creating temporary file: %v", err)
+	}
+	defer tempFile.Close() // Ensure the file is closed before returning
+
+	// Write the JSON data to the temporary file
+	if _, err := tempFile.Write(jsonData); err != nil {
+		t.Fatalf("error writing to temporary file: %v", err)
+	}
+
+	return tempFile.Name()
 }
