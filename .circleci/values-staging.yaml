@@ -93,7 +93,7 @@ configFiles:
       idle-timeout: 60s
       allowed-origins: [ "*" ]
       log-level: debug
-      btc-net: "mainnet"
+      btc-net: signet
     db:
       address: mongodb://mongodb-staging-headless.mongodb-staking-api:27017
       db-name: staking-api-service
@@ -103,7 +103,7 @@ configFiles:
     queue:
       queue_user: USER
       queue_password: PASSWORD
-      url: "rabbitmq-headless.phase-1-staging:5672"
+      url: rabbitmq-headless.phase-1-staging:5672
       processing_timeout: 30
       msg_max_retry_attempts: 10
       requeue_delay_time: 300
