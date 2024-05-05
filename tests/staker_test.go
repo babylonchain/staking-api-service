@@ -8,9 +8,9 @@ import (
 	"time"
 	"fmt"
 
+	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
 	"github.com/babylonchain/staking-api-service/internal/services"
-	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -83,7 +83,9 @@ func TestActiveStakingFetchedByStakerPkWithInvalidPaginationKey(t *testing.T) {
 	bodyBytes, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err, "reading response body should not fail")
 
-	var response types.Error
+	var response api.ErrorResponse
 	err = json.Unmarshal(bodyBytes, &response)
 	assert.NoError(t, err, "unmarshalling response body should not fail")
+
+	assert.Equal(t, "Invalid pagination token", response.Message, "expected error message does not match")
 }
