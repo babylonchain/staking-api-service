@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/babylonchain/babylon/btcstaking"
-	"github.com/ltcsuite/ltcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2"
 )
 
 type VersionedGlobalParams struct {
@@ -73,8 +73,14 @@ func Validate(g *GlobalParams) error {
 	// Loop through the versions and validate each one
 	var previousParams *VersionedGlobalParams
 	for _, p := range g.Versions {
-		if len(p.Tag) != btcstaking.MagicBytesLen {
-			return fmt.Errorf("invalid tag length, expected %d, got %d", btcstaking.MagicBytesLen, len(p.Tag))
+		tagDecoded, err := hex.DecodeString(p.Tag)
+
+		if err != nil {
+			return fmt.Errorf("invalid tag: %w", err)
+		}
+
+		if len(tagDecoded) != btcstaking.MagicBytesLen {
+			return fmt.Errorf("invalid tag length, expected %d, got %d", btcstaking.MagicBytesLen, len(tagDecoded))
 		}
 
 		if len(p.CovenantPks) == 0 {

@@ -4,7 +4,7 @@
             "version": 0,
             "activation_height": 192840,
             "staking_cap": 50000000000,
-            "tag": "bbt4",
+            "tag": "01020304",
             "covenant_pks": [
                 "05149a0c7a95320adf210e47bca8b363b7bd966be86be6392dd6cf4f96995869",
                 "e8d503cb52715249f32f3ee79cee88dfd48c2565cb0c79cf9640d291f46fd518",

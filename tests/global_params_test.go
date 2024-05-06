@@ -51,7 +51,7 @@ func TestGlobalParams(t *testing.T) {
 	assert.Equal(t, uint64(0), versionedGlobalParam.Version)
 	assert.Equal(t, uint64(100), versionedGlobalParam.ActivationHeight)
 	assert.Equal(t, uint64(50), versionedGlobalParam.StakingCap)
-	assert.Equal(t, "bbt4", versionedGlobalParam.Tag)
+	assert.Equal(t, "01020304", versionedGlobalParam.Tag)
 	assert.Equal(t, 5, len(versionedGlobalParam.CovenantPks))
 	assert.Equal(t, uint64(3), versionedGlobalParam.CovenantQuorum)
 	assert.Equal(t, uint64(1000), versionedGlobalParam.UnbondingTime)
@@ -65,7 +65,7 @@ func TestGlobalParams(t *testing.T) {
 	assert.Equal(t, uint64(1), versionedGlobalParam2.Version)
 	assert.Equal(t, uint64(200), versionedGlobalParam2.ActivationHeight)
 	assert.Equal(t, uint64(500), versionedGlobalParam2.StakingCap)
-	assert.Equal(t, "bbt4", versionedGlobalParam2.Tag)
+	assert.Equal(t, "01020304", versionedGlobalParam2.Tag)
 	assert.Equal(t, 4, len(versionedGlobalParam2.CovenantPks))
 	assert.Equal(t, uint64(2), versionedGlobalParam2.CovenantQuorum)
 	assert.Equal(t, uint64(2000), versionedGlobalParam2.UnbondingTime)
@@ -80,7 +80,7 @@ var defaultParam = types.VersionedGlobalParams{
 	Version:          0,
 	ActivationHeight: 100,
 	StakingCap:       50,
-	Tag:              "bbt4",
+	Tag:              "01020304",
 	CovenantPks: []string{
 		"03ffeaec52a9b407b355ef6967a7ffc15fd6c3fe07de2844d61550475e7a5233e5",
 		"03a5c60c2188e833d39d0fa798ab3f69aa12ed3dd2f3bad659effa252782de3c31",
@@ -116,7 +116,7 @@ func TestFailGlobalParamsValidation(t *testing.T) {
 
 	// invalid tag length
 	utils.DeepCopy(&defaultGlobalParams, &clonedParams)
-	clonedParams.Versions[0].Tag = "bbt"
+	clonedParams.Versions[0].Tag = "010203"
 
 	invalidTagJsonData, err := json.Marshal(clonedParams)
 	assert.NoError(t, err, "marshalling invalid tag data should not fail")
