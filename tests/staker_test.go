@@ -29,6 +29,7 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
 	var paginationKey string
 	allDataCollected := make([]services.DelegationPublic, 0)
+	isFirstLoop := true
 
 	// loop through all pages
 	for {
@@ -55,12 +56,17 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 
 		allDataCollected = append(allDataCollected, response.Data...)
 
+		if isFirstLoop {
+			assert.NotEmpty(t, response.Pagination.NextKey, "should have pagination token after first iteration")
+			isFirstLoop = false
+		}
+
     if response.Pagination.NextKey != "" {
-        t.Logf("Next page: %v", response.Pagination.NextKey)
-        paginationKey = response.Pagination.NextKey
+			t.Logf("Next page: %v", response.Pagination.NextKey)
+			paginationKey = response.Pagination.NextKey
     } else {
-        t.Log("Already last page")
-        break
+			t.Log("Already last page")
+			break
     }
 	}
 
