@@ -247,20 +247,18 @@ workflows:
               only:
                 - main
                 - dev
-      - deploy_staging:
+      - redeploy_staging_mongodb:
           requires:
             - push_docker
             - build_lint_tests
-            - redeploy_staging_mongodb
           filters:
             branches:
               only:
                 - main
                 - dev
-      - redeploy_staging_mongodb:
+      - deploy_staging:
           requires:
-            - push_docker
-            - build_lint_tests
+            - redeploy_staging_mongodb
           filters:
             branches:
               only:
