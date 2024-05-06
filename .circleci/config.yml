@@ -247,15 +247,6 @@ workflows:
               only:
                 - main
                 - dev
-      - deploy_staging:
-          requires:
-            - push_docker
-            - build_lint_tests
-          filters:
-            branches:
-              only:
-                - main
-                - dev
       - redeploy_staging_mongodb:
           requires:
             - push_docker
@@ -265,11 +256,18 @@ workflows:
               only:
                 - main
                 - dev
+      - deploy_staging:
+          requires:
+            - redeploy_staging_mongodb
+          filters:
+            branches:
+              only:
+                - main
+                - dev
       - require_approval_deploy:
           type: approval
           requires:
             - deploy_staging
-            - redeploy_staging_mongodb
           filters:
             branches:
               only:
