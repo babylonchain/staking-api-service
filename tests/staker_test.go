@@ -57,7 +57,6 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 
 	// Check the overflow is returned correctly
 	for _, d := range response.Data {
-
 		if d.StakingTxHashHex == activeStakingEvent[7].StakingTxHashHex {
 			assert.Equal(t, true, d.IsOverflow)
 		} else {
