@@ -43,7 +43,7 @@ func shouldGetFinalityProvidersSuccessfully(t *testing.T, testServer *TestServer
 	// Check that the response body is as expected
 
 	assert.NotEmpty(t, result, "expected response body to be non-empty")
-	assert.Equal(t, "Babylon Foundation 2", result[2].Description.Moniker)
+	assert.Equal(t, "Babylon Foundation 3", result[2].Description.Moniker)
 	assert.Equal(t, "0.060000000000000000", result[1].Commission)
 	assert.Equal(t, "0d2f9728abc45c0cdeefdd73f52a0e0102470e35fb689fc5bc681959a61b021f", result[3].BtcPk)
 
