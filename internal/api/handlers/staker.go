@@ -19,10 +19,12 @@ func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.E
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "staker_btc_pk is required")
 	}
 
-	delegations, paginationToken, err := h.services.DelegationsByStakerPk(request.Context(), stakerBtcPk, "")
+	paginationKey := request.URL.Query().Get("pagination_key")
+
+	delegations, newPaginationKey, err := h.services.DelegationsByStakerPk(request.Context(), stakerBtcPk, paginationKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewResultWithPagination(delegations, paginationToken), nil
+	return NewResultWithPagination(delegations, newPaginationKey), nil
 }
