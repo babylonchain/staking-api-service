@@ -17,7 +17,7 @@ func TestWithdrawFromActiveStaking(t *testing.T) {
 	activeStakingEvent := getTestActiveStakingEvent()
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
-	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{*activeStakingEvent})
 
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
@@ -79,7 +79,7 @@ func TestWithdrawFromStakingHasUnbondingRequested(t *testing.T) {
 	activeStakingEvent := getTestActiveStakingEvent()
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
-	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{*activeStakingEvent})
 
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
@@ -166,7 +166,7 @@ func TestProcessWithdrawStakingEventShouldTolerateEventMsgOutOfOrder(t *testing.
 	activeStakingEvent := getTestActiveStakingEvent()
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
-	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{*activeStakingEvent})
 
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
@@ -225,7 +225,7 @@ func TestShouldIgnoreWithdrawnEventIfAlreadyWithdrawn(t *testing.T) {
 	activeStakingEvent := getTestActiveStakingEvent()
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
-	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{*activeStakingEvent})
 	// Wait for 2 seconds to make sure the message is processed
 	time.Sleep(2 * time.Second)
 

@@ -62,6 +62,7 @@ func TestActiveStaking(t *testing.T) {
 	assert.Equal(t, "active", response.Data[0].State, "expected response body to match")
 	assert.Nil(t, response.Data[0].UnbondingTx, "expected response body to match")
 	assert.Equal(t, activeStakingEvent[0].StakingTxHashHex, response.Data[0].StakingTxHashHex, "expected response body to match")
+	assert.Equal(t, false, response.Data[0].IsOverflow, "expected response body to match")
 
 	assert.Empty(t, response.Pagination.NextKey, "should not have pagination")
 }
@@ -135,7 +136,7 @@ func TestShouldNotUnbondIfNotActiveState(t *testing.T) {
 	expiredStakingEvent := client.NewExpiredStakingEvent(activeStakingEvent.StakingTxHashHex, types.ActiveTxType.ToString())
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
-	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{activeStakingEvent})
+	err := sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{*activeStakingEvent})
 	require.NoError(t, err)
 	time.Sleep(2 * time.Second)
 
