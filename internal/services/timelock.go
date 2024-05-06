@@ -15,7 +15,7 @@ import (
 func (s *Services) ProcessExpireCheck(
 	ctx context.Context, stakingTxHashHex string,
 	startHeight, timelock uint64, txType types.StakingTxType,
-) error {
+) *types.Error {
 	expireHeight := startHeight + timelock
 	err := s.DbClient.SaveTimeLockExpireCheck(
 		ctx, stakingTxHashHex, expireHeight, txType.ToString(),

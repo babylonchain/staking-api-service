@@ -11,7 +11,7 @@ type DBClient interface {
 	Ping(ctx context.Context) error
 	SaveActiveStakingDelegation(
 		ctx context.Context, stakingTxHashHex, stakerPkHex, fpPkHex string, stakingTxHex string,
-		amount, startHeight, timelock, outputIndex uint64, startTimestamp int64,
+		amount, startHeight, timelock, outputIndex uint64, startTimestamp int64, isOverflow bool,
 	) error
 	FindDelegationsByStakerPk(
 		ctx context.Context, stakerPk string, paginationToken string,

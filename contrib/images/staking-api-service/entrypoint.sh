@@ -5,7 +5,7 @@ set -x
 BINARY=${BINARY:-/bin/staking-api-service}
 CONFIG=${CONFIG:-/home/staking-api-service/config.yml}
 PARAMS=${PARAMS:-/home/staking-api-service/global-params.json}
-FINALITY_PROVIDERS=${PARAMS:-/home/staking-api-service/finality-providers.json}
+FINALITY_PROVIDERS=${FINALITY_PROVIDERS:-/home/staking-api-service/finality-providers.json}
 
 if ! [ -f "${BINARY}" ]; then
 	echo "The binary $(basename "${BINARY}") cannot be found."

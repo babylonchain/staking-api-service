@@ -11,12 +11,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody string) error {
+func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody string) *types.Error {
 	var withdrawnStakingEvent queueClient.WithdrawStakingEvent
 	err := json.Unmarshal([]byte(messageBody), &withdrawnStakingEvent)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to unmarshal the message body into withdrawnStakingEvent")
-		return err
+		return types.NewError(http.StatusBadRequest, types.BadRequest, err)
 	}
 
 	// Check if the delegation is in the right state to process the withdrawn event.
@@ -29,6 +29,8 @@ func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody s
 
 	if utils.Contains(utils.OutdatedStatesForWithdraw(), state) {
 		// Ignore the message as the delegation state is withdrawn. Nothing to do anymore
+		log.Ctx(ctx).Debug().Str("StakingTxHashHex", withdrawnStakingEvent.StakingTxHashHex).
+			Msg("delegation state is outdated for withdrawn event")
 		return nil
 	}
 	// Requeue if the current state is not in the qualified states to transition to withdrawn
@@ -45,7 +47,6 @@ func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody s
 		ctx, withdrawnStakingEvent.StakingTxHashHex,
 	)
 	if transitionErr != nil {
-		log.Ctx(ctx).Err(transitionErr).Msg("Failed to transition to withdrawn state")
 		return transitionErr
 	}
 

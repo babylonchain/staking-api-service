@@ -22,6 +22,8 @@ deployment:
               name: staking-api-service
           - configMap:
               name: phase1-global-config
+          - configMap:
+              name: phase1-finality-providers
   volumeMounts:
     - name: staking-api-service
       mountPath: /home/staking-api-service
@@ -30,7 +32,7 @@ deployment:
     prometheus.io/port: "2112"
     prometheus.io/scheme: http
     prometheus.io/scrape: "true"
-    configmap.reloader.stakater.com/reload: "staking-api-service"
+    configmap.reloader.stakater.com/reload: "staking-api-service, phase1-global-config, phase1-finality-providers"
   nodeSelector:
     workload: "staging"
   affinity:
@@ -91,7 +93,7 @@ configFiles:
       idle-timeout: 60s
       allowed-origins: [ "*" ]
       log-level: debug
-      btc-net: "mainnet"
+      btc-net: signet
     db:
       address: mongodb://mongodb-staging-headless.mongodb-staking-api:27017
       db-name: staking-api-service
@@ -101,7 +103,7 @@ configFiles:
     queue:
       queue_user: USER
       queue_password: PASSWORD
-      url: "rabbitmq-headless.phase-1-staging:5672"
+      url: rabbitmq-headless.phase-1-staging:5672
       processing_timeout: 30
       msg_max_retry_attempts: 10
       requeue_delay_time: 300

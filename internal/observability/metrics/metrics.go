@@ -24,12 +24,12 @@ func (O Outcome) String() string {
 }
 
 var (
-	once                         sync.Once
-	metricsRouter                *chi.Mux
-	httpRequestDurationHistogram *prometheus.HistogramVec
-	processFuncDuration          *prometheus.HistogramVec
-	documentCount                *prometheus.GaugeVec
-	clientRequestLatency         *prometheus.HistogramVec
+	once                             sync.Once
+	metricsRouter                    *chi.Mux
+	httpRequestDurationHistogram     *prometheus.HistogramVec
+	eventProcessingDurationHistogram *prometheus.HistogramVec
+	unprocessableEntityCounter       *prometheus.CounterVec
+	queueOperationFailureCounter     *prometheus.CounterVec
 )
 
 // Init initializes the metrics package.
@@ -69,10 +69,37 @@ func registerMetrics() {
 		[]string{"endpoint", "status"},
 	)
 
-	prometheus.MustRegister(
-		httpRequestDurationHistogram,
+	eventProcessingDurationHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "event_processing_duration_seconds",
+			Help:    "Histogram of event processing durations in seconds.",
+			Buckets: defaultHistogramBucketsSeconds,
+		},
+		[]string{"queuename", "status", "attempts"},
 	)
 
+	unprocessableEntityCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "unprocessable_entity_total",
+			Help: "Total number of unprocessable entities from the event processing.",
+		},
+		[]string{"entity"},
+	)
+
+	queueOperationFailureCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "queue_operation_failure_total",
+			Help: "Total number of failed queue operations per queue name.",
+		},
+		[]string{"operation", "queuename"},
+	)
+
+	prometheus.MustRegister(
+		httpRequestDurationHistogram,
+		eventProcessingDurationHistogram,
+		unprocessableEntityCounter,
+		queueOperationFailureCounter,
+	)
 }
 
 // StartHttpRequestDurationTimer starts a timer to measure http request handling duration.
@@ -80,6 +107,32 @@ func StartHttpRequestDurationTimer(endpoint string) func(statusCode int) {
 	startTime := time.Now()
 	return func(statusCode int) {
 		duration := time.Since(startTime).Seconds()
-		httpRequestDurationHistogram.WithLabelValues(endpoint, fmt.Sprintf("%d", statusCode)).Observe(duration)
+		httpRequestDurationHistogram.WithLabelValues(
+			endpoint,
+			fmt.Sprintf("%d", statusCode),
+		).Observe(duration)
 	}
+}
+
+func StartEventProcessingDurationTimer(queuename string, attempts int32) func(statusCode int) {
+	startTime := time.Now()
+	return func(statusCode int) {
+		duration := time.Since(startTime).Seconds()
+		eventProcessingDurationHistogram.WithLabelValues(
+			queuename,
+			fmt.Sprintf("%d", statusCode),
+			fmt.Sprintf("%d", attempts),
+		).Observe(duration)
+	}
+}
+
+// RecordUnprocessableEntity increments the unprocessable entity counter.
+// This is basically the number of items will show up in the unprocessable entity collection
+func RecordUnprocessableEntity(entity string) {
+	unprocessableEntityCounter.WithLabelValues(entity).Inc()
+}
+
+// RecordQueueOperationFailure increments the queue operation failure counter.
+func RecordQueueOperationFailure(operation, queuename string) {
+	queueOperationFailureCounter.WithLabelValues(operation, queuename).Inc()
 }

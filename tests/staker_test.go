@@ -16,6 +16,9 @@ import (
 
 func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 11)
+	// randomly set one of the staking tx to be overflow
+	activeStakingEvent[7].IsOverflow = true
+
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
@@ -42,16 +45,23 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 		err = json.Unmarshal(bodyBytes, &response)
 		assert.NoError(t, err, "unmarshalling response body should not fail")
 
+		// Check that the response body is as expected
+		assert.NotEmpty(t, response.Data, "expected response body to have data")
+		assert.Equal(t, activeStakingEvent[0].StakerPkHex, response.Data[0].StakerPkHex, "expected response body to match")
+
+		// check the timestamp string is in ISO format
+		_, err = time.Parse(time.RFC3339, response.Data[0].StakingTx.StartTimestamp)
+		assert.NoError(t, err, "expected timestamp to be in RFC3339 format")
+
 		allDataCollected = append(allDataCollected, response.Data...)
 
-		// Check if there's a next page
-		if response.Pagination.NextKey == "" {
-			t.Log("Already last page")
-			break
-		} else {
-			t.Logf("Next page: %v", response.Pagination.NextKey)
-			paginationKey = response.Pagination.NextKey
-		}
+    if response.Pagination.NextKey != "" {
+        t.Logf("Next page: %v", response.Pagination.NextKey)
+        paginationKey = response.Pagination.NextKey
+    } else {
+        t.Log("Already last page")
+        break
+    }
 	}
 
 	assert.Greater(t, len(allDataCollected), 10, "expected more than 10 items in total across all pages")
@@ -59,6 +69,14 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 
 	for i := 0; i < len(allDataCollected)-1; i++ {
 		assert.True(t, allDataCollected[i].StakingTx.StartHeight >= allDataCollected[i+1].StakingTx.StartHeight, "expected collected data to be sorted by start height")
+	}
+
+	for _, d := range allDataCollected {
+		if d.StakingTxHashHex == activeStakingEvent[7].StakingTxHashHex {
+			assert.Equal(t, true, d.IsOverflow)
+		} else {
+			assert.Equal(t, false, d.IsOverflow)
+		}
 	}
 }
 

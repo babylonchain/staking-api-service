@@ -86,44 +86,6 @@ jobs:
           repo: "$CIRCLE_PROJECT_REPONAME"
           tag: "$CIRCLE_SHA1,$CIRCLE_TAG"
 
-  deploy_mainnet:
-    machine:
-      image: ubuntu-2204:2024.01.1
-      resource_class: large
-    steps:
-      - checkout
-      - aws-ecr/ecr-login:
-          aws-access-key-id: AWS_ACCESS_KEY_ID
-          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-          region: "$AWS_REGION"
-      - kubernetes/install-kubeconfig:
-          kubeconfig: MAINNET_KUBECONFIG
-      - helm/install-helm-client
-      - run:
-          name: Fetch and replace RabbitMQ credentials from CircleCi env vars
-          command: |
-            HELM_VALUES=/home/circleci/project/.circleci/values-mainnet.yaml
-            sed -i "s/USER/$RABBITMQ_USER/g" $HELM_VALUES
-            sed -i "s/PASSWORD/$RABBITMQ_PASSWORD/g" $HELM_VALUES
-      - run:
-          name: Perform a dry run of the new release
-          command: |
-            helm upgrade --install --debug --dry-run \
-              -n $DEPLOY_MAINNET_NAMESPACE \
-              --values /home/circleci/project/.circleci/values-mainnet.yaml \
-              --version $HELM_CHART_VERSION \
-              --set deployment.version=$CIRCLE_SHA1 \
-              staking-api-service $HELM_CHART_REPO
-      - run:
-          name: Release new service version in an atomic way
-          command: |
-            helm upgrade --install --debug --atomic --wait \
-              -n $DEPLOY_MAINNET_NAMESPACE --create-namespace \
-              --values /home/circleci/project/.circleci/values-mainnet.yaml \
-              --version $HELM_CHART_VERSION \
-              --set deployment.version=$CIRCLE_SHA1 \
-              staking-api-service $HELM_CHART_REPO
-
   deploy_staging:
     machine:
       image: ubuntu-2204:2024.01.1
@@ -205,10 +167,68 @@ jobs:
       - run:
           name: Overwrite the existing replica set configuration
           command: |
-            sleep 10s
+            sleep 30s
             kubectl exec mongodb-staging-0 -n $MONGODB_STAGING_NAMESPACE \
             -- mongosh \
             --eval "rs.reconfig({'_id': 'rs0', 'members': [{'_id': 0, 'host': 'mongodb-staging-0.mongodb-staging-headless.mongodb-staking-api.svc.cluster.local:27017', 'priority': 10}]}, {force: true})"
+
+  deploy_mainnet:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      resource_class: large
+    steps:
+      - checkout
+      - aws-ecr/ecr-login:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          region: "$AWS_REGION"
+      - kubernetes/install-kubeconfig:
+          kubeconfig: MAINNET_KUBECONFIG
+      - helm/install-helm-client
+      - run:
+          name: Fetch and replace RabbitMQ credentials from CircleCi env vars
+          command: |
+            HELM_VALUES=/home/circleci/project/.circleci/values-mainnet.yaml
+            sed -i "s/USER/$RABBITMQ_USER/g" $HELM_VALUES
+            sed -i "s/PASSWORD/$RABBITMQ_PASSWORD/g" $HELM_VALUES
+      - run:
+          name: Perform a dry run of the new release
+          command: |
+            helm upgrade --install --debug --dry-run \
+              -n $DEPLOY_MAINNET_NAMESPACE \
+              --values /home/circleci/project/.circleci/values-mainnet.yaml \
+              --version $HELM_CHART_VERSION \
+              --set deployment.version=$CIRCLE_SHA1 \
+              staking-api-service $HELM_CHART_REPO
+      - run:
+          name: Release new service version in an atomic way
+          command: |
+            helm upgrade --install --debug --atomic --wait \
+              -n $DEPLOY_MAINNET_NAMESPACE --create-namespace \
+              --values /home/circleci/project/.circleci/values-mainnet.yaml \
+              --version $HELM_CHART_VERSION \
+              --set deployment.version=$CIRCLE_SHA1 \
+              staking-api-service $HELM_CHART_REPO
+
+  rollback_mainnet:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      resource_class: large
+    steps:
+      - checkout
+      - aws-ecr/ecr-login:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          region: "$AWS_REGION"
+      - kubernetes/install-kubeconfig:
+          kubeconfig: MAINNET_KUBECONFIG
+      - helm/install-helm-client
+      - run:
+          name: Rollback Helm Chart to previous release
+          command: |
+            helm rollback --cleanup-on-fail --force --recreate-pods --wait \
+              --debug -n $DEPLOY_MAINNET_NAMESPACE staking-api-service
+
 workflows:
   CICD:
     jobs:
@@ -226,14 +246,6 @@ workflows:
             branches:
               only:
                 - main
-      - deploy_mainnet:
-          requires:
-            - push_docker
-            - build_lint_tests
-          filters:
-            branches:
-              only:
-                - main
                 - dev
       - deploy_staging:
           requires:
@@ -248,6 +260,41 @@ workflows:
           requires:
             - push_docker
             - build_lint_tests
+          filters:
+            branches:
+              only:
+                - main
+                - dev
+      - require_approval_deploy:
+          type: approval
+          requires:
+            - deploy_staging
+            - redeploy_staging_mongodb
+          filters:
+            branches:
+              only:
+                - main
+                - dev
+      - deploy_mainnet:
+          requires:
+            - require_approval_deploy
+          filters:
+            branches:
+              only:
+                - main
+                - dev
+      - require_approval_rollback:
+          type: approval
+          requires:
+            - deploy_mainnet
+          filters:
+            branches:
+              only:
+                - main
+                - dev
+      - rollback_mainnet:
+          requires:
+            - require_approval_rollback
           filters:
             branches:
               only:

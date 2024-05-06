@@ -7,14 +7,13 @@ import (
 
 	"github.com/babylonchain/babylon/btcstaking"
 	bbntypes "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-
-	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 // GetSchnorrPkFromHex parses Schnorr public keys in 32 bytes
@@ -56,7 +55,7 @@ func VerifyUnbondingRequest(
 	stakingTimeLock,
 	stakingOutputIndex,
 	stakingValue uint64,
-	params *types.GlobalParams,
+	params *types.VersionedGlobalParams,
 	btcNetParam *chaincfg.Params,
 ) error {
 	// 1. validate that un-bonding transaction has proper shape

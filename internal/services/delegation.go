@@ -27,6 +27,7 @@ type DelegationPublic struct {
 	StakingValue          uint64             `json:"staking_value"`
 	StakingTx             *TransactionPublic `json:"staking_tx"`
 	UnbondingTx           *TransactionPublic `json:"unbonding_tx,omitempty"`
+	IsOverflow            bool               `json:"is_overflow"`
 }
 
 func fromDelegationDocument(d model.DelegationDocument) DelegationPublic {
@@ -43,6 +44,7 @@ func fromDelegationDocument(d model.DelegationDocument) DelegationPublic {
 			StartHeight:    d.StakingTx.StartHeight,
 			TimeLock:       d.StakingTx.TimeLock,
 		},
+		IsOverflow: d.IsOverflow,
 	}
 
 	// Add unbonding transaction if it exists
@@ -79,16 +81,15 @@ func (s *Services) DelegationsByStakerPk(ctx context.Context, stakerPk string, p
 func (s *Services) SaveActiveStakingDelegation(
 	ctx context.Context, txHashHex, stakerPkHex, finalityProviderPkHex string,
 	value, startHeight uint64, stakingTimestamp int64, timeLock, stakingOutputIndex uint64,
-	stakingTxHex string,
-) error {
+	stakingTxHex string, isOverflow bool,
+) *types.Error {
 	err := s.DbClient.SaveActiveStakingDelegation(
 		ctx, txHashHex, stakerPkHex, finalityProviderPkHex, stakingTxHex,
-		value, startHeight, timeLock, stakingOutputIndex, stakingTimestamp,
+		value, startHeight, timeLock, stakingOutputIndex, stakingTimestamp, isOverflow,
 	)
 	if err != nil {
 		if ok := db.IsDuplicateKeyError(err); ok {
 			log.Ctx(ctx).Warn().Err(err).Msg("Skip the active staking event as it already exists in the database")
-			// TODO: Add metrics for duplicate active staking events
 			return nil
 		}
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to save active staking delegation")
