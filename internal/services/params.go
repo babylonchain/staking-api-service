@@ -46,14 +46,17 @@ func (s *Services) GetGlobalParamsPublic() *GlobalParamsPublic {
 	}
 }
 
-// It returns the versioned global params if the height is greater than or equal to the activation height
+// GetVersionedGlobalParamsByHeight returns the versioned global params
+// for a particular bitcoin height
 func (s *Services) GetVersionedGlobalParamsByHeight(height uint64) *types.VersionedGlobalParams {
-	// It is assumed the versions are sorted by activation height in ascending order
-	for _, version := range s.params.Versions {
-		if version.ActivationHeight <= height {
-			return version
+	// Iterate the list in reverse (i.e. decreasing ActivationHeight)
+	// and identify the first element that has an activation height below
+	// the specified BTC height.
+	for i := len(s.params.Versions) - 1; i >= 0; i-- {
+		paramsVersion := s.params.Versions[i]
+		if paramsVersion.ActivationHeight <= height {
+			return paramsVersion
 		}
 	}
-
 	return nil
 }
