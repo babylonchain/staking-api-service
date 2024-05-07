@@ -60,6 +60,7 @@ func TestGlobalParams(t *testing.T) {
 	assert.Equal(t, uint64(3000), versionedGlobalParam.MinStakingAmount)
 	assert.Equal(t, uint64(10000), versionedGlobalParam.MaxStakingTime)
 	assert.Equal(t, uint64(100), versionedGlobalParam.MinStakingTime)
+	assert.Equal(t, uint64(10), versionedGlobalParam.ConfirmationDepth)
 
 	versionedGlobalParam2 := result[1]
 	assert.Equal(t, uint64(1), versionedGlobalParam2.Version)
@@ -74,6 +75,7 @@ func TestGlobalParams(t *testing.T) {
 	assert.Equal(t, uint64(2000), versionedGlobalParam2.MinStakingAmount)
 	assert.Equal(t, uint64(20000), versionedGlobalParam2.MaxStakingTime)
 	assert.Equal(t, uint64(200), versionedGlobalParam2.MinStakingTime)
+	assert.Equal(t, uint64(10), versionedGlobalParam2.ConfirmationDepth)
 }
 
 var defaultParam = types.VersionedGlobalParams{
@@ -88,13 +90,14 @@ var defaultParam = types.VersionedGlobalParams{
 		"0357349e985e742d5131e1e2b227b5170f6350ac2e2feb72254fcc25b3cee21a18",
 		"03c8ccb03c379e452f10c81232b41a1ca8b63d0baf8387e57d302c987e5abb8527",
 	},
-	CovenantQuorum:   3,
-	UnbondingTime:    1000,
-	UnbondingFee:     10000,
-	MaxStakingAmount: 300000,
-	MinStakingAmount: 3000,
-	MaxStakingTime:   10000,
-	MinStakingTime:   100,
+	CovenantQuorum:    3,
+	UnbondingTime:     1000,
+	UnbondingFee:      10000,
+	MaxStakingAmount:  300000,
+	MinStakingAmount:  3000,
+	MaxStakingTime:    10000,
+	MinStakingTime:    100,
+	ConfirmationDepth: 10,
 }
 
 func TestFailGlobalParamsValidation(t *testing.T) {
@@ -206,6 +209,18 @@ func TestFailGlobalParamsValidation(t *testing.T) {
 	_, err = types.NewGlobalParams(fileName)
 	os.Remove(fileName)
 	assert.Equal(t, "staking cap should be positive", err.Error())
+
+	// test confirmation depth
+	utils.DeepCopy(&defaultGlobalParams, &clonedParams)
+	clonedParams.Versions[0].ConfirmationDepth = 0
+
+	jsonData, err = json.Marshal(clonedParams)
+	assert.NoError(t, err)
+
+	fileName = createJsonFile(t, jsonData)
+	_, err = types.NewGlobalParams(fileName)
+	os.Remove(fileName)
+	assert.Equal(t, "confirmation-depth should be positive", err.Error())
 }
 
 func TestGlobalParamsSortedByActivationHeight(t *testing.T) {

@@ -11,18 +11,19 @@ import (
 )
 
 type VersionedGlobalParams struct {
-	Version          uint64   `json:"version"`
-	ActivationHeight uint64   `json:"activation_height"`
-	StakingCap       uint64   `json:"staking_cap"`
-	Tag              string   `json:"tag"`
-	CovenantPks      []string `json:"covenant_pks"`
-	CovenantQuorum   uint64   `json:"covenant_quorum"`
-	UnbondingTime    uint64   `json:"unbonding_time"`
-	UnbondingFee     uint64   `json:"unbonding_fee"`
-	MaxStakingAmount uint64   `json:"max_staking_amount"`
-	MinStakingAmount uint64   `json:"min_staking_amount"`
-	MaxStakingTime   uint64   `json:"max_staking_time"`
-	MinStakingTime   uint64   `json:"min_staking_time"`
+	Version           uint64   `json:"version"`
+	ActivationHeight  uint64   `json:"activation_height"`
+	StakingCap        uint64   `json:"staking_cap"`
+	Tag               string   `json:"tag"`
+	CovenantPks       []string `json:"covenant_pks"`
+	CovenantQuorum    uint64   `json:"covenant_quorum"`
+	UnbondingTime     uint64   `json:"unbonding_time"`
+	UnbondingFee      uint64   `json:"unbonding_fee"`
+	MaxStakingAmount  uint64   `json:"max_staking_amount"`
+	MinStakingAmount  uint64   `json:"min_staking_amount"`
+	MaxStakingTime    uint64   `json:"max_staking_time"`
+	MinStakingTime    uint64   `json:"min_staking_time"`
+	ConfirmationDepth uint64   `json:"confirmation_depth"`
 }
 
 type GlobalParams struct {
@@ -102,6 +103,10 @@ func Validate(g *GlobalParams) error {
 
 		if p.MaxStakingTime <= p.MinStakingTime {
 			return fmt.Errorf("max-staking-time must be larger than min-staking-time")
+		}
+
+		if p.ConfirmationDepth <= 0 {
+			return fmt.Errorf("confirmation-depth should be positive")
 		}
 
 		if p.ActivationHeight <= 0 {
