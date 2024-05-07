@@ -18,7 +18,8 @@
             "max_staking_amount": 300000,
             "min_staking_amount": 3000,
             "max_staking_time": 10000,
-            "min_staking_time": 100
+            "min_staking_time": 100,
+            "confirmation_depth": 10
         },
         {
             "version": 1,
@@ -37,7 +38,8 @@
             "max_staking_amount": 200000,
             "min_staking_amount": 2000,
             "max_staking_time": 20000,
-            "min_staking_time": 200
+            "min_staking_time": 200,
+            "confirmation_depth": 10
         }
     ]
 }
