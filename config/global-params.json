@@ -6,18 +6,18 @@
             "staking_cap": 50000000000,
             "tag": "01020304",
             "covenant_pks": [
-                "05149a0c7a95320adf210e47bca8b363b7bd966be86be6392dd6cf4f96995869",
-                "e8d503cb52715249f32f3ee79cee88dfd48c2565cb0c79cf9640d291f46fd518",
-                "fe81b2409a32ddfd8ec1556557e8dd949b6e4fd37047523cb7f5fefca283d542",
-                "bc4a1ff485d7b44faeec320b81ad31c3cad4d097813c21fcf382b4305e4cfc82",
-                "001e50601a4a1c003716d7a1ee7fe25e26e55e24e909b3642edb60d30e3c40c1"
+                "0381b70c01535f5153a8039c21150c53f3e49a083555b57930103db8a7272ff336",
+                "02159f46467124f6bbba77060520571ddb07c7e95ff54d8b9958ec0b0d59d86c03",
+                "039705be04f3a3eb5c3d0dd61e648e06ea8170975744594fe702e8088bcceff375",
+                "02ce138027bfdfb4dd631e9cecf097082c8a505ab16de36f5e3eb816d105ba7575",
+                "03e15dba250612e79e22abf28a1828ba5e6bdfaaa6ed2d87462b046994c33fa46f"
             ],
             "covenant_quorum": 3,
             "unbonding_time": 1000,
             "unbonding_fee": 20000,
             "max_staking_amount": 1000000000,
             "min_staking_amount": 1000000,
-            "max_staking_time": 64000,
+            "max_staking_time": 84000,
             "min_staking_time": 64000,
             "confirmation_depth": 10
         }

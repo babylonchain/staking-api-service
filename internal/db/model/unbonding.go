@@ -1,7 +1,6 @@
 package model
 
 const (
-	UnbondingCollection   = "unbonding_queue"
 	UnbondingInitialState = "INSERTED"
 )
 

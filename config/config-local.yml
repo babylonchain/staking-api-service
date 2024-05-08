@@ -8,7 +8,7 @@ server:
   log-level: debug
   btc-net: "mainnet"
 db:
-  address: "mongodb://localhost:27017"
+  address: "mongodb://localhost:27017/?directConnection=true"
   db-name: staking-api-service
   max-pagination-limit: 10
   db-batch-size-limit: 100
