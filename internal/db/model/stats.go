@@ -1,12 +1,5 @@
 package model
 
-const (
-	StatsLockCollection             = "stats_lock"
-	OverallStatsCollection          = "overall_stats"
-	FinalityProviderStatsCollection = "finality_providers_stats"
-	StakerStatsCollection           = "staker_stats"
-)
-
 // StatsLockDocument represents the document in the stats lock collection
 // It's used as a lock to prevent concurrent stats calculation for the same staking tx hash
 // As well as to prevent the same staking tx hash + txType to be processed multiple times

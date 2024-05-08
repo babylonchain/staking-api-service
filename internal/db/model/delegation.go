@@ -4,8 +4,6 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
-const DelegationCollection = "delegations"
-
 type TimelockTransaction struct {
 	TxHex          string `bson:"tx_hex"`
 	OutputIndex    uint64 `bson:"output_index"`
