@@ -70,7 +70,7 @@ func Setup(ctx context.Context, cfg *config.Config) error {
 func createCollection(ctx context.Context, database *mongo.Database, collectionName string) {
 	// Check if the collection already exists.
 	if _, err := database.Collection(collectionName).Indexes().CreateOne(ctx, mongo.IndexModel{}); err != nil {
-		log.Debug().Msg(fmt.Sprintf("Collection maybe already exists: %s, error: %s", collectionName, err))
+		log.Debug().Msg(fmt.Sprintf("Collection maybe already exists: %s, skip the rest. info: %s", collectionName, err))
 		return
 	}
 
