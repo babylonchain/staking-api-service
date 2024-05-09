@@ -70,10 +70,11 @@ func randomString(r *rand.Rand, n int) string {
 	return string(result)
 }
 
-// randomAmount generates a random BTC amount range from 0.1 to 10000 in satoshi.
+// randomAmount generates a random BTC amount from 0.1 to 10000
+// the returned value is in satoshis
 func randomAmount(r *rand.Rand) int64 {
-	// Generate a random BTC value range from 0.1 to 10000
+	// Generate a random value range from 0.1 to 10000 BTC
 	randomBTC := r.Float64()*(9999.9-0.1) + 0.1
-	// round to nearest satoshi
+	// convert to satoshi
 	return int64(randomBTC * 1e8)
 }

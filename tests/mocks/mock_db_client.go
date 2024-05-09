@@ -139,23 +139,23 @@ func (_m *DBClient) FindFinalityProviderStatsByFinalityProviderPkHex(ctx context
 }
 
 // FindTopStakersByTvl provides a mock function with given fields: ctx, paginationToken
-func (_m *DBClient) FindTopStakersByTvl(ctx context.Context, paginationToken string) (*db.DbResultMap[model.StakerStatsDocument], error) {
+func (_m *DBClient) FindTopStakersByTvl(ctx context.Context, paginationToken string) (*db.DbResultMap[*model.StakerStatsDocument], error) {
 	ret := _m.Called(ctx, paginationToken)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindTopStakersByTvl")
 	}
 
-	var r0 *db.DbResultMap[model.StakerStatsDocument]
+	var r0 *db.DbResultMap[*model.StakerStatsDocument]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.DbResultMap[model.StakerStatsDocument], error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.DbResultMap[*model.StakerStatsDocument], error)); ok {
 		return rf(ctx, paginationToken)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *db.DbResultMap[model.StakerStatsDocument]); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.DbResultMap[*model.StakerStatsDocument]); ok {
 		r0 = rf(ctx, paginationToken)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.DbResultMap[model.StakerStatsDocument])
+			r0 = ret.Get(0).(*db.DbResultMap[*model.StakerStatsDocument])
 		}
 	}
 

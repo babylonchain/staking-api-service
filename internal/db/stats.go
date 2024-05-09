@@ -396,7 +396,7 @@ func (db *Database) updateStakerStats(ctx context.Context, state, stakingTxHashH
 	return txErr
 }
 
-func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken string) (*DbResultMap[model.StakerStatsDocument], error) {
+func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken string) (*DbResultMap[*model.StakerStatsDocument], error) {
 	client := db.Client.Database(db.DbName).Collection(model.StakerStatsCollection)
 
 	opts := options.Find().SetSort(bson.D{{Key: "active_tvl", Value: -1}}).
@@ -423,7 +423,7 @@ func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken str
 		return nil, err
 	}
 
-	var stakerStats []model.StakerStatsDocument
+	var stakerStats []*model.StakerStatsDocument
 	if err = cursor.All(ctx, &stakerStats); err != nil {
 		cursor.Close(ctx)
 		return nil, err
