@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/db"
+	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/rs/zerolog/log"
 )
@@ -17,14 +18,12 @@ type FpDescriptionPublic struct {
 	Details         string `json:"details"`
 }
 
-func EmptyFpDescriptionPublic() FpDescriptionPublic {
-	return FpDescriptionPublic{
-		Moniker:         "",
-		Identity:        "",
-		Website:         "",
-		SecurityContact: "",
-		Details:         "",
-	}
+var emptyFpDescriptionPublic = &FpDescriptionPublic{
+	Moniker:         "",
+	Identity:        "",
+	Website:         "",
+	SecurityContact: "",
+	Details:         "",
 }
 
 type FpDetailsPublic struct {
@@ -38,24 +37,24 @@ type FpDetailsPublic struct {
 }
 
 type FpParamsPublic struct {
-	Description FpDescriptionPublic `json:"description"`
-	Commission  string              `json:"commission"`
-	BtcPk       string              `json:"btc_pk"`
+	Description *FpDescriptionPublic `json:"description"`
+	Commission  string               `json:"commission"`
+	BtcPk       string               `json:"btc_pk"`
 }
 
 // GetFinalityProvidersFromGlobalParams returns the finality providers from the global params.
 // Those FP are treated as "active" finality providers.
-func (s *Services) GetFinalityProvidersFromGlobalParams() []FpParamsPublic {
-	var fpDetails []FpParamsPublic
+func (s *Services) GetFinalityProvidersFromGlobalParams() []*FpParamsPublic {
+	var fpDetails []*FpParamsPublic
 	for _, finalityProvider := range s.finalityProviders {
-		description := FpDescriptionPublic{
+		description := &FpDescriptionPublic{
 			Moniker:         finalityProvider.Description.Moniker,
 			Identity:        finalityProvider.Description.Identity,
 			Website:         finalityProvider.Description.Website,
 			SecurityContact: finalityProvider.Description.SecurityContact,
 			Details:         finalityProvider.Description.Details,
 		}
-		fpDetails = append(fpDetails, FpParamsPublic{
+		fpDetails = append(fpDetails, &FpParamsPublic{
 			Description: description,
 			Commission:  finalityProvider.Commission,
 			BtcPk:       finalityProvider.BtcPk,
@@ -64,7 +63,7 @@ func (s *Services) GetFinalityProvidersFromGlobalParams() []FpParamsPublic {
 	return fpDetails
 }
 
-func (s *Services) GetFinalityProviders(ctx context.Context, page string) ([]FpDetailsPublic, string, *types.Error) {
+func (s *Services) GetFinalityProviders(ctx context.Context, page string) ([]*FpDetailsPublic, string, *types.Error) {
 	fpParams := s.GetFinalityProvidersFromGlobalParams()
 	if len(fpParams) == 0 {
 		log.Ctx(ctx).Error().Msg("No finality providers found from global params")
@@ -73,7 +72,7 @@ func (s *Services) GetFinalityProviders(ctx context.Context, page string) ([]FpD
 	// Convert the fpParams slice to a map with the BtcPk as the key
 	fpParamsMap := make(map[string]*FpParamsPublic)
 	for _, fp := range fpParams {
-		fpParamsMap[fp.BtcPk] = &fp
+		fpParamsMap[fp.BtcPk] = fp
 	}
 
 	resultMap, err := s.DbClient.FindFinalityProviderStats(ctx, page)
@@ -95,20 +94,21 @@ func (s *Services) GetFinalityProviders(ctx context.Context, page string) ([]FpD
 		return buildFallbackFpDetailsPublic(fpParams), "", nil
 	}
 
-	var finalityProviderDetailsPublic []FpDetailsPublic
+	var finalityProviderDetailsPublic []*FpDetailsPublic
 	for _, fp := range resultMap.Data {
 		var paramsPublic *FpParamsPublic
 		if fpParamsMap[fp.FinalityProviderPkHex] != nil {
 			paramsPublic = fpParamsMap[fp.FinalityProviderPkHex]
 		} else {
 			paramsPublic = &FpParamsPublic{
-				Description: EmptyFpDescriptionPublic(),
+				Description: emptyFpDescriptionPublic,
 				Commission:  "",
 				BtcPk:       fp.FinalityProviderPkHex,
 			}
 		}
-		detail := FpDetailsPublic{
-			Description:       &paramsPublic.Description,
+
+		detail := &FpDetailsPublic{
+			Description:       paramsPublic.Description,
 			Commission:        paramsPublic.Commission,
 			BtcPk:             fp.FinalityProviderPkHex,
 			ActiveTvl:         fp.ActiveTvl,
@@ -118,15 +118,60 @@ func (s *Services) GetFinalityProviders(ctx context.Context, page string) ([]FpD
 		}
 		finalityProviderDetailsPublic = append(finalityProviderDetailsPublic, detail)
 	}
+	// If there are no more pages to fetch, make sure all the finality providers from global params are included
+	if resultMap.PaginationToken == "" {
+		fpsNotInUse, err := s.findRegisteredFinalityProvidersNotInUse(ctx, fpParams)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Error while fetching finality providers not in use")
+			return nil, "", types.NewError(http.StatusInternalServerError, types.InternalServiceError, err)
+		}
+
+		finalityProviderDetailsPublic = append(finalityProviderDetailsPublic, fpsNotInUse...)
+	}
 
 	return finalityProviderDetailsPublic, resultMap.PaginationToken, nil
 }
 
-func buildFallbackFpDetailsPublic(fpParams []FpParamsPublic) []FpDetailsPublic {
-	var finalityProviderDetailsPublic []FpDetailsPublic
+func (s *Services) findRegisteredFinalityProvidersNotInUse(
+	ctx context.Context, fpParams []*FpParamsPublic,
+) ([]*FpDetailsPublic, error) {
+	var finalityProvidersPkHex []string
 	for _, fp := range fpParams {
-		detail := FpDetailsPublic{
-			Description:       &fp.Description,
+		finalityProvidersPkHex = append(finalityProvidersPkHex, fp.BtcPk)
+	}
+	fpStatsByPks, err := s.DbClient.FindFinalityProviderStatsByFinalityProviderPkHex(ctx, finalityProvidersPkHex)
+	if err != nil {
+		return nil, err
+	}
+	fpStatsByPksMap := make(map[string]*model.FinalityProviderStatsDocument)
+	for _, fpStat := range fpStatsByPks {
+		fpStatsByPksMap[fpStat.FinalityProviderPkHex] = fpStat
+	}
+
+	// Find the finality providers that are not in the fpStatsByPksMap
+	var fps []*FpDetailsPublic
+	for _, fp := range fpParams {
+		if fpStatsByPksMap[fp.BtcPk] == nil {
+			detail := &FpDetailsPublic{
+				Description:       fp.Description,
+				Commission:        fp.Commission,
+				BtcPk:             fp.BtcPk,
+				ActiveTvl:         0,
+				TotalTvl:          0,
+				ActiveDelegations: 0,
+				TotalDelegations:  0,
+			}
+			fps = append(fps, detail)
+		}
+	}
+	return fps, nil
+}
+
+func buildFallbackFpDetailsPublic(fpParams []*FpParamsPublic) []*FpDetailsPublic {
+	var finalityProviderDetailsPublic []*FpDetailsPublic
+	for _, fp := range fpParams {
+		detail := &FpDetailsPublic{
+			Description:       fp.Description,
 			Commission:        fp.Commission,
 			BtcPk:             fp.BtcPk,
 			ActiveTvl:         0,

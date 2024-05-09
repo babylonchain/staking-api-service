@@ -45,7 +45,10 @@ type DBClient interface {
 	SubtractFinalityProviderStats(
 		ctx context.Context, stakingTxHashHex, fpPkHex string, amount uint64,
 	) error
-	FindFinalityProviderStats(ctx context.Context, paginationToken string) (*DbResultMap[model.FinalityProviderStatsDocument], error)
+	FindFinalityProviderStats(ctx context.Context, paginationToken string) (*DbResultMap[*model.FinalityProviderStatsDocument], error)
+	FindFinalityProviderStatsByFinalityProviderPkHex(
+		ctx context.Context, finalityProviderPkHex []string,
+	) ([]*model.FinalityProviderStatsDocument, error)
 	IncrementStakerStats(
 		ctx context.Context, stakingTxHashHex, stakerPkHex string, amount uint64,
 	) error

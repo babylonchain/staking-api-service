@@ -247,7 +247,7 @@ func (db *Database) SubtractFinalityProviderStats(
 }
 
 // FindFinalityProviderStats fetches the finality provider stats from the database
-func (db *Database) FindFinalityProviderStats(ctx context.Context, paginationToken string) (*DbResultMap[model.FinalityProviderStatsDocument], error) {
+func (db *Database) FindFinalityProviderStats(ctx context.Context, paginationToken string) (*DbResultMap[*model.FinalityProviderStatsDocument], error) {
 	client := db.Client.Database(db.DbName).Collection(model.FinalityProviderStatsCollection)
 	options := options.Find().SetSort(bson.D{{Key: "active_tvl", Value: -1}}) // Sorting in descending order
 	options.SetLimit(db.cfg.MaxPaginationLimit)
@@ -275,12 +275,31 @@ func (db *Database) FindFinalityProviderStats(ctx context.Context, paginationTok
 	}
 	defer cursor.Close(ctx)
 
-	var finalityProviders []model.FinalityProviderStatsDocument
+	var finalityProviders []*model.FinalityProviderStatsDocument
 	if err = cursor.All(ctx, &finalityProviders); err != nil {
 		return nil, err
 	}
 
 	return toResultMapWithPaginationToken(db.cfg, finalityProviders, model.BuildFinalityProviderStatsPaginationToken)
+}
+
+func (db *Database) FindFinalityProviderStatsByFinalityProviderPkHex(
+	ctx context.Context, finalityProviderPkHex []string,
+) ([]*model.FinalityProviderStatsDocument, error) {
+	client := db.Client.Database(db.DbName).Collection(model.FinalityProviderStatsCollection)
+	filter := bson.M{"_id": bson.M{"$in": finalityProviderPkHex}}
+	cursor, err := client.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var finalityProviders []*model.FinalityProviderStatsDocument
+	if err = cursor.All(ctx, &finalityProviders); err != nil {
+		return nil, err
+	}
+
+	return finalityProviders, nil
 }
 
 func (db *Database) updateFinalityProviderStats(ctx context.Context, state, stakingTxHashHex, fpPkHex string, upsertUpdate primitive.M) error {

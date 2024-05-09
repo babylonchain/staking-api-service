@@ -44,7 +44,7 @@ type FinalityProviderStatsPagination struct {
 	ActiveTvl             int64  `json:"active_tvl"`
 }
 
-func BuildFinalityProviderStatsPaginationToken(d FinalityProviderStatsDocument) (string, error) {
+func BuildFinalityProviderStatsPaginationToken(d *FinalityProviderStatsDocument) (string, error) {
 	page := FinalityProviderStatsPagination{
 		ActiveTvl:             d.ActiveTvl,
 		FinalityProviderPkHex: d.FinalityProviderPkHex,
