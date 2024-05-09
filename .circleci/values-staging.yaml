@@ -106,7 +106,7 @@ configFiles:
       url: rabbitmq-headless.phase-1-staging:5672
       processing_timeout: 30
       msg_max_retry_attempts: 10
-      requeue_delay_time: 300
+      requeue_delay_time: 60
     metrics:
       host: 0.0.0.0
       port: 2112
