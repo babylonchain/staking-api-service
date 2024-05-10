@@ -168,6 +168,36 @@ func (_m *DBClient) FindTopStakersByTvl(ctx context.Context, paginationToken str
 	return r0, r1
 }
 
+// GetLatestBtcInfo provides a mock function with given fields: ctx
+func (_m *DBClient) GetLatestBtcInfo(ctx context.Context) (*model.BtcInfo, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestBtcInfo")
+	}
+
+	var r0 *model.BtcInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*model.BtcInfo, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *model.BtcInfo); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.BtcInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetOrCreateStatsLock provides a mock function with given fields: ctx, stakingTxHashHex, state
 func (_m *DBClient) GetOrCreateStatsLock(ctx context.Context, stakingTxHashHex string, state string) (*model.StatsLockDocument, error) {
 	ret := _m.Called(ctx, stakingTxHashHex, state)
@@ -473,6 +503,24 @@ func (_m *DBClient) TransitionToWithdrawnState(ctx context.Context, txHashHex st
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(ctx, txHashHex)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpsertLatestBtcInfo provides a mock function with given fields: ctx, height, unconfirmedActiveTvl
+func (_m *DBClient) UpsertLatestBtcInfo(ctx context.Context, height uint64, unconfirmedActiveTvl uint64) error {
+	ret := _m.Called(ctx, height, unconfirmedActiveTvl)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpsertLatestBtcInfo")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint64) error); ok {
+		r0 = rf(ctx, height, unconfirmedActiveTvl)
 	} else {
 		r0 = ret.Error(0)
 	}

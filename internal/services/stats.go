@@ -11,11 +11,12 @@ import (
 )
 
 type OverallStatsPublic struct {
-	ActiveTvl         int64  `json:"active_tvl"`
-	TotalTvl          int64  `json:"total_tvl"`
-	ActiveDelegations int64  `json:"active_delegations"`
-	TotalDelegations  int64  `json:"total_delegations"`
-	TotalStakers      uint64 `json:"total_stakers"`
+	ActiveTvl            int64  `json:"active_tvl"`
+	TotalTvl             int64  `json:"total_tvl"`
+	ActiveDelegations    int64  `json:"active_delegations"`
+	TotalDelegations     int64  `json:"total_delegations"`
+	TotalStakers         uint64 `json:"total_stakers"`
+	UnconfirmedActiveTvl uint64 `json:"unconfirmed_active_tvl"`
 }
 
 type StakerStatsPublic struct {
@@ -130,13 +131,29 @@ func (s *Services) GetOverallStats(ctx context.Context) (*OverallStatsPublic, *t
 		log.Ctx(ctx).Error().Err(err).Msg("error while fetching overall stats")
 		return nil, types.NewInternalServiceError(err)
 	}
+	btcInfo, err := s.DbClient.GetLatestBtcInfo(ctx)
+	unconfirmedTvl := uint64(0)
+	if err != nil {
+		// Handle missing BTC information, which may occur during initial setup.
+		// Default the unconfirmed TVL to 0; this will be updated automatically
+		// after processing new BTC blocks, all subsequent requests will be served with the correct value.
+		if db.IsNotFoundError(err) {
+			log.Ctx(ctx).Error().Err(err).Msg("latest btc info not found")
+		} else {
+			log.Ctx(ctx).Error().Err(err).Msg("error while fetching latest btc info")
+			return nil, types.NewInternalServiceError(err)
+		}
+	} else {
+		unconfirmedTvl = btcInfo.UnconfirmedActiveTvl
+	}
 
 	return &OverallStatsPublic{
-		ActiveTvl:         stats.ActiveTvl,
-		TotalTvl:          stats.TotalTvl,
-		ActiveDelegations: stats.ActiveDelegations,
-		TotalDelegations:  stats.TotalDelegations,
-		TotalStakers:      stats.TotalStakers,
+		ActiveTvl:            stats.ActiveTvl,
+		TotalTvl:             stats.TotalTvl,
+		ActiveDelegations:    stats.ActiveDelegations,
+		TotalDelegations:     stats.TotalDelegations,
+		TotalStakers:         stats.TotalStakers,
+		UnconfirmedActiveTvl: unconfirmedTvl,
 	}, nil
 }
 
@@ -162,4 +179,13 @@ func (s *Services) GetTopStakersByActiveTvl(ctx context.Context, pageToken strin
 	}
 
 	return topStakersStats, resultMap.PaginationToken, nil
+}
+
+func (s *Services) ProcessUnconfirmedTvlStats(ctx context.Context, btcHeight uint64, unconfirmedTvl uint64) *types.Error {
+	err := s.DbClient.UpsertLatestBtcInfo(ctx, btcHeight, unconfirmedTvl)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while upserting latest btc info")
+		return types.NewInternalServiceError(err)
+	}
+	return nil
 }

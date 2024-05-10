@@ -21,6 +21,7 @@ const (
 	DelegationCollection            = "delegations"
 	TimeLockCollection              = "timelock_queue"
 	UnbondingCollection             = "unbonding_queue"
+	BtcInfoCollection               = "btc_info"
 	UnprocessableMsgCollection      = "unprocessable_messages"
 )
 
@@ -38,6 +39,7 @@ var collections = map[string]index{
 	TimeLockCollection:              {Indexes: map[string]int{"expire_height": 1}, Unique: false},
 	UnbondingCollection:             {Indexes: map[string]int{"unbonding_tx_hash_hex": 1}, Unique: true},
 	UnprocessableMsgCollection:      {Indexes: map[string]int{}},
+	BtcInfoCollection:               {Indexes: map[string]int{}},
 }
 
 func Setup(ctx context.Context, cfg *config.Config) error {

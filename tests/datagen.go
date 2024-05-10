@@ -82,3 +82,12 @@ func randomAmount(r *rand.Rand) int64 {
 func attachRandomSeedsToFuzzer(f *testing.F, numOfSeeds int) {
 	bbndatagen.AddRandomSeedsToFuzzer(f, uint(numOfSeeds))
 }
+
+// generate a random height from 1 to maxHeight
+// if maxHeight is 0, then we default the max height to 1000000
+func randomBtcHeight(r *rand.Rand, maxHeight uint64) uint64 {
+	if maxHeight == 0 {
+		maxHeight = 1000000
+	}
+	return uint64(r.Intn(int(maxHeight))) + 1
+}

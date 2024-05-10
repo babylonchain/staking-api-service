@@ -14,15 +14,24 @@ where many operations update the same data points concurrently.
 
 ### Implementation
 
-Sharding is achieved by appending a shard number to each document's ID, 
-such as `finalityProviderPkHex:shardNumber`. This approach effectively spreads 
+Sharding is achieved by randomly select a shard number to represent the document's ID
+(Or by appending a shard number to each document's ID, such as `{{docId}}:{{shardNumber}}`)
+
+This approach effectively spreads 
 writes across multiple documents, reducing bottlenecks.
 
 #### Example
 ```go
-func (db *Database) generateFinalityProviderStatsId(finalityProviderPkHex string) string {
+func (db *Database) generateOverallStatsId() string {
+	return fmt.Sprint(rand.Intn(int(db.cfg.LogicalShardCount)))
+}
+```
+
+or 
+```go
+func (db *Database) generateXXXStatsId(docId string) string {
     randomShardNum := uint64(rand.Intn(int(db.cfg.LogicalShardCount)))
-    return fmt.Sprintf("%s:%d", finalityProviderPkHex, randomShardNum)
+    return fmt.Sprintf("%s:%d", docId, randomShardNum)
 }
 ```
 
@@ -31,7 +40,7 @@ func (db *Database) generateFinalityProviderStatsId(finalityProviderPkHex string
 #### Query Complexity
 
 Logical sharding increases query complexity. 
-Operations like `FindFinalityProviderStatsByPkHex` must now access multiple shards, 
+Operations like `GetOverallStats` must now access multiple shards, 
 leading to costlier queries as shard count increases.
 
 #### Configuration Sensitivity
