@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"testing"
 
+	bbndatagen "github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
@@ -17,7 +18,6 @@ func generateRandomFinalityProviderDetail(t *testing.T, r *rand.Rand, numOfFps u
 	var finalityProviders []types.FinalityProviderDetails
 
 	for i := uint64(0); i < numOfFps; i++ {
-
 		fpPkInHex, err := randomPk()
 		if err != nil {
 			t.Fatalf("failed to generate random public key: %v", err)
@@ -26,7 +26,7 @@ func generateRandomFinalityProviderDetail(t *testing.T, r *rand.Rand, numOfFps u
 		randomStr := randomString(r, 10)
 		finalityProviders = append(finalityProviders, types.FinalityProviderDetails{
 			Description: types.FinalityProviderDescription{
-				Moniker:         "Moniker" + fmt.Sprintf("%d", i),
+				Moniker:         "Moniker" + randomStr,
 				Identity:        "Identity" + randomStr,
 				Website:         "Website" + randomStr,
 				SecurityContact: "SecurityContact" + randomStr,
@@ -76,5 +76,9 @@ func randomAmount(r *rand.Rand) int64 {
 	// Generate a random value range from 0.1 to 10000 BTC
 	randomBTC := r.Float64()*(9999.9-0.1) + 0.1
 	// convert to satoshi
-	return int64(randomBTC * 1e8)
+	return int64(randomBTC*1e8) + 1
+}
+
+func attachRandomSeedsToFuzzer(f *testing.F, numOfSeeds int) {
+	bbndatagen.AddRandomSeedsToFuzzer(f, uint(numOfSeeds))
 }

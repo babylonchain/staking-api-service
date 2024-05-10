@@ -45,7 +45,7 @@ func TestGlobalParams(t *testing.T) {
 
 	result := responseBody.Data.Versions
 	// Check that the response body is as expected
-	assert.NotEmpty(t, result, "expected response body to be non-empty")
+	assert.NotEmptyf(t, result, "expected response body to be non-empty")
 	assert.Equal(t, 2, len(result))
 	versionedGlobalParam := result[0]
 	assert.Equal(t, uint64(0), versionedGlobalParam.Version)

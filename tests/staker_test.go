@@ -2,11 +2,11 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
 	"time"
-	"fmt"
 
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
@@ -47,7 +47,7 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 		assert.NoError(t, err, "unmarshalling response body should not fail")
 
 		// Check that the response body is as expected
-		assert.NotEmpty(t, response.Data, "expected response body to have data")
+		assert.NotEmptyf(t, response.Data, "expected response body to have data")
 		assert.Equal(t, activeStakingEvent[0].StakerPkHex, response.Data[0].StakerPkHex, "expected response body to match")
 
 		// check the timestamp string is in ISO format
@@ -57,21 +57,21 @@ func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
 		allDataCollected = append(allDataCollected, response.Data...)
 
 		if isFirstLoop {
-			assert.NotEmpty(t, response.Pagination.NextKey, "should have pagination token after first iteration")
+			assert.NotEmptyf(t, response.Pagination.NextKey, "should have pagination token after first iteration")
 			isFirstLoop = false
 		}
 
-    if response.Pagination.NextKey != "" {
+		if response.Pagination.NextKey != "" {
 			t.Logf("Next page: %v", response.Pagination.NextKey)
 			paginationKey = response.Pagination.NextKey
-    } else {
+		} else {
 			t.Log("Already last page")
 			break
-    }
+		}
 	}
 
 	assert.Greater(t, len(allDataCollected), 10, "expected more than 10 items in total across all pages")
-	assert.NotEmpty(t, allDataCollected, "expected collected data to not be empty")
+	assert.NotEmptyf(t, allDataCollected, "expected collected data to not be empty")
 
 	for i := 0; i < len(allDataCollected)-1; i++ {
 		assert.True(t, allDataCollected[i].StakingTx.StartHeight >= allDataCollected[i+1].StakingTx.StartHeight, "expected collected data to be sorted by start height")
@@ -96,7 +96,7 @@ func TestActiveStakingFetchedByStakerPkWithInvalidPaginationKey(t *testing.T) {
 
 	// Test the API with an invalid pagination key
 	url := fmt.Sprintf("%s%s?staker_btc_pk=%s&pagination_key=%s", testServer.Server.URL, stakerDelegations, activeStakingEvent[0].StakerPkHex, "btc_to_one_milly")
-	
+
 	resp, err := http.Get(url)
 	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
 	defer resp.Body.Close()
