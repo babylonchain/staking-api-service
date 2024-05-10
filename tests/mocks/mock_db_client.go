@@ -79,23 +79,23 @@ func (_m *DBClient) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 }
 
 // FindFinalityProviderStats provides a mock function with given fields: ctx, paginationToken
-func (_m *DBClient) FindFinalityProviderStats(ctx context.Context, paginationToken string) (*db.DbResultMap[model.FinalityProviderStatsDocument], error) {
+func (_m *DBClient) FindFinalityProviderStats(ctx context.Context, paginationToken string) (*db.DbResultMap[*model.FinalityProviderStatsDocument], error) {
 	ret := _m.Called(ctx, paginationToken)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindFinalityProviderStats")
 	}
 
-	var r0 *db.DbResultMap[model.FinalityProviderStatsDocument]
+	var r0 *db.DbResultMap[*model.FinalityProviderStatsDocument]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.DbResultMap[model.FinalityProviderStatsDocument], error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.DbResultMap[*model.FinalityProviderStatsDocument], error)); ok {
 		return rf(ctx, paginationToken)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *db.DbResultMap[model.FinalityProviderStatsDocument]); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.DbResultMap[*model.FinalityProviderStatsDocument]); ok {
 		r0 = rf(ctx, paginationToken)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.DbResultMap[model.FinalityProviderStatsDocument])
+			r0 = ret.Get(0).(*db.DbResultMap[*model.FinalityProviderStatsDocument])
 		}
 	}
 
@@ -108,24 +108,54 @@ func (_m *DBClient) FindFinalityProviderStats(ctx context.Context, paginationTok
 	return r0, r1
 }
 
+// FindFinalityProviderStatsByFinalityProviderPkHex provides a mock function with given fields: ctx, finalityProviderPkHex
+func (_m *DBClient) FindFinalityProviderStatsByFinalityProviderPkHex(ctx context.Context, finalityProviderPkHex []string) ([]*model.FinalityProviderStatsDocument, error) {
+	ret := _m.Called(ctx, finalityProviderPkHex)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindFinalityProviderStatsByFinalityProviderPkHex")
+	}
+
+	var r0 []*model.FinalityProviderStatsDocument
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []string) ([]*model.FinalityProviderStatsDocument, error)); ok {
+		return rf(ctx, finalityProviderPkHex)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []string) []*model.FinalityProviderStatsDocument); ok {
+		r0 = rf(ctx, finalityProviderPkHex)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*model.FinalityProviderStatsDocument)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
+		r1 = rf(ctx, finalityProviderPkHex)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindTopStakersByTvl provides a mock function with given fields: ctx, paginationToken
-func (_m *DBClient) FindTopStakersByTvl(ctx context.Context, paginationToken string) (*db.DbResultMap[model.StakerStatsDocument], error) {
+func (_m *DBClient) FindTopStakersByTvl(ctx context.Context, paginationToken string) (*db.DbResultMap[*model.StakerStatsDocument], error) {
 	ret := _m.Called(ctx, paginationToken)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindTopStakersByTvl")
 	}
 
-	var r0 *db.DbResultMap[model.StakerStatsDocument]
+	var r0 *db.DbResultMap[*model.StakerStatsDocument]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.DbResultMap[model.StakerStatsDocument], error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.DbResultMap[*model.StakerStatsDocument], error)); ok {
 		return rf(ctx, paginationToken)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *db.DbResultMap[model.StakerStatsDocument]); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.DbResultMap[*model.StakerStatsDocument]); ok {
 		r0 = rf(ctx, paginationToken)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.DbResultMap[model.StakerStatsDocument])
+			r0 = ret.Get(0).(*db.DbResultMap[*model.StakerStatsDocument])
 		}
 	}
 

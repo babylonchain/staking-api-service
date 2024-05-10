@@ -44,7 +44,7 @@ type FinalityProviderStatsPagination struct {
 	ActiveTvl             int64  `json:"active_tvl"`
 }
 
-func BuildFinalityProviderStatsPaginationToken(d FinalityProviderStatsDocument) (string, error) {
+func BuildFinalityProviderStatsPaginationToken(d *FinalityProviderStatsDocument) (string, error) {
 	page := FinalityProviderStatsPagination{
 		ActiveTvl:             d.ActiveTvl,
 		FinalityProviderPkHex: d.FinalityProviderPkHex,
@@ -71,7 +71,7 @@ type StakerStatsByStakerPagination struct {
 	ActiveTvl   int64  `json:"active_tvl"`
 }
 
-func BuildStakerStatsByStakerPaginationToken(d StakerStatsDocument) (string, error) {
+func BuildStakerStatsByStakerPaginationToken(d *StakerStatsDocument) (string, error) {
 	page := StakerStatsByStakerPagination{
 		StakerPkHex: d.StakerPkHex,
 		ActiveTvl:   d.ActiveTvl,

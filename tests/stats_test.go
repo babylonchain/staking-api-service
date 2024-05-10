@@ -184,11 +184,20 @@ func TestStatsEndpoints(t *testing.T) {
 
 	// Test the finality endpoint first
 	result := fetchFinalityEndpoint(t, testServer)
-	assert.Equal(t, 1, len(result))
-	assert.Equal(t, int64(activeStakingEvent.StakingValue), result[0].ActiveTvl)
-	assert.Equal(t, int64(activeStakingEvent.StakingValue), result[0].TotalTvl)
-	assert.Equal(t, int64(1), result[0].ActiveDelegations)
-	assert.Equal(t, int64(1), result[0].TotalDelegations)
+	assert.Equal(t, 4, len(result))
+	for _, r := range result {
+		if r.BtcPk == activeStakingEvent.FinalityProviderPkHex {
+			assert.Equal(t, int64(activeStakingEvent.StakingValue), r.ActiveTvl)
+			assert.Equal(t, int64(activeStakingEvent.StakingValue), r.TotalTvl)
+			assert.Equal(t, int64(1), r.ActiveDelegations)
+			assert.Equal(t, int64(1), r.TotalDelegations)
+		} else {
+			assert.Equal(t, int64(0), r.ActiveTvl)
+			assert.Equal(t, int64(0), r.TotalTvl)
+			assert.Equal(t, int64(0), r.ActiveDelegations)
+			assert.Equal(t, int64(0), r.TotalDelegations)
+		}
+	}
 
 	// Test the overall stats endpoint
 	overallStats := fetchOverallStatsEndpoint(t, testServer)
@@ -222,11 +231,20 @@ func TestStatsEndpoints(t *testing.T) {
 
 	// Make a GET request to the finality providers endpoint
 	result = fetchFinalityEndpoint(t, testServer)
-	assert.Equal(t, 1, len(result))
-	assert.Equal(t, int64(0), result[0].ActiveTvl)
-	assert.Equal(t, int64(activeStakingEvent.StakingValue), result[0].TotalTvl)
-	assert.Equal(t, int64(0), result[0].ActiveDelegations)
-	assert.Equal(t, int64(1), result[0].TotalDelegations)
+	assert.Equal(t, 4, len(result))
+	for _, r := range result {
+		if r.BtcPk == activeStakingEvent.FinalityProviderPkHex {
+			assert.Equal(t, int64(0), r.ActiveTvl)
+			assert.Equal(t, int64(activeStakingEvent.StakingValue), r.TotalTvl)
+			assert.Equal(t, int64(0), r.ActiveDelegations)
+			assert.Equal(t, int64(1), r.TotalDelegations)
+		} else {
+			assert.Equal(t, int64(0), r.ActiveTvl)
+			assert.Equal(t, int64(0), r.TotalTvl)
+			assert.Equal(t, int64(0), r.ActiveDelegations)
+			assert.Equal(t, int64(0), r.TotalDelegations)
+		}
+	}
 
 	overallStats = fetchOverallStatsEndpoint(t, testServer)
 	assert.Equal(t, int64(0), overallStats.ActiveTvl)
@@ -250,7 +268,7 @@ func TestStatsEndpoints(t *testing.T) {
 
 	// Make a GET request to the finality providers endpoint
 	finalityProviderStats := fetchFinalityEndpoint(t, testServer)
-	assert.Equal(t, 3, len(finalityProviderStats))
+	assert.Equal(t, 6, len(finalityProviderStats))
 	// Make sure sorted by active TVL
 	for i := 0; i < len(finalityProviderStats)-1; i++ {
 		assert.True(t, finalityProviderStats[i].ActiveTvl >= finalityProviderStats[i+1].ActiveTvl, "expected response body to be sorted")

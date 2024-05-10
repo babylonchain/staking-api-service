@@ -33,9 +33,11 @@ import (
 )
 
 type TestServerDependency struct {
-	ConfigOverrides        *config.Config
-	MockDbClient           db.DBClient
-	PreInjectEventsHandler func(queueClient client.QueueClient) error
+	ConfigOverrides         *config.Config
+	MockDbClient            db.DBClient
+	PreInjectEventsHandler  func(queueClient client.QueueClient) error
+	MockedFinalityProviders []types.FinalityProviderDetails
+	MockedGlobalParams      *types.GlobalParams
 }
 
 type TestServer struct {
@@ -60,14 +62,24 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
 
-	params, err := types.NewGlobalParams("./config/global-params-test.json")
-	if err != nil {
-		t.Fatalf("Failed to load global params: %v", err)
+	var params *types.GlobalParams
+	if dep != nil && dep.MockedGlobalParams != nil {
+		params = dep.MockedGlobalParams
+	} else {
+		params, err = types.NewGlobalParams("./config/global-params-test.json")
+		if err != nil {
+			t.Fatalf("Failed to load global params: %v", err)
+		}
 	}
 
-	fps, err := types.NewFinalityProviders("./config/finality-providers-test.json")
-	if err != nil {
-		t.Fatalf("Failed to load finality providers: %v", err)
+	var fps []types.FinalityProviderDetails
+	if dep != nil && dep.MockedFinalityProviders != nil {
+		fps = dep.MockedFinalityProviders
+	} else {
+		fps, err = types.NewFinalityProviders("./config/finality-providers-test.json")
+		if err != nil {
+			t.Fatalf("Failed to load finality providers: %v", err)
+		}
 	}
 
 	if dep != nil && dep.ConfigOverrides != nil {
