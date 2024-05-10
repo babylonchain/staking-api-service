@@ -247,6 +247,11 @@ workflows:
           requires:
             - push_docker
             - build_lint_tests
+          filters:
+            branches:
+              only:
+                - main
+                - dev
       - deploy_staging:
           requires:
             - redeploy_staging_mongodb
