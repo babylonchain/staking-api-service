@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	DefaultMaxAttempts   = 3 // max attempt INCLUDES the first execution
+	DefaultMaxAttempts   = 4 // max attempt INCLUDES the first execution
 	DefaultInitialBackoff = 100 * time.Millisecond
 	DefaultBackoffFactor = 2.0
 )

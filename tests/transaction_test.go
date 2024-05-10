@@ -67,7 +67,7 @@ func TestTxWithRetries_MaxRetries(t *testing.T) {
     }
 
     mockDBClient.On("StartSession").Return(mockSession, nil)
-    mockSession.On("WithTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil, writeConflictError()).Times(3)  // Assuming max attempts is 3
+    mockSession.On("WithTransaction", mock.Anything, mock.Anything, mock.Anything).Return(nil, writeConflictError()).Times(4)  // Assuming max attempts is 4
     mockSession.On("EndSession", mock.Anything).Return()
 
     sleepDurations := []time.Duration{}
@@ -81,7 +81,7 @@ func TestTxWithRetries_MaxRetries(t *testing.T) {
 
     require.Error(t, err)
     require.Nil(t, result)
-    require.Len(t, sleepDurations, 2)
+    require.Len(t, sleepDurations, 3)
 
     mockSession.AssertExpectations(t)
 }
