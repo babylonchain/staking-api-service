@@ -20,7 +20,7 @@ while [ $current_retry -lt $max_retries ]; do
     break
   else
     # Command execution failed
-    echo "Command execution failed. Return code: $return_code. Retrying in 10 second..."
+    echo "Command execution failed. Return code: $return_code. Retrying in $MONGODB_HEALTH_CHECK_INTERVAL second..."
     sleep $MONGODB_HEALTH_CHECK_INTERVAL
     current_retry=$((current_retry + 1))
   fi
