@@ -132,6 +132,8 @@ definitions:
         type: integer
       total_tvl:
         type: integer
+      unconfirmed_tvl:
+        type: integer
     type: object
   services.StakerStatsPublic:
     properties:
@@ -222,6 +224,11 @@ paths:
     get:
       description: Fetches details of all active finality providers sorted by their
         active total value locked (ActiveTvl) in descending order.
+      parameters:
+      - description: Pagination key to fetch the next page of finality providers
+        in: query
+        name: pagination_key
+        type: string
       produces:
       - application/json
       responses:
@@ -251,6 +258,10 @@ paths:
         in: query
         name: staker_btc_pk
         required: true
+        type: string
+      - description: Pagination key to fetch the next page of delegations
+        in: query
+        name: pagination_key
         type: string
       produces:
       - application/json

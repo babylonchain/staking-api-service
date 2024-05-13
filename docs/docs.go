@@ -39,6 +39,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "summary": "Get Active Finality Providers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pagination key to fetch the next page of finality providers",
+                        "name": "pagination_key",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "A list of finality providers sorted by ActiveTvl in descending order",
@@ -79,6 +87,12 @@ const docTemplate = `{
                         "name": "staker_btc_pk",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination key to fetch the next page of delegations",
+                        "name": "pagination_key",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -405,6 +419,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "total_tvl": {
+                    "type": "integer"
+                },
+                "unconfirmed_tvl": {
                     "type": "integer"
                 }
             }

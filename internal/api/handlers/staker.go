@@ -10,6 +10,7 @@ import (
 // @Description Retrieves delegations for a given staker
 // @Produce json
 // @Param staker_btc_pk query string true "Staker BTC Public Key"
+// @Param pagination_key query string false "Pagination key to fetch the next page of delegations"
 // @Success 200 {object} PublicResponse[[]services.DelegationPublic]{array} "List of delegations and pagination token"
 // @Failure 400 {object} types.Error "Error: Bad Request"
 // @Router /v1/staker/delegations [get]
