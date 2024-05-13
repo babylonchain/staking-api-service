@@ -24,14 +24,18 @@ func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
 			NumberOfFps:     randomPositiveInt(r, 11),
 			NumberOfStakers: 1,
 		}
-		activeStakingEvents := generateRandomActiveStakingEvents(t, r, opts)
+		activeStakingEventsByStaker1 := generateRandomActiveStakingEvents(t, r, opts)
+		activeStakingEventsByStaker2 := generateRandomActiveStakingEvents(t, r, opts)
 		testServer := setupTestServer(t, nil)
 		defer testServer.Close()
-		sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvents)
+		sendTestMessage(
+			testServer.Queues.ActiveStakingQueueClient,
+			append(activeStakingEventsByStaker1, activeStakingEventsByStaker2...),
+		)
 		time.Sleep(5 * time.Second)
 
 		// Test the API
-		stakerPk := activeStakingEvents[0].StakerPkHex
+		stakerPk := activeStakingEventsByStaker1[0].StakerPkHex
 		url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + stakerPk
 		var paginationKey string
 		var allDataCollected []services.DelegationPublic
@@ -62,7 +66,7 @@ func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
 
 		assert.True(t, atLeastOnePage, "expected at least one page of data")
 		assert.Equal(t, 11, len(allDataCollected), "expected 11 items in total")
-		for _, events := range activeStakingEvents {
+		for _, events := range activeStakingEventsByStaker1 {
 			found := false
 			for _, d := range allDataCollected {
 				if d.StakingTxHashHex == events.StakingTxHashHex {
