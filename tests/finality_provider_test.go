@@ -7,8 +7,10 @@ import (
 	"math/rand"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
+	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/services"
@@ -173,6 +175,60 @@ func FuzzGetFinalityProviderShouldReturnAllRegisteredFps(f *testing.F) {
 		}
 		for _, f := range notRegisteredFpsStats {
 			assert.Equal(t, "", resultMap[f.FinalityProviderPkHex].Description.Moniker)
+		}
+	})
+}
+
+func FuzzTestGetFinalityProviderWithPaginationResponse(f *testing.F) {
+	attachRandomSeedsToFuzzer(f, 3)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		opts := &TestActiveEventGeneratorOpts{
+			NumOfEvents:     20,
+			NumberOfFps:     10,
+			NumberOfStakers: randomPositiveInt(r, 10),
+		}
+		activeStakingEvents := generateRandomActiveStakingEvents(t, r, opts)
+		cfg, err := config.New("./config/config-test.yml")
+		if err != nil {
+			t.Fatalf("Failed to load test config: %v", err)
+		}
+		cfg.Db.MaxPaginationLimit = 2
+
+		testServer := setupTestServer(t, &TestServerDependency{ConfigOverrides: cfg})
+		defer testServer.Close()
+		sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvents)
+		time.Sleep(10 * time.Second)
+
+		var paginationKey string
+		var allDataCollected []services.FpDetailsPublic
+		var atLeastOnePage bool
+		// Test the API
+		for {
+			url := testServer.Server.URL + finalityProvidersPath + "?pagination_key=" + paginationKey
+			resp, err := http.Get(url)
+			assert.NoError(t, err, "making GET request to finality providers endpoint should not fail")
+			assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+			bodyBytes, err := io.ReadAll(resp.Body)
+			assert.NoError(t, err, "reading response body should not fail")
+			var response handlers.PublicResponse[[]services.FpDetailsPublic]
+			err = json.Unmarshal(bodyBytes, &response)
+			assert.NoError(t, err, "unmarshalling response body should not fail")
+
+			// Check that the response body is as expected
+			assert.NotEmptyf(t, response.Data, "expected response body to have data")
+			allDataCollected = append(allDataCollected, response.Data...)
+			if response.Pagination.NextKey != "" {
+				atLeastOnePage = true
+				paginationKey = response.Pagination.NextKey
+			} else {
+				break
+			}
+		}
+
+		assert.True(t, atLeastOnePage, "expected at least one page")
+		for i := 0; i < len(allDataCollected)-1; i++ {
+			assert.True(t, allDataCollected[i].ActiveTvl >= allDataCollected[i+1].ActiveTvl)
 		}
 	})
 }

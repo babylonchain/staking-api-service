@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
@@ -14,76 +15,71 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestActiveStakingFetchedByStakerPkWithPaginationResponse(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 11)
-	// randomly set one of the staking tx to be overflow
-	activeStakingEvent[7].IsOverflow = true
+func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
+	attachRandomSeedsToFuzzer(f, 3)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		opts := &TestActiveEventGeneratorOpts{
+			NumOfEvents:     11,
+			NumberOfFps:     randomPositiveInt(r, 11),
+			NumberOfStakers: 1,
+		}
+		activeStakingEventsByStaker1 := generateRandomActiveStakingEvents(t, r, opts)
+		activeStakingEventsByStaker2 := generateRandomActiveStakingEvents(t, r, opts)
+		testServer := setupTestServer(t, nil)
+		defer testServer.Close()
+		sendTestMessage(
+			testServer.Queues.ActiveStakingQueueClient,
+			append(activeStakingEventsByStaker1, activeStakingEventsByStaker2...),
+		)
+		time.Sleep(5 * time.Second)
 
-	testServer := setupTestServer(t, nil)
-	defer testServer.Close()
-	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
-	// Wait for 2 seconds to make sure the message is processed
-	time.Sleep(2 * time.Second)
+		// Test the API
+		stakerPk := activeStakingEventsByStaker1[0].StakerPkHex
+		url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + stakerPk
+		var paginationKey string
+		var allDataCollected []services.DelegationPublic
+		var atLeastOnePage bool
+		for {
+			resp, err := http.Get(url + "&pagination_key=" + paginationKey)
+			assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
+			assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+			bodyBytes, err := io.ReadAll(resp.Body)
+			assert.NoError(t, err, "reading response body should not fail")
+			var response handlers.PublicResponse[[]services.DelegationPublic]
+			err = json.Unmarshal(bodyBytes, &response)
+			assert.NoError(t, err, "unmarshalling response body should not fail")
 
-	// Test the API
-	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
-	var paginationKey string
-	allDataCollected := make([]services.DelegationPublic, 0)
-	isFirstLoop := true
-
-	// loop through all pages
-	for {
-		resp, err := http.Get(url + "&pagination_key=" + paginationKey)
-		assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
-		defer resp.Body.Close()
-
-		// Check that the status code is 200 OK
-		assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
-
-		bodyBytes, err := io.ReadAll(resp.Body)
-		assert.NoError(t, err, "reading response body should not fail")
-		var response handlers.PublicResponse[[]services.DelegationPublic]
-		err = json.Unmarshal(bodyBytes, &response)
-		assert.NoError(t, err, "unmarshalling response body should not fail")
-
-		// Check that the response body is as expected
-		assert.NotEmptyf(t, response.Data, "expected response body to have data")
-		assert.Equal(t, activeStakingEvent[0].StakerPkHex, response.Data[0].StakerPkHex, "expected response body to match")
-
-		// check the timestamp string is in ISO format
-		_, err = time.Parse(time.RFC3339, response.Data[0].StakingTx.StartTimestamp)
-		assert.NoError(t, err, "expected timestamp to be in RFC3339 format")
-
-		allDataCollected = append(allDataCollected, response.Data...)
-
-		if isFirstLoop {
-			assert.NotEmptyf(t, response.Pagination.NextKey, "should have pagination token after first iteration")
-			isFirstLoop = false
+			// Check that the response body is as expected
+			assert.NotEmptyf(t, response.Data, "expected response body to have data")
+			for _, d := range response.Data {
+				assert.Equal(t, stakerPk, d.StakerPkHex, "expected response body to match")
+			}
+			allDataCollected = append(allDataCollected, response.Data...)
+			if response.Pagination.NextKey != "" {
+				paginationKey = response.Pagination.NextKey
+				atLeastOnePage = true
+			} else {
+				break
+			}
 		}
 
-		if response.Pagination.NextKey != "" {
-			t.Logf("Next page: %v", response.Pagination.NextKey)
-			paginationKey = response.Pagination.NextKey
-		} else {
-			t.Log("Already last page")
-			break
+		assert.True(t, atLeastOnePage, "expected at least one page of data")
+		assert.Equal(t, 11, len(allDataCollected), "expected 11 items in total")
+		for _, events := range activeStakingEventsByStaker1 {
+			found := false
+			for _, d := range allDataCollected {
+				if d.StakingTxHashHex == events.StakingTxHashHex {
+					found = true
+					break
+				}
+			}
+			assert.True(t, found, "expected to find the staking tx in the response")
 		}
-	}
-
-	assert.Greater(t, len(allDataCollected), 10, "expected more than 10 items in total across all pages")
-	assert.NotEmptyf(t, allDataCollected, "expected collected data to not be empty")
-
-	for i := 0; i < len(allDataCollected)-1; i++ {
-		assert.True(t, allDataCollected[i].StakingTx.StartHeight >= allDataCollected[i+1].StakingTx.StartHeight, "expected collected data to be sorted by start height")
-	}
-
-	for _, d := range allDataCollected {
-		if d.StakingTxHashHex == activeStakingEvent[7].StakingTxHashHex {
-			assert.Equal(t, true, d.IsOverflow)
-		} else {
-			assert.Equal(t, false, d.IsOverflow)
+		for i := 0; i < len(allDataCollected)-1; i++ {
+			assert.True(t, allDataCollected[i].StakingTx.StartHeight >= allDataCollected[i+1].StakingTx.StartHeight, "expected collected data to be sorted by start height")
 		}
-	}
+	})
 }
 
 func TestActiveStakingFetchedByStakerPkWithInvalidPaginationKey(t *testing.T) {

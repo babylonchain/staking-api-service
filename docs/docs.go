@@ -39,6 +39,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "summary": "Get Active Finality Providers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pagination key to fetch the next page of finality providers",
+                        "name": "pagination_key",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "A list of finality providers sorted by ActiveTvl in descending order",
@@ -79,6 +87,12 @@ const docTemplate = `{
                         "name": "staker_btc_pk",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination key to fetch the next page of delegations",
+                        "name": "pagination_key",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -309,6 +323,9 @@ const docTemplate = `{
                 "finality_provider_pk_hex": {
                     "type": "string"
                 },
+                "is_overflow": {
+                    "type": "boolean"
+                },
                 "staker_pk_hex": {
                     "type": "string"
                 },
@@ -378,35 +395,11 @@ const docTemplate = `{
         "services.GlobalParamsPublic": {
             "type": "object",
             "properties": {
-                "covenant_pks": {
+                "versions": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/services.VersionedGlobalParamsPublic"
                     }
-                },
-                "covenant_quorum": {
-                    "type": "integer"
-                },
-                "max_staking_amount": {
-                    "type": "integer"
-                },
-                "max_staking_time": {
-                    "type": "integer"
-                },
-                "min_staking_amount": {
-                    "type": "integer"
-                },
-                "min_staking_time": {
-                    "type": "integer"
-                },
-                "tag": {
-                    "type": "string"
-                },
-                "unbonding_fee": {
-                    "type": "integer"
-                },
-                "unbonding_time": {
-                    "type": "integer"
                 }
             }
         },
@@ -426,6 +419,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "total_tvl": {
+                    "type": "integer"
+                },
+                "unconfirmed_tvl": {
                     "type": "integer"
                 }
             }
@@ -467,6 +463,53 @@ const docTemplate = `{
                 },
                 "tx_hex": {
                     "type": "string"
+                }
+            }
+        },
+        "services.VersionedGlobalParamsPublic": {
+            "type": "object",
+            "properties": {
+                "activation_height": {
+                    "type": "integer"
+                },
+                "confirmation_depth": {
+                    "type": "integer"
+                },
+                "covenant_pks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "covenant_quorum": {
+                    "type": "integer"
+                },
+                "max_staking_amount": {
+                    "type": "integer"
+                },
+                "max_staking_time": {
+                    "type": "integer"
+                },
+                "min_staking_amount": {
+                    "type": "integer"
+                },
+                "min_staking_time": {
+                    "type": "integer"
+                },
+                "staking_cap": {
+                    "type": "integer"
+                },
+                "tag": {
+                    "type": "string"
+                },
+                "unbonding_fee": {
+                    "type": "integer"
+                },
+                "unbonding_time": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
                 }
             }
         },

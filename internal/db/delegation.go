@@ -68,8 +68,8 @@ func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 		}
 		filter = bson.M{
 			"$or": []bson.M{
-				{"staking_tx.start_height": bson.M{"$lt": decodedToken.StakingStartHeight}},
-				{"staking_tx.start_height": decodedToken.StakingStartHeight, "_id": bson.M{"$gt": decodedToken.StakingTxHashHex}},
+				{"staker_pk_hex": stakerPk, "staking_tx.start_height": bson.M{"$lt": decodedToken.StakingStartHeight}},
+				{"staker_pk_hex": stakerPk, "staking_tx.start_height": decodedToken.StakingStartHeight, "_id": bson.M{"$gt": decodedToken.StakingTxHashHex}},
 			},
 		}
 	}
