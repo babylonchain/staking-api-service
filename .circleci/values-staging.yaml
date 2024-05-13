@@ -57,11 +57,12 @@ service:
       name: prom
 ingress:
   enabled: true
-  groupName: "mainnet-internal"
+  # TODO: Update LB group pre phase-1
+  groupName: "testnet3-internal"
   tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/2c6cb5ad-8899-4871-9206-ea8e978aebae
   scheme: "internal"
   hosts:
-    - host: staking-api-staging.mainnet.babylonchain.io
+    - host: API_STAGING_FQDN
       http:
         paths:
           - path: /
@@ -79,7 +80,7 @@ ingress:
                 port:
                   name: staking-api
 externalDns:
-  fqdn: staking-api-staging.mainnet.babylonchain.io
+  fqdn: API_STAGING_FQDN
   ttl: 60
 purgeCloudflareCache:
   enabled: false
