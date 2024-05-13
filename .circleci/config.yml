@@ -232,6 +232,21 @@ jobs:
 workflows:
   CICD:
     jobs:
+      - require_approval_mongodb:
+          type: approval
+          filters:
+            branches:
+              only:
+                - main
+                - dev
+      - redeploy_staging_mongodb:
+          requires:
+            - require_approval_mongodb
+          filters:
+            branches:
+              only:
+                - main
+                - dev
       - build_lint_tests
       - build_docker:
           filters:
@@ -247,18 +262,10 @@ workflows:
               only:
                 - main
                 - dev
-      - redeploy_staging_mongodb:
+      - deploy_staging:
           requires:
             - push_docker
             - build_lint_tests
-          filters:
-            branches:
-              only:
-                - main
-                - dev
-      - deploy_staging:
-          requires:
-            - redeploy_staging_mongodb
           filters:
             branches:
               only:
