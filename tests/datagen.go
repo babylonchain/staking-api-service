@@ -56,9 +56,6 @@ func randomFloat64(r *rand.Rand) float64 {
 }
 
 func randomPositiveInt(r *rand.Rand, max int) int {
-	if max == 1 {
-		return 1
-	}
 	// Generate a random number from 1 to max (inclusive)
 	return r.Intn(max) + 1
 }
@@ -99,9 +96,6 @@ func attachRandomSeedsToFuzzer(f *testing.F, numOfSeeds int) {
 // generate a random height from 1 to maxHeight
 // if maxHeight is 0, then we default the max height to 1000000
 func randomBtcHeight(r *rand.Rand, maxHeight uint64) uint64 {
-	if maxHeight == 1 {
-		return 1
-	}
 	if maxHeight == 0 {
 		maxHeight = 1000000
 	}
@@ -123,7 +117,7 @@ func generateRandomTx(r *rand.Rand) (*wire.MsgTx, string, error) {
 		},
 		TxOut: []*wire.TxOut{
 			{
-				Value:    r.Int63(),
+				Value:    int64(r.Int31()),
 				PkScript: bbndatagen.GenRandomByteArray(r, 80),
 			},
 		},
