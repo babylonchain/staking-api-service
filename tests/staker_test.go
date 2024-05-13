@@ -35,6 +35,7 @@ func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
 		url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + stakerPk
 		var paginationKey string
 		var allDataCollected []services.DelegationPublic
+		var atLeastOnePage bool
 		for {
 			resp, err := http.Get(url + "&pagination_key=" + paginationKey)
 			assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
@@ -53,11 +54,13 @@ func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
 			allDataCollected = append(allDataCollected, response.Data...)
 			if response.Pagination.NextKey != "" {
 				paginationKey = response.Pagination.NextKey
+				atLeastOnePage = true
 			} else {
 				break
 			}
 		}
 
+		assert.True(t, atLeastOnePage, "expected at least one page of data")
 		assert.Equal(t, 11, len(allDataCollected), "expected 11 items in total")
 		for _, events := range activeStakingEvents {
 			found := false

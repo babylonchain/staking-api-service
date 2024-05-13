@@ -13,7 +13,8 @@ import (
 // @Success 200 {object} PublicResponse[[]services.FpDetailsPublic] "A list of finality providers sorted by ActiveTvl in descending order"
 // @Router /v1/finality-providers [get]
 func (h *Handler) GetFinalityProviders(request *http.Request) (*Result, *types.Error) {
-	fps, paginationToken, err := h.services.GetFinalityProviders(request.Context(), "")
+	paginationKey := request.URL.Query().Get("pagination_key")
+	fps, paginationToken, err := h.services.GetFinalityProviders(request.Context(), paginationKey)
 	if err != nil {
 		return nil, err
 	}
