@@ -24,6 +24,7 @@ type Queues struct {
 	UnbondingStakingQueueClient client.QueueClient
 	WithdrawStakingQueueClient  client.QueueClient
 	StatsQueueClient            client.QueueClient
+	BtcInfoQueueClient          client.QueueClient
 }
 
 func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
@@ -62,6 +63,13 @@ func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
 		log.Fatal().Err(err).Msg("error while creating StatsQueueClient")
 	}
 
+	btcInfoQueueClient, err := client.NewQueueClient(
+		cfg, client.BtcInfoQueueName,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while creating BtcInfoQueueClient")
+	}
+
 	handlers := handlers.NewQueueHandler(service, statsQueueClient.SendMessage)
 	return &Queues{
 		Handlers:                    handlers,
@@ -72,6 +80,7 @@ func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
 		UnbondingStakingQueueClient: unbondingStakingQueueClient,
 		WithdrawStakingQueueClient:  withdrawStakingQueueClient,
 		StatsQueueClient:            statsQueueClient,
+		BtcInfoQueueClient:          btcInfoQueueClient,
 	}
 }
 
@@ -103,6 +112,11 @@ func (q *Queues) StartReceivingMessages() {
 		q.Handlers.StatsHandler, q.Handlers.HandleUnprocessedMessage,
 		q.maxRetryAttempts, q.processingTimeout,
 	)
+	startQueueMessageProcessing(
+		q.BtcInfoQueueClient,
+		q.Handlers.BtcInfoHandler, q.Handlers.HandleUnprocessedMessage,
+		q.maxRetryAttempts, q.processingTimeout,
+	)
 	// ...add more queues here
 }
 
@@ -110,23 +124,39 @@ func (q *Queues) StartReceivingMessages() {
 func (q *Queues) StopReceivingMessages() {
 	activeQueueErr := q.ActiveStakingQueueClient.Stop()
 	if activeQueueErr != nil {
-		log.Error().Err(activeQueueErr).Str("queueName", q.ActiveStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+		log.Error().Err(activeQueueErr).
+			Str("queueName", q.ActiveStakingQueueClient.GetQueueName()).
+			Msg("error while stopping queue")
 	}
 	expiredQueueErr := q.ExpiredStakingQueueClient.Stop()
 	if expiredQueueErr != nil {
-		log.Error().Err(expiredQueueErr).Str("queueName", q.ExpiredStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+		log.Error().Err(expiredQueueErr).
+			Str("queueName", q.ExpiredStakingQueueClient.GetQueueName()).
+			Msg("error while stopping queue")
 	}
 	unbondingQueueErr := q.UnbondingStakingQueueClient.Stop()
 	if unbondingQueueErr != nil {
-		log.Error().Err(unbondingQueueErr).Str("queueName", q.UnbondingStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+		log.Error().Err(unbondingQueueErr).
+			Str("queueName", q.UnbondingStakingQueueClient.GetQueueName()).
+			Msg("error while stopping queue")
 	}
 	withdrawnQueueErr := q.WithdrawStakingQueueClient.Stop()
 	if withdrawnQueueErr != nil {
-		log.Error().Err(withdrawnQueueErr).Str("queueName", q.WithdrawStakingQueueClient.GetQueueName()).Msg("error while stopping queue")
+		log.Error().Err(withdrawnQueueErr).
+			Str("queueName", q.WithdrawStakingQueueClient.GetQueueName()).
+			Msg("error while stopping queue")
 	}
 	statsQueueErr := q.StatsQueueClient.Stop()
 	if statsQueueErr != nil {
-		log.Error().Err(statsQueueErr).Str("queueName", q.StatsQueueClient.GetQueueName()).Msg("error while stopping queue")
+		log.Error().Err(statsQueueErr).
+			Str("queueName", q.StatsQueueClient.GetQueueName()).
+			Msg("error while stopping queue")
+	}
+	btcInfoQueueErr := q.BtcInfoQueueClient.Stop()
+	if btcInfoQueueErr != nil {
+		log.Error().Err(btcInfoQueueErr).
+			Str("queueName", q.BtcInfoQueueClient.GetQueueName()).
+			Msg("error while stopping queue")
 	}
 	// ...add more queues here
 }

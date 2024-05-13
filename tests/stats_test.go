@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
@@ -206,6 +207,8 @@ func TestStatsEndpoints(t *testing.T) {
 	assert.Equal(t, int64(1), overallStats.ActiveDelegations)
 	assert.Equal(t, int64(1), overallStats.TotalDelegations)
 	assert.Equal(t, uint64(1), overallStats.TotalStakers)
+	// We have not yet sent any UnconfirmedInfoEvent, hence no recrod in db
+	assert.Equal(t, uint64(0), overallStats.UnconfirmedTvl)
 
 	// Test the top staker stats endpoint
 	stakerStats, _ := fetchStakerStatsEndpoint(t, testServer)
@@ -291,6 +294,59 @@ func TestStatsEndpoints(t *testing.T) {
 	for i := 0; i < len(stakerStats)-1; i++ {
 		assert.True(t, stakerStats[i].ActiveTvl >= stakerStats[i+1].ActiveTvl, "expected response body to be sorted")
 	}
+
+	// send an BtcInfoEvent which shall update the unconfirmed active TVL
+	btcInfoEvent := &client.BtcInfoEvent{
+		EventType:      client.BtcInfoEventType,
+		Height:         100,
+		ConfirmedTvl:   90,
+		UnconfirmedTvl: 100,
+	}
+	sendTestMessage(testServer.Queues.BtcInfoQueueClient, []*client.BtcInfoEvent{btcInfoEvent})
+
+	time.Sleep(2 * time.Second)
+
+	overallStats = fetchOverallStatsEndpoint(t, testServer)
+	assert.Equal(t, uint64(100), overallStats.UnconfirmedTvl)
+}
+
+func FuzzStatsEndpointReturnHighestUnconfirmedTvlFromEvents(f *testing.F) {
+	attachRandomSeedsToFuzzer(f, 5)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		testServer := setupTestServer(t, nil)
+		defer testServer.Close()
+
+		overallStats := fetchOverallStatsEndpoint(t, testServer)
+		assert.Equal(t, uint64(0), overallStats.UnconfirmedTvl)
+
+		highestHeightEvent := &client.BtcInfoEvent{
+			EventType:      client.BtcInfoEventType,
+			Height:         0,
+			ConfirmedTvl:   0,
+			UnconfirmedTvl: 0,
+		}
+		var messages []*client.BtcInfoEvent
+		for i := 0; i < 10; i++ {
+			confirmedTvl := uint64(randomAmount(r))
+			btcInfoEvent := &client.BtcInfoEvent{
+				EventType:      client.BtcInfoEventType,
+				Height:         randomBtcHeight(r, 0),
+				ConfirmedTvl:   confirmedTvl,
+				UnconfirmedTvl: confirmedTvl + uint64(randomAmount(r)),
+			}
+			messages = append(messages, btcInfoEvent)
+			if btcInfoEvent.Height > highestHeightEvent.Height {
+				highestHeightEvent = btcInfoEvent
+			}
+		}
+		sendTestMessage(testServer.Queues.BtcInfoQueueClient, messages)
+		time.Sleep(5 * time.Second)
+
+		overallStats = fetchOverallStatsEndpoint(t, testServer)
+		assert.Equal(t, &highestHeightEvent.UnconfirmedTvl, &overallStats.UnconfirmedTvl)
+	})
+
 }
 
 func fetchFinalityEndpoint(t *testing.T, testServer *TestServer) []services.FpDetailsPublic {

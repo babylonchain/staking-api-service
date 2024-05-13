@@ -16,6 +16,7 @@ type OverallStatsPublic struct {
 	ActiveDelegations int64  `json:"active_delegations"`
 	TotalDelegations  int64  `json:"total_delegations"`
 	TotalStakers      uint64 `json:"total_stakers"`
+	UnconfirmedTvl    uint64 `json:"unconfirmed_tvl"`
 }
 
 type StakerStatsPublic struct {
@@ -130,6 +131,21 @@ func (s *Services) GetOverallStats(ctx context.Context) (*OverallStatsPublic, *t
 		log.Ctx(ctx).Error().Err(err).Msg("error while fetching overall stats")
 		return nil, types.NewInternalServiceError(err)
 	}
+	unconfirmedTvl := uint64(0)
+	btcInfo, err := s.DbClient.GetLatestBtcInfo(ctx)
+	if err != nil {
+		// Handle missing BTC information, which may occur during initial setup.
+		// Default the unconfirmed TVL to 0; this will be updated automatically
+		// after processing new BTC blocks, all subsequent requests will be served with the correct value.
+		if db.IsNotFoundError(err) {
+			log.Ctx(ctx).Error().Err(err).Msg("latest btc info not found")
+		} else {
+			log.Ctx(ctx).Error().Err(err).Msg("error while fetching latest btc info")
+			return nil, types.NewInternalServiceError(err)
+		}
+	} else {
+		unconfirmedTvl = btcInfo.UnconfirmedTvl
+	}
 
 	return &OverallStatsPublic{
 		ActiveTvl:         stats.ActiveTvl,
@@ -137,6 +153,7 @@ func (s *Services) GetOverallStats(ctx context.Context) (*OverallStatsPublic, *t
 		ActiveDelegations: stats.ActiveDelegations,
 		TotalDelegations:  stats.TotalDelegations,
 		TotalStakers:      stats.TotalStakers,
+		UnconfirmedTvl:    unconfirmedTvl,
 	}, nil
 }
 
@@ -162,4 +179,15 @@ func (s *Services) GetTopStakersByActiveTvl(ctx context.Context, pageToken strin
 	}
 
 	return topStakersStats, resultMap.PaginationToken, nil
+}
+
+func (s *Services) ProcessBtcInfoStats(
+	ctx context.Context, btcHeight uint64, confirmedTvl uint64, unconfirmedTvl uint64,
+) *types.Error {
+	err := s.DbClient.UpsertLatestBtcInfo(ctx, btcHeight, confirmedTvl, unconfirmedTvl)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while upserting latest btc info")
+		return types.NewInternalServiceError(err)
+	}
+	return nil
 }
