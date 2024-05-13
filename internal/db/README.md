@@ -15,7 +15,7 @@ where many operations update the same data points concurrently.
 ### Implementation
 
 Sharding is achieved by randomly select a shard number to represent the document's ID
-(Or by appending a shard number to each document's ID, such as `{{docId}}:{{shardNumber}}`)
+(or by appending a shard number to each document's ID, such as `{{docId}}:{{shardNumber}}`)
 
 This approach effectively spreads 
 writes across multiple documents, reducing bottlenecks.

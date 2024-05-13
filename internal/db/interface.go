@@ -57,7 +57,7 @@ type DBClient interface {
 	) error
 	FindTopStakersByTvl(ctx context.Context, paginationToken string) (*DbResultMap[*model.StakerStatsDocument], error)
 	UpsertLatestBtcInfo(
-		ctx context.Context, height uint64, unconfirmedActiveTvl uint64,
+		ctx context.Context, height uint64, confirmedTvl uint64, unconfirmedTvl uint64,
 	) error
 	GetLatestBtcInfo(ctx context.Context) (*model.BtcInfo, error)
 }

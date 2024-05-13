@@ -10,14 +10,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (h *QueueHandler) UnconfirmedInfoHandler(ctx context.Context, messageBody string) *types.Error {
-	var unconfirmedInfo queueClient.UnconfirmedInfoEvent
-	err := json.Unmarshal([]byte(messageBody), &unconfirmedInfo)
+func (h *QueueHandler) BtcInfoHandler(ctx context.Context, messageBody string) *types.Error {
+	var btcInfo queueClient.BtcInfoEvent
+	err := json.Unmarshal([]byte(messageBody), &btcInfo)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Failed to unmarshal the message body into unconfirmedInfo")
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to unmarshal the message body into btcInfo")
 		return types.NewError(http.StatusBadRequest, types.BadRequest, err)
 	}
-	statsErr := h.Services.ProcessUnconfirmedTvlStats(ctx, unconfirmedInfo.Height, unconfirmedInfo.ActiveTvl)
+
+	statsErr := h.Services.ProcessBtcInfoStats(
+		ctx, btcInfo.Height, btcInfo.ConfirmedTvl, btcInfo.UnconfirmedTvl,
+	)
 	if statsErr != nil {
 		log.Error().Err(statsErr).Msg("Failed to process unconfirmed tvl stats")
 		return types.NewInternalServiceError(statsErr)

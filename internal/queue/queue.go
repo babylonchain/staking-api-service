@@ -24,7 +24,7 @@ type Queues struct {
 	UnbondingStakingQueueClient client.QueueClient
 	WithdrawStakingQueueClient  client.QueueClient
 	StatsQueueClient            client.QueueClient
-	UnconfirmedInfoQueueClient  client.QueueClient
+	BtcInfoQueueClient          client.QueueClient
 }
 
 func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
@@ -63,11 +63,11 @@ func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
 		log.Fatal().Err(err).Msg("error while creating StatsQueueClient")
 	}
 
-	unconfirmedInfoQueueClient, err := client.NewQueueClient(
-		cfg, client.UnconfirmedInfoQueueName,
+	btcInfoQueueClient, err := client.NewQueueClient(
+		cfg, client.BtcInfoQueueName,
 	)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error while creating UnconfirmedInfoQueueClient")
+		log.Fatal().Err(err).Msg("error while creating BtcInfoQueueClient")
 	}
 
 	handlers := handlers.NewQueueHandler(service, statsQueueClient.SendMessage)
@@ -80,7 +80,7 @@ func New(cfg *queueConfig.QueueConfig, service *services.Services) *Queues {
 		UnbondingStakingQueueClient: unbondingStakingQueueClient,
 		WithdrawStakingQueueClient:  withdrawStakingQueueClient,
 		StatsQueueClient:            statsQueueClient,
-		UnconfirmedInfoQueueClient:  unconfirmedInfoQueueClient,
+		BtcInfoQueueClient:          btcInfoQueueClient,
 	}
 }
 
@@ -113,8 +113,8 @@ func (q *Queues) StartReceivingMessages() {
 		q.maxRetryAttempts, q.processingTimeout,
 	)
 	startQueueMessageProcessing(
-		q.UnconfirmedInfoQueueClient,
-		q.Handlers.UnconfirmedInfoHandler, q.Handlers.HandleUnprocessedMessage,
+		q.BtcInfoQueueClient,
+		q.Handlers.BtcInfoHandler, q.Handlers.HandleUnprocessedMessage,
 		q.maxRetryAttempts, q.processingTimeout,
 	)
 	// ...add more queues here
@@ -152,10 +152,10 @@ func (q *Queues) StopReceivingMessages() {
 			Str("queueName", q.StatsQueueClient.GetQueueName()).
 			Msg("error while stopping queue")
 	}
-	unconfirmedInfoQueueErr := q.UnconfirmedInfoQueueClient.Stop()
-	if unconfirmedInfoQueueErr != nil {
-		log.Error().Err(unconfirmedInfoQueueErr).
-			Str("queueName", q.UnconfirmedInfoQueueClient.GetQueueName()).
+	btcInfoQueueErr := q.BtcInfoQueueClient.Stop()
+	if btcInfoQueueErr != nil {
+		log.Error().Err(btcInfoQueueErr).
+			Str("queueName", q.BtcInfoQueueClient.GetQueueName()).
 			Msg("error while stopping queue")
 	}
 	// ...add more queues here

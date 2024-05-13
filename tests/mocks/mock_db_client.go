@@ -510,17 +510,17 @@ func (_m *DBClient) TransitionToWithdrawnState(ctx context.Context, txHashHex st
 	return r0
 }
 
-// UpsertLatestBtcInfo provides a mock function with given fields: ctx, height, unconfirmedActiveTvl
-func (_m *DBClient) UpsertLatestBtcInfo(ctx context.Context, height uint64, unconfirmedActiveTvl uint64) error {
-	ret := _m.Called(ctx, height, unconfirmedActiveTvl)
+// UpsertLatestBtcInfo provides a mock function with given fields: ctx, height, confirmedTvl, unconfirmedTvl
+func (_m *DBClient) UpsertLatestBtcInfo(ctx context.Context, height uint64, confirmedTvl uint64, unconfirmedTvl uint64) error {
+	ret := _m.Called(ctx, height, confirmedTvl, unconfirmedTvl)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpsertLatestBtcInfo")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint64) error); ok {
-		r0 = rf(ctx, height, unconfirmedActiveTvl)
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint64, uint64) error); ok {
+		r0 = rf(ctx, height, confirmedTvl, unconfirmedTvl)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 func (db *Database) UpsertLatestBtcInfo(
-	ctx context.Context, height uint64, unconfirmedActiveTvl uint64,
+	ctx context.Context, height uint64, confirmedTvl, unconfirmedTvl uint64,
 ) error {
 	client := db.Client.Database(db.DbName).Collection(model.BtcInfoCollection)
 	// Start a session
@@ -29,9 +29,10 @@ func (db *Database) UpsertLatestBtcInfo(
 		}
 
 		btcInfo := &model.BtcInfo{
-			ID:                   model.LatestBtcInfoId,
-			BtcHeight:            height,
-			UnconfirmedActiveTvl: unconfirmedActiveTvl,
+			ID:             model.LatestBtcInfoId,
+			BtcHeight:      height,
+			ConfirmedTvl:   confirmedTvl,
+			UnconfirmedTvl: unconfirmedTvl,
 		}
 		if findErr == mongo.ErrNoDocuments {
 			// If no document exists, insert a new one

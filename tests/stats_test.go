@@ -208,7 +208,7 @@ func TestStatsEndpoints(t *testing.T) {
 	assert.Equal(t, int64(1), overallStats.TotalDelegations)
 	assert.Equal(t, uint64(1), overallStats.TotalStakers)
 	// We have not yet sent any UnconfirmedInfoEvent, hence no recrod in db
-	assert.Equal(t, uint64(0), overallStats.UnconfirmedActiveTvl)
+	assert.Equal(t, uint64(0), overallStats.UnconfirmedTvl)
 
 	// Test the top staker stats endpoint
 	stakerStats, _ := fetchStakerStatsEndpoint(t, testServer)
@@ -295,18 +295,19 @@ func TestStatsEndpoints(t *testing.T) {
 		assert.True(t, stakerStats[i].ActiveTvl >= stakerStats[i+1].ActiveTvl, "expected response body to be sorted")
 	}
 
-	// send an UnconfirmedInfoEvent which shall update the unconfirmed active TVL
-	unconfirmedInfoEvent := &client.UnconfirmedInfoEvent{
-		EventType: client.UnconfirmedInfoEventType,
-		Height:    100,
-		ActiveTvl: 100,
+	// send an BtcInfoEvent which shall update the unconfirmed active TVL
+	btcInfoEvent := &client.BtcInfoEvent{
+		EventType:      client.BtcInfoEventType,
+		Height:         100,
+		ConfirmedTvl:   90,
+		UnconfirmedTvl: 100,
 	}
-	sendTestMessage(testServer.Queues.UnconfirmedInfoQueueClient, []*client.UnconfirmedInfoEvent{unconfirmedInfoEvent})
+	sendTestMessage(testServer.Queues.BtcInfoQueueClient, []*client.BtcInfoEvent{btcInfoEvent})
 
 	time.Sleep(2 * time.Second)
 
 	overallStats = fetchOverallStatsEndpoint(t, testServer)
-	assert.Equal(t, uint64(100), overallStats.UnconfirmedActiveTvl)
+	assert.Equal(t, uint64(100), overallStats.UnconfirmedTvl)
 }
 
 func FuzzStatsEndpointReturnHighestUnconfirmedTvlFromEvents(f *testing.F) {
@@ -317,30 +318,33 @@ func FuzzStatsEndpointReturnHighestUnconfirmedTvlFromEvents(f *testing.F) {
 		defer testServer.Close()
 
 		overallStats := fetchOverallStatsEndpoint(t, testServer)
-		assert.Equal(t, uint64(0), overallStats.UnconfirmedActiveTvl)
+		assert.Equal(t, uint64(0), overallStats.UnconfirmedTvl)
 
-		highestHeightEvent := &client.UnconfirmedInfoEvent{
-			EventType: client.UnconfirmedInfoEventType,
-			Height:    0,
-			ActiveTvl: 0,
+		highestHeightEvent := &client.BtcInfoEvent{
+			EventType:      client.BtcInfoEventType,
+			Height:         0,
+			ConfirmedTvl:   0,
+			UnconfirmedTvl: 0,
 		}
-		var messages []*client.UnconfirmedInfoEvent
+		var messages []*client.BtcInfoEvent
 		for i := 0; i < 10; i++ {
-			unconfirmedInfoEvent := &client.UnconfirmedInfoEvent{
-				EventType: client.UnconfirmedInfoEventType,
-				Height:    randomBtcHeight(r, 0),
-				ActiveTvl: uint64(randomAmount(r)),
+			confirmedTvl := uint64(randomAmount(r))
+			btcInfoEvent := &client.BtcInfoEvent{
+				EventType:      client.BtcInfoEventType,
+				Height:         randomBtcHeight(r, 0),
+				ConfirmedTvl:   confirmedTvl,
+				UnconfirmedTvl: confirmedTvl + uint64(randomAmount(r)),
 			}
-			messages = append(messages, unconfirmedInfoEvent)
-			if unconfirmedInfoEvent.Height > highestHeightEvent.Height {
-				highestHeightEvent = unconfirmedInfoEvent
+			messages = append(messages, btcInfoEvent)
+			if btcInfoEvent.Height > highestHeightEvent.Height {
+				highestHeightEvent = btcInfoEvent
 			}
 		}
-		sendTestMessage(testServer.Queues.UnconfirmedInfoQueueClient, messages)
+		sendTestMessage(testServer.Queues.BtcInfoQueueClient, messages)
 		time.Sleep(5 * time.Second)
 
 		overallStats = fetchOverallStatsEndpoint(t, testServer)
-		assert.Equal(t, &highestHeightEvent.ActiveTvl, &overallStats.UnconfirmedActiveTvl)
+		assert.Equal(t, &highestHeightEvent.UnconfirmedTvl, &overallStats.UnconfirmedTvl)
 	})
 
 }
