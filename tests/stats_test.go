@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
+	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-queue-client/client"
@@ -346,7 +347,69 @@ func FuzzStatsEndpointReturnHighestUnconfirmedTvlFromEvents(f *testing.F) {
 		overallStats = fetchOverallStatsEndpoint(t, testServer)
 		assert.Equal(t, &highestHeightEvent.UnconfirmedTvl, &overallStats.UnconfirmedTvl)
 	})
+}
 
+func FuzzTestTopStakersWithPaginationResponse(f *testing.F) {
+	attachRandomSeedsToFuzzer(f, 3)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		opts := &TestActiveEventGeneratorOpts{
+			NumOfEvents:        randomPositiveInt(r, 1),
+			NumberOfStakers:    1,
+			EnforceNotOverflow: true,
+		}
+		numOfStakers := randomPositiveInt(r, 10)
+		paginationSize := randomPositiveInt(r, 10)
+		var events []*client.ActiveStakingEvent
+		for i := 0; i < numOfStakers; i++ {
+			activeStakingEventsByStaker := generateRandomActiveStakingEvents(t, r, opts)
+			events = append(events, activeStakingEventsByStaker...)
+		}
+		cfg, err := config.New("./config/config-test.yml")
+		if err != nil {
+			t.Fatalf("Failed to load test config: %v", err)
+		}
+		cfg.Db.MaxPaginationLimit = int64(paginationSize)
+
+		testServer := setupTestServer(t, &TestServerDependency{ConfigOverrides: cfg})
+		defer testServer.Close()
+		sendTestMessage(
+			testServer.Queues.ActiveStakingQueueClient,
+			events,
+		)
+		time.Sleep(5 * time.Second)
+		// Test the API
+		url := testServer.Server.URL + topStakerStatsPath
+		var paginationKey string
+		var allDataCollected []services.StakerStatsPublic
+		var numOfPaginatedResponse int
+		for {
+			resp, err := http.Get(url + "?pagination_key=" + paginationKey)
+			assert.NoError(t, err, "making GET request to staker stats endpoint should not fail")
+			assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+			bodyBytes, err := io.ReadAll(resp.Body)
+			assert.NoError(t, err, "reading response body should not fail")
+			var response handlers.PublicResponse[[]services.StakerStatsPublic]
+			err = json.Unmarshal(bodyBytes, &response)
+			assert.NoError(t, err, "unmarshalling response body should not fail")
+			// Check that the response body is as expected
+			allDataCollected = append(allDataCollected, response.Data...)
+			if response.Pagination.NextKey != "" {
+				assert.NotEmptyf(t, response.Data, "expected response body to have data")
+				assert.Equal(t, paginationSize, len(response.Data), "expected 10 items in the pagination response")
+				paginationKey = response.Pagination.NextKey
+				numOfPaginatedResponse++
+			} else {
+				break
+			}
+		}
+
+		assert.Equal(t, numOfStakers/paginationSize, numOfPaginatedResponse)
+		assert.Equal(t, numOfStakers, len(allDataCollected))
+		for i := 0; i < len(allDataCollected)-1; i++ {
+			assert.True(t, allDataCollected[i].ActiveTvl >= allDataCollected[i+1].ActiveTvl, "expected collected data to be sorted by start height")
+		}
+	})
 }
 
 func fetchFinalityEndpoint(t *testing.T, testServer *TestServer) []services.FpDetailsPublic {

@@ -133,9 +133,10 @@ func generateRandomTx(r *rand.Rand) (*wire.MsgTx, string, error) {
 }
 
 type TestActiveEventGeneratorOpts struct {
-	NumOfEvents     int
-	NumberOfFps     int
-	NumberOfStakers int
+	NumOfEvents        int
+	NumberOfFps        int
+	NumberOfStakers    int
+	EnforceNotOverflow bool
 }
 
 // generateRandomActiveStakingEvents generates a random number of active staking events
@@ -145,16 +146,26 @@ func generateRandomActiveStakingEvents(
 	t *testing.T, r *rand.Rand, opts *TestActiveEventGeneratorOpts,
 ) []*client.ActiveStakingEvent {
 	var activeStakingEvents []*client.ActiveStakingEvent
-	if opts == nil {
-		opts = &TestActiveEventGeneratorOpts{
-			NumOfEvents:     11,
-			NumberOfFps:     11,
-			NumberOfStakers: 11,
+	genOpts := &TestActiveEventGeneratorOpts{
+		NumOfEvents:     11,
+		NumberOfFps:     11,
+		NumberOfStakers: 11,
+	}
+
+	if opts != nil {
+		if opts.NumOfEvents > 0 {
+			genOpts.NumOfEvents = opts.NumOfEvents
+		}
+		if opts.NumberOfFps > 0 {
+			genOpts.NumberOfFps = opts.NumberOfFps
+		}
+		if opts.NumberOfStakers > 0 {
+			genOpts.NumberOfStakers = opts.NumberOfStakers
 		}
 	}
 
 	var fpPks []string
-	for i := 0; i < opts.NumberOfFps; i++ {
+	for i := 0; i < genOpts.NumberOfFps; i++ {
 		fpPk, err := randomPk()
 		if err != nil {
 			t.Fatalf("failed to generate random public key for FP: %v", err)
@@ -163,7 +174,7 @@ func generateRandomActiveStakingEvents(
 	}
 
 	var stakerPks []string
-	for i := 0; i < opts.NumberOfStakers; i++ {
+	for i := 0; i < genOpts.NumberOfStakers; i++ {
 		stakerPk, err := randomPk()
 		if err != nil {
 			t.Fatalf("failed to generate random public key for staker: %v", err)
@@ -171,12 +182,18 @@ func generateRandomActiveStakingEvents(
 		stakerPks = append(stakerPks, stakerPk)
 	}
 
-	for i := 0; i < opts.NumOfEvents; i++ {
+	for i := 0; i < genOpts.NumOfEvents; i++ {
 		randomFpPk := fpPks[rand.Intn(len(fpPks))]
 		randomStakerPk := stakerPks[rand.Intn(len(stakerPks))]
 		tx, hex, err := generateRandomTx(r)
 		if err != nil {
 			t.Fatalf("failed to generate random tx: %v", err)
+		}
+		var isOverflow bool
+		if opts.EnforceNotOverflow {
+			isOverflow = false
+		} else {
+			isOverflow = rand.Int()%2 == 0
 		}
 		activeStakingEvent := &client.ActiveStakingEvent{
 			EventType:             client.ActiveStakingEventType,
@@ -189,7 +206,7 @@ func generateRandomActiveStakingEvents(
 			StakingTimeLock:       uint64(rand.Intn(100)),
 			StakingOutputIndex:    uint64(rand.Intn(100)),
 			StakingTxHex:          hex,
-			IsOverflow:            rand.Int()%2 == 0,
+			IsOverflow:            isOverflow,
 		}
 		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
 	}

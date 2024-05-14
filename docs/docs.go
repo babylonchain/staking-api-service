@@ -135,6 +135,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "summary": "Get Top Staker Stats by Active TVL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pagination key to fetch the next page of top stakers",
+                        "name": "pagination_key",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of top stakers by active tvl",
