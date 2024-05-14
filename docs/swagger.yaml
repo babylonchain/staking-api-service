@@ -290,6 +290,11 @@ paths:
     get:
       description: Fetches details of top stakers by their active total value locked
         (ActiveTvl) in descending order.
+      parameters:
+      - description: Pagination key to fetch the next page of top stakers
+        in: query
+        name: pagination_key
+        type: string
       produces:
       - application/json
       responses:

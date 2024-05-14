@@ -25,11 +25,13 @@ func (h *Handler) GetOverallStats(request *http.Request) (*Result, *types.Error)
 // @Summary Get Top Staker Stats by Active TVL
 // @Description Fetches details of top stakers by their active total value locked (ActiveTvl) in descending order.
 // @Produce json
+// @Param  pagination_key query string false "Pagination key to fetch the next page of top stakers"
 // @Success 200 {object} PublicResponse[[]services.StakerStatsPublic]{array} "List of top stakers by active tvl"
 // @Failure 400 {object} types.Error "Error: Bad Request"
 // @Router /v1/stats/staker [get]
 func (h *Handler) GetTopStakerStats(request *http.Request) (*Result, *types.Error) {
-	topStakerStats, paginationToken, err := h.services.GetTopStakersByActiveTvl(request.Context(), "")
+	paginationKey := request.URL.Query().Get("pagination_key")
+	topStakerStats, paginationToken, err := h.services.GetTopStakersByActiveTvl(request.Context(), paginationKey)
 	if err != nil {
 		return nil, err
 	}
