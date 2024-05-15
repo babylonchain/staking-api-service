@@ -25,10 +25,10 @@ jobs:
       - run:
           name: Build Staking API Service
           command: make build
-      # - save_cache:
-      #     key: go-mod-v6-{{ checksum "go.sum" }}
-      #     paths:
-      #       - "/home/circleci/.go_workspace/pkg/mod"
+      - save_cache:
+          key: go-mod-v6-{{ checksum "go.sum" }}
+          paths:
+            - "/home/circleci/.go_workspace/pkg/mod"
       # TODO: https://github.com/babylonchain/staking-api-service/issues/29
       # - run:
       #     name: Lint
