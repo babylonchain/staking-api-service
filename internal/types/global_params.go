@@ -97,12 +97,12 @@ func Validate(g *GlobalParams) error {
 				return fmt.Errorf("invalid covenant public key %s: %w", covPk, err)
 			}
 		}
-		if p.MaxStakingAmount <= p.MinStakingAmount {
-			return fmt.Errorf("max-staking-amount must be larger than min-staking-amount")
+		if p.MaxStakingAmount < p.MinStakingAmount {
+			return fmt.Errorf("max-staking-amount cannot be lower than min-staking-amount")
 		}
 
-		if p.MaxStakingTime <= p.MinStakingTime {
-			return fmt.Errorf("max-staking-time must be larger than min-staking-time")
+		if p.MaxStakingTime < p.MinStakingTime {
+			return fmt.Errorf("max-staking-time cannot be lower than min-staking-time")
 		}
 
 		if p.ConfirmationDepth <= 0 {
