@@ -153,7 +153,7 @@ jobs:
           name: Clone production data from latest MongoDB primary node dump
           command: |
             PVC_MANIFEST=/home/circleci/project/.circleci/pvc-mongodb.yaml
-            SNAPSHOT_DATE=$(date -d "yesterday" +"%Y%m%d")
+            SNAPSHOT_DATE=$(date -d "today" +"%Y%m%d")
             SNAPSHOT_NAME=datadir-mongodb-0-mongodb-staking-api-daily-${SNAPSHOT_DATE}1200
             sed -i "s/REPLACEME/$SNAPSHOT_NAME/g" $PVC_MANIFEST
             kubectl apply -f $PVC_MANIFEST
@@ -241,14 +241,7 @@ workflows:
               only:
                 - main
                 - dev
-      - redeploy_staging_mongodb:
-          requires:
-            - require_approval_mongodb
-          filters:
-            branches:
-              only:
-                - main
-                - dev
+      - redeploy_staging_mongodb
       - build_lint_tests
       - build_docker:
           filters:
@@ -257,39 +250,22 @@ workflows:
       - push_docker:
           requires:
             - build_docker
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              only:
-                - main
-                - dev
       - deploy_staging:
           requires:
             - push_docker
-            - build_lint_tests
-          filters:
-            branches:
-              only:
-                - main
-                - dev
-      - require_approval_deploy:
-          type: approval
-          requires:
-            - deploy_staging
-          filters:
-            branches:
-              only:
-                - main
-                - dev
+              #filters:
+              #  branches:
+              #    only:
+              #      - main
+              #      - dev
       - deploy_testnet:
           requires:
-            - require_approval_deploy
-          filters:
-            branches:
-              only:
-                - main
-                - dev
+            - deploy_staging
+              #filters:
+              #  branches:
+              #    only:
+              #      - main
+              #      - dev
       - require_approval_rollback:
           type: approval
           requires:
