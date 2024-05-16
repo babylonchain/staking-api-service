@@ -184,7 +184,7 @@ func TestFailGlobalParamsValidation(t *testing.T) {
 	fileName = createJsonFile(t, jsonData)
 	_, err = types.NewGlobalParams(fileName)
 	os.Remove(fileName)
-	assert.Equal(t, "max-staking-amount must be larger than min-staking-amount", err.Error())
+	assert.Equal(t, "max-staking-amount cannot be lower than min-staking-amount", err.Error())
 
 	// test activation height
 	utils.DeepCopy(&defaultGlobalParams, &clonedParams)
