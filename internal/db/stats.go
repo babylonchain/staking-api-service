@@ -93,7 +93,7 @@ func (db *Database) IncrementOverallStats(
 	// Execute the transaction with retries
 	_, txErr := TxWithRetries(
 		ctx, 
-		&dbTransactionClient{db.Client},
+		db.Client,
 		transactionWork,
 	)
 	if txErr != nil {
@@ -135,7 +135,7 @@ func (db *Database) SubtractOverallStats(
 	// Execute the transaction with retries
 	_, txErr := TxWithRetries(
 		ctx, 
-		&dbTransactionClient{db.Client},
+		db.Client,
 		transactionWork,
 	)
 	if txErr != nil {
@@ -299,7 +299,7 @@ func (db *Database) updateFinalityProviderStats(ctx context.Context, state, stak
 	// Execute the transaction with retries
 	_, txErr := TxWithRetries(
 		ctx, 
-		&dbTransactionClient{db.Client},
+		db.Client,
 		transactionWork,
 	)
 	if txErr != nil {
@@ -360,7 +360,7 @@ func (db *Database) updateStakerStats(ctx context.Context, state, stakingTxHashH
 	// Execute the transaction with retries
 	_, txErr := TxWithRetries(
 		ctx, 
-		&dbTransactionClient{db.Client},
+		db.Client,
 		transactionWork,
 	)
 	return txErr

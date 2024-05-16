@@ -5,8 +5,6 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/types"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type DBClient interface {
@@ -55,11 +53,4 @@ type DBClient interface {
 		ctx context.Context, stakingTxHashHex, stakerPkHex string, amount uint64,
 	) error
 	FindTopStakersByTvl(ctx context.Context, paginationToken string) (*DbResultMap[model.StakerStatsDocument], error)
-}
-type DBSession interface {
-	EndSession(ctx context.Context)
-	WithTransaction(ctx context.Context, fn func(sessCtx mongo.SessionContext) (interface{}, error), opts ...*options.TransactionOptions) (interface{}, error)
-}
-type DBTransactionClient interface {
-	StartSession(opts ...*options.SessionOptions) (DBSession, error)
 }

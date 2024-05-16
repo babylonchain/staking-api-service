@@ -16,29 +16,8 @@ const (
 	DefaultBackoffFactor = 2.0
 )
 
-type dbTransactionClient struct {
-	*mongo.Client
-}
-
-type dbSessionWrapper struct {
-	mongo.Session
-}
-
-func (c *dbTransactionClient) StartSession(opts...*options.SessionOptions) (DBSession, error) {
-	session, err := c.Client.StartSession(opts...)
-	if err!= nil {
-		return nil, err
-	}
-	return &dbSessionWrapper{session}, nil
-}
-
-
-func (s *dbSessionWrapper) EndSession(ctx context.Context) {
-	s.Session.EndSession(ctx)
-}
-
-func (s *dbSessionWrapper) WithTransaction(ctx context.Context, fn func(sessCtx mongo.SessionContext) (interface{}, error), opts...*options.TransactionOptions) (interface{}, error) {
-	return s.Session.WithTransaction(ctx, fn, opts...)
+type DBTransactionClient interface {
+	StartSession(opts ...*options.SessionOptions) (mongo.Session, error)
 }
 
 func TxWithRetries(

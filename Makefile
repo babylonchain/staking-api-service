@@ -48,6 +48,7 @@ run-local:
 
 generate-mock-interface:
 	cd internal/db && mockery --name=DBClient --output=../../tests/mocks --outpkg=dbmock --filename=mock_db_client.go
+	cd internal/db && mockery --name=DBTransactionClient --output=../../tests/mocks --outpkg=dbmock --filename=mock_db_client.go
 
 tests:
 	./bin/local-startup.sh;
