@@ -167,11 +167,7 @@ jobs:
               mongodb-staging $MONGODB_HELM_CHART_REPO
       - run:
           name: Overwrite the existing replica set configuration
-          command: |
-            sleep 30s
-            kubectl exec mongodb-staging-0 -n $MONGODB_STAGING_NAMESPACE \
-            -- mongosh \
-            --eval "rs.reconfig({'_id': 'rs0', 'members': [{'_id': 0, 'host': 'mongodb-staging-0.mongodb-staging-headless.mongodb-staking-api.svc.cluster.local:27017', 'priority': 10}]}, {force: true})"
+          command: sh /home/circleci/project/.circleci/mongodb_reconfig.sh
 
   deploy_testnet:
     machine:
