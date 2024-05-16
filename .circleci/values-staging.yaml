@@ -35,15 +35,6 @@ deployment:
     configmap.reloader.stakater.com/reload: "staking-api-service, phase1-global-config, phase1-finality-providers"
   nodeSelector:
     workload: "staging"
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app: staking-api-service
-            topologyKey: topology.kubernetes.io/zone
-          weight: 1
 service:
   type: NodePort
   ports:
@@ -57,9 +48,8 @@ service:
       name: prom
 ingress:
   enabled: true
-  # TODO: Update LB group pre phase-1
   groupName: "testnet3-internal"
-  tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/2c6cb5ad-8899-4871-9206-ea8e978aebae
+  tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/46965f73-18c3-4b1e-9eb2-b09d87e53af1
   scheme: "internal"
   hosts:
     - host: API_STAGING_FQDN
