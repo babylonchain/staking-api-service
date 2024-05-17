@@ -35,6 +35,15 @@ deployment:
     configmap.reloader.stakater.com/reload: "staking-api-service, phase1-global-config, phase1-finality-providers"
   nodeSelector:
     workload: "webservices"
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app: staking-api-service
+            topologyKey: topology.kubernetes.io/zone
+          weight: 1
 service:
   type: NodePort
   ports:
