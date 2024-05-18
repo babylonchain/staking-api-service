@@ -126,3 +126,12 @@ func (s *Services) GetDelegation(ctx context.Context, txHashHex string) (*model.
 	}
 	return delegation, nil
 }
+
+func (s *Services) CheckStakerHasActiveDelegation(ctx context.Context, stakerPk string) (bool, *types.Error) {
+	hasDelegation, err := s.DbClient.CheckStakerDelegationExist(ctx, stakerPk, []types.DelegationState{types.Active})
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to check if staker has active delegation")
+		return false, types.NewInternalServiceError(err)
+	}
+	return hasDelegation, nil
+}

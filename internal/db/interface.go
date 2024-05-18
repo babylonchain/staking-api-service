@@ -60,4 +60,7 @@ type DBClient interface {
 		ctx context.Context, height uint64, confirmedTvl uint64, unconfirmedTvl uint64,
 	) error
 	GetLatestBtcInfo(ctx context.Context) (*model.BtcInfo, error)
+	CheckStakerDelegationExist(
+		ctx context.Context, stakerPk string, statesToCheck []types.DelegationState,
+	) (bool, error)
 }

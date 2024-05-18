@@ -228,7 +228,7 @@ func startQueueMessageProcessing(
 			}
 
 			tracingInfo := ctx.Value(tracing.TracingInfoKey)
-			logEvent := log.Ctx(ctx).Info()
+			logEvent := log.Ctx(ctx).Debug()
 			if tracingInfo != nil {
 				logEvent = logEvent.Interface("tracingInfo", tracingInfo)
 			}

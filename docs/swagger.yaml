@@ -48,6 +48,12 @@ definitions:
       pagination:
         $ref: '#/definitions/handlers.paginationResponse'
     type: object
+  handlers.Result:
+    properties:
+      data: {}
+      status:
+        type: integer
+    type: object
   handlers.UnbondDelegationRequestPayload:
     properties:
       staker_signed_signature_hex:
@@ -250,6 +256,26 @@ paths:
           schema:
             $ref: '#/definitions/handlers.PublicResponse-services_GlobalParamsPublic'
       summary: Get Babylon global parameters
+  /v1/staker/delegation/check:
+    get:
+      description: Check if staker has active delegation
+      parameters:
+      - description: Staker BTC Public Key
+        in: query
+        name: staker_btc_pk
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Result
+          schema:
+            $ref: '#/definitions/handlers.Result'
+        "400":
+          description: 'Error: Bad Request'
+          schema:
+            $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
   /v1/staker/delegations:
     get:
       description: Retrieves delegations for a given staker

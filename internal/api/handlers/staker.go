@@ -29,3 +29,23 @@ func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.E
 
 	return NewResultWithPagination(delegations, newPaginationKey), nil
 }
+
+// CheckStakerDelegationExist @Summary Check if staker has active delegation
+// @Description Check if staker has active delegation
+// @Produce json
+// @Param staker_btc_pk query string true "Staker BTC Public Key"
+// @Success 200 {object} Result "Result"
+// @Failure 400 {object} types.Error "Error: Bad Request"
+// @Router /v1/staker/delegation/check [get]
+func (h *Handler) CheckStakerDelegationExist(request *http.Request) (*Result, *types.Error) {
+	stakerBtcPk := request.URL.Query().Get("staker_btc_pk")
+	if stakerBtcPk == "" {
+		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "staker_btc_pk is required")
+	}
+	exist, err := h.services.CheckStakerHasActiveDelegation(request.Context(), stakerBtcPk)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewResult(exist), nil
+}

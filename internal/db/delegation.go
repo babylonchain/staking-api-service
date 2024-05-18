@@ -51,6 +51,24 @@ func (db *Database) SaveActiveStakingDelegation(
 	return nil
 }
 
+// CheckStakerDelegationExist checks if a staker has any delegation in the specified states
+func (db *Database) CheckStakerDelegationExist(
+	ctx context.Context, stakerPk string, statesToCheck []types.DelegationState,
+) (bool, error) {
+	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
+	filter := bson.M{"staker_pk_hex": stakerPk, "state": bson.M{"$in": statesToCheck}}
+
+	var delegation model.DelegationDocument
+	err := client.FindOne(ctx, filter).Decode(&delegation)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk string, paginationToken string) (*DbResultMap[model.DelegationDocument], error) {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
 
