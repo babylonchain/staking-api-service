@@ -76,7 +76,7 @@ const docTemplate = `{
         },
         "/v1/staker/delegation/check": {
             "get": {
-                "description": "Check if staker has active delegation",
+                "description": "Check if a staker has an active delegation",
                 "produces": [
                     "application/json"
                 ],

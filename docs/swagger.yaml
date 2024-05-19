@@ -258,7 +258,7 @@ paths:
       summary: Get Babylon global parameters
   /v1/staker/delegation/check:
     get:
-      description: Check if staker has active delegation
+      description: Check if a staker has an active delegation
       parameters:
       - description: Staker BTC Public Key
         in: query

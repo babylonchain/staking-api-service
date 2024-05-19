@@ -30,8 +30,8 @@ func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.E
 	return NewResultWithPagination(delegations, newPaginationKey), nil
 }
 
-// CheckStakerDelegationExist @Summary Check if staker has active delegation
-// @Description Check if staker has active delegation
+// CheckStakerDelegationExist @Summary Check if a staker has an active delegation
+// @Description Check if a staker has an active delegation
 // @Produce json
 // @Param staker_btc_pk query string true "Staker BTC Public Key"
 // @Success 200 {object} Result "Result"
