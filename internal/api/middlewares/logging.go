@@ -11,8 +11,8 @@ import (
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if the request path starts with /swagger/
-		if strings.HasPrefix(r.URL.Path, "/swagger/") {
+		// Check if the request path starts with /swagger/ or is /healthcheck
+		if strings.HasPrefix(r.URL.Path, "/swagger/") || r.URL.Path == "/healthcheck" {
 			// If it does, skip logging and serve the swagger request
 			next.ServeHTTP(w, r)
 			return

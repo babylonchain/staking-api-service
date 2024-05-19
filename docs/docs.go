@@ -74,6 +74,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/staker/delegation/check": {
+            "get": {
+                "description": "Check if a staker has an active delegation",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Staker BTC Public Key",
+                        "name": "staker_btc_pk",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Result",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Result"
+                        }
+                    },
+                    "400": {
+                        "description": "Error: Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/staker/delegations": {
             "get": {
                 "description": "Retrieves delegations for a given staker",
@@ -297,6 +328,15 @@ const docTemplate = `{
                 },
                 "pagination": {
                     "$ref": "#/definitions/handlers.paginationResponse"
+                }
+            }
+        },
+        "handlers.Result": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "status": {
+                    "type": "integer"
                 }
             }
         },

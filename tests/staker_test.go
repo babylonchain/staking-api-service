@@ -12,7 +12,12 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
 	"github.com/babylonchain/staking-api-service/internal/services"
+	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/stretchr/testify/assert"
+)
+
+const (
+	checkStakerDelegationUrl = "/v1/staker/delegation/check"
 )
 
 func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
@@ -108,4 +113,100 @@ func TestActiveStakingFetchedByStakerPkWithInvalidPaginationKey(t *testing.T) {
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 
 	assert.Equal(t, "Invalid pagination token", response.Message, "expected error message does not match")
+}
+
+func TestCheckStakerDelegationAllowOptionRequest(t *testing.T) {
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+
+	url := testServer.Server.URL + checkStakerDelegationUrl
+	client := &http.Client{}
+	req, err := http.NewRequest("OPTIONS", url, nil)
+	assert.NoError(t, err)
+	req.Header.Add("Access-Control-Request-Method", "GET")
+	req.Header.Add("Origin", "https://galxe.com")
+	req.Header.Add("Access-Control-Request-Headers", "Content-Type")
+
+	// Send the request
+	resp, err := client.Do(req)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 204
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode, "expected HTTP 204")
+	assert.Equal(t, "https://galxe.com", resp.Header.Get("Access-Control-Allow-Origin"), "expected Access-Control-Allow-Origin to be https://galxe.com")
+	assert.Equal(t, "GET, OPTIONS, POST", resp.Header.Get("Access-Control-Allow-Methods"), "expected Access-Control-Allow-Methods to be GET and OPTIONS")
+}
+
+func FuzzCheckStakerActiveDelegations(f *testing.F) {
+	attachRandomSeedsToFuzzer(f, 3)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		opts := &TestActiveEventGeneratorOpts{
+			NumOfEvents:        randomPositiveInt(r, 10),
+			NumberOfStakers:    1,
+			EnforceNotOverflow: true,
+		}
+		activeStakingEvents := generateRandomActiveStakingEvents(t, r, opts)
+		testServer := setupTestServer(t, nil)
+		defer testServer.Close()
+		sendTestMessage(
+			testServer.Queues.ActiveStakingQueueClient, activeStakingEvents,
+		)
+		time.Sleep(5 * time.Second)
+
+		// Test the API
+		stakerPk := activeStakingEvents[0].StakerPkHex
+		isExist := fetchCheckStakerActiveDelegations(t, testServer, stakerPk)
+
+		assert.True(t, isExist, "expected staker to have active delegation")
+
+		// Test the API with a staker PK that never had any active delegation
+		stakerPkWithoutDelegation, err := randomPk()
+		if err != nil {
+			t.Fatalf("failed to generate random public key for staker: %v", err)
+		}
+		isExist = fetchCheckStakerActiveDelegations(t, testServer, stakerPkWithoutDelegation)
+		assert.False(t, isExist, "expected staker to not have active delegation")
+
+		// Update the staker to have its delegations in a different state
+		var unbondingEvents []client.UnbondingStakingEvent
+		for _, activeStakingEvent := range activeStakingEvents {
+			unbondingEvent := client.NewUnbondingStakingEvent(
+				activeStakingEvent.StakingTxHashHex,
+				activeStakingEvent.StakingStartHeight+100,
+				time.Now().Unix(),
+				10,
+				1,
+				activeStakingEvent.StakingTxHex,     // mocked data, it doesn't matter in stats calculation
+				activeStakingEvent.StakingTxHashHex, // mocked data, it doesn't matter in stats calculation
+			)
+			unbondingEvents = append(unbondingEvents, unbondingEvent)
+		}
+		sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, unbondingEvents)
+		time.Sleep(5 * time.Second)
+
+		isExist = fetchCheckStakerActiveDelegations(t, testServer, stakerPk)
+		assert.False(t, isExist, "expected staker to not have active delegation")
+	})
+}
+
+func fetchCheckStakerActiveDelegations(
+	t *testing.T, testServer *TestServer, stakerPk string,
+) bool {
+	url := testServer.Server.URL + checkStakerDelegationUrl + "?staker_btc_pk=" + stakerPk
+	resp, err := http.Get(url)
+	assert.NoError(t, err)
+
+	// Check that the status code is HTTP 200 OK
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	var response handlers.PublicResponse[bool]
+	err = json.Unmarshal(bodyBytes, &response)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
+
+	return response.Data
 }

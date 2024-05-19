@@ -56,7 +56,8 @@ func (h *QueueHandler) UnbondingStakingHandler(ctx context.Context, messageBody 
 			types.Unbonded.ToString(),
 		))
 		if statsError != nil {
-			log.Ctx(ctx).Error().Err(statsError).Msg("Failed to emit stats event for unbonding staking")
+			log.Ctx(ctx).Error().Err(statsError).Str("stakingTxHashHex", del.StakingTxHashHex).
+				Msg("Failed to emit stats event for unbonding staking")
 			return statsError
 		}
 	}

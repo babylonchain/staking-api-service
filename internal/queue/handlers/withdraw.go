@@ -27,9 +27,11 @@ func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody s
 	}
 	state := del.State
 
+	stakingTxHashHex := withdrawnStakingEvent.GetStakingTxHashHex()
+
 	if utils.Contains(utils.OutdatedStatesForWithdraw(), state) {
 		// Ignore the message as the delegation state is withdrawn. Nothing to do anymore
-		log.Ctx(ctx).Debug().Str("StakingTxHashHex", withdrawnStakingEvent.StakingTxHashHex).
+		log.Ctx(ctx).Debug().Str("stakingTxHashHex", stakingTxHashHex).
 			Msg("delegation state is outdated for withdrawn event")
 		return nil
 	}
@@ -37,7 +39,8 @@ func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody s
 	// We will wait for the unbonded message to be processed first.
 	if !utils.Contains(utils.QualifiedStatesToWithdraw(), state) {
 		errMsg := "delegation is not in the qualified state to transition to withdrawn"
-		log.Ctx(ctx).Warn().Str("state", state.ToString()).Msg(errMsg)
+		log.Ctx(ctx).Warn().Str("stakingTxHashHex", stakingTxHashHex).
+			Str("state", state.ToString()).Msg(errMsg)
 		return types.NewErrorWithMsg(http.StatusForbidden, types.Forbidden, errMsg)
 	}
 

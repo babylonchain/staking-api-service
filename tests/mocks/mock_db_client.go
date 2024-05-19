@@ -18,6 +18,34 @@ type DBClient struct {
 	mock.Mock
 }
 
+// CheckStakerDelegationExist provides a mock function with given fields: ctx, stakerPk, statesToCheck
+func (_m *DBClient) CheckStakerDelegationExist(ctx context.Context, stakerPk string, statesToCheck []types.DelegationState) (bool, error) {
+	ret := _m.Called(ctx, stakerPk, statesToCheck)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckStakerDelegationExist")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, []types.DelegationState) (bool, error)); ok {
+		return rf(ctx, stakerPk, statesToCheck)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, []types.DelegationState) bool); ok {
+		r0 = rf(ctx, stakerPk, statesToCheck)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, []types.DelegationState) error); ok {
+		r1 = rf(ctx, stakerPk, statesToCheck)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindDelegationByTxHashHex provides a mock function with given fields: ctx, txHashHex
 func (_m *DBClient) FindDelegationByTxHashHex(ctx context.Context, txHashHex string) (*model.DelegationDocument, error) {
 	ret := _m.Called(ctx, txHashHex)
