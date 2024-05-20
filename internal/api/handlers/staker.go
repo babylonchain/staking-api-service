@@ -33,14 +33,14 @@ func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.E
 // CheckStakerDelegationExist @Summary Check if a staker has an active delegation
 // @Description Check if a staker has an active delegation by the staker BTC address (Taproot only)
 // @Produce json
-// @Param btc_address query string true "Staker BTC address in Taproot format"
+// @Param address query string true "Staker BTC address in Taproot format"
 // @Success 200 {object} Result "Result"
 // @Failure 400 {object} types.Error "Error: Bad Request"
 // @Router /v1/staker/delegation/check [get]
 func (h *Handler) CheckStakerDelegationExist(request *http.Request) (*Result, *types.Error) {
-	address := request.URL.Query().Get("btc_address")
+	address := request.URL.Query().Get("address")
 	if address == "" {
-		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "btc_address is required")
+		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "address is required")
 	}
 	exist, err := h.services.CheckStakerHasActiveDelegationByAddress(request.Context(), address)
 	if err != nil {

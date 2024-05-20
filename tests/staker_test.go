@@ -223,7 +223,7 @@ func TestGetDelegationReturnEmptySliceWhenNoDelegation(t *testing.T) {
 func fetchCheckStakerActiveDelegations(
 	t *testing.T, testServer *TestServer, btcAddress string,
 ) bool {
-	url := testServer.Server.URL + checkStakerDelegationUrl + "?btc_address=" + btcAddress
+	url := testServer.Server.URL + checkStakerDelegationUrl + "?address=" + btcAddress
 	resp, err := http.Get(url)
 	assert.NoError(t, err)
 
