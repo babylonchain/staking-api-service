@@ -12,6 +12,11 @@ type TimelockTransaction struct {
 	TimeLock       uint64 `bson:"timelock"`
 }
 
+// The available addresses that can be derived from the given StakerPkHex
+type StakerBtcAddress struct {
+	TaprootAddress string `bson:"taproot_address"`
+}
+
 type DelegationDocument struct {
 	StakingTxHashHex      string                `bson:"_id"` // Primary key
 	StakerPkHex           string                `bson:"staker_pk_hex"`
@@ -21,6 +26,7 @@ type DelegationDocument struct {
 	StakingTx             *TimelockTransaction  `bson:"staking_tx"` // Always exist
 	UnbondingTx           *TimelockTransaction  `bson:"unbonding_tx,omitempty"`
 	IsOverflow            bool                  `bson:"is_overflow"`
+	StakerBtcAddress      *StakerBtcAddress     `bson:"staker_btc_address,omitempty"`
 }
 
 type DelegationByStakerPagination struct {

@@ -258,11 +258,12 @@ paths:
       summary: Get Babylon global parameters
   /v1/staker/delegation/check:
     get:
-      description: Check if a staker has an active delegation
+      description: Check if a staker has an active delegation by the staker BTC address
+        (Taproot only)
       parameters:
-      - description: Staker BTC Public Key
+      - description: Staker BTC address in Taproot format
         in: query
-        name: staker_btc_pk
+        name: btc_address
         required: true
         type: string
       produces:

@@ -10,7 +10,7 @@ import (
 
 func TestSaveTimelock(t *testing.T) {
 	// Inject random data
-	activeStakingEvent := buildActiveStakingEvent("0x1234567890abcdef", 1)
+	activeStakingEvent := buildActiveStakingEvent(t, 1)
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
@@ -33,7 +33,7 @@ func TestSaveTimelock(t *testing.T) {
 
 func TestNotSaveExpireCheckIfAlreadyProcessed(t *testing.T) {
 	// Inject random data
-	activeStakingEvent := buildActiveStakingEvent("0x1234567890abcdef", 1)
+	activeStakingEvent := buildActiveStakingEvent(t, 1)
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
@@ -55,7 +55,7 @@ func TestNotSaveExpireCheckIfAlreadyProcessed(t *testing.T) {
 	assert.Equal(t, expectedExpireHeight, results[0].ExpireHeight, "expected address to be the same")
 
 	// Now, let's inject the same data but with different expireHeight
-	eventWithDifferentExpireHeight := buildActiveStakingEvent("0x1234567890abcdef", 1)
+	eventWithDifferentExpireHeight := buildActiveStakingEvent(t, 1)
 
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, eventWithDifferentExpireHeight)
 	time.Sleep(2 * time.Second)

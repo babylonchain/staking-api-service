@@ -30,16 +30,19 @@ type index struct {
 	Unique  bool
 }
 
-var collections = map[string]index{
-	StatsLockCollection:             {Indexes: map[string]int{}},
-	OverallStatsCollection:          {Indexes: map[string]int{}},
-	FinalityProviderStatsCollection: {Indexes: map[string]int{"active_tvl": -1}, Unique: false},
-	StakerStatsCollection:           {Indexes: map[string]int{"active_tvl": -1}, Unique: false},
-	DelegationCollection:            {Indexes: map[string]int{"staker_pk_hex": 1, "staking_tx.start_height": -1}, Unique: false},
-	TimeLockCollection:              {Indexes: map[string]int{"expire_height": 1}, Unique: false},
-	UnbondingCollection:             {Indexes: map[string]int{"unbonding_tx_hash_hex": 1}, Unique: true},
-	UnprocessableMsgCollection:      {Indexes: map[string]int{}},
-	BtcInfoCollection:               {Indexes: map[string]int{}},
+var collections = map[string][]index{
+	StatsLockCollection:             {{Indexes: map[string]int{}}},
+	OverallStatsCollection:          {{Indexes: map[string]int{}}},
+	FinalityProviderStatsCollection: {{Indexes: map[string]int{"active_tvl": -1}, Unique: false}},
+	StakerStatsCollection:           {{Indexes: map[string]int{"active_tvl": -1}, Unique: false}},
+	DelegationCollection: {
+		{Indexes: map[string]int{"staker_pk_hex": 1, "staking_tx.start_height": -1}, Unique: false},
+		{Indexes: map[string]int{"staker_btc_address.taproot_address": 1}, Unique: false},
+	},
+	TimeLockCollection:         {{Indexes: map[string]int{"expire_height": 1}, Unique: false}},
+	UnbondingCollection:        {{Indexes: map[string]int{"unbonding_tx_hash_hex": 1}, Unique: true}},
+	UnprocessableMsgCollection: {{Indexes: map[string]int{}}},
+	BtcInfoCollection:          {{Indexes: map[string]int{}}},
 }
 
 func Setup(ctx context.Context, cfg *config.Config) error {
@@ -61,8 +64,10 @@ func Setup(ctx context.Context, cfg *config.Config) error {
 		createCollection(ctx, database, collection)
 	}
 
-	for name, idx := range collections {
-		createIndex(ctx, database, name, idx)
+	for name, idxs := range collections {
+		for _, idx := range idxs {
+			createIndex(ctx, database, name, idx)
+		}
 	}
 
 	log.Info().Msg("Collections and Indexes created successfully.")
