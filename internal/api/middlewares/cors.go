@@ -10,7 +10,7 @@ import (
 const (
 	maxAge                    = 300
 	stakerDelegationCheckPath = "/v1/staker/delegation/check"
-	galxeOrigin               = "https://galxe.com"
+	galxeOrigin               = "https://app.galxe.com"
 )
 
 func CorsMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
