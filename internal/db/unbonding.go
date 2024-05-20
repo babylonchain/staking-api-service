@@ -82,9 +82,8 @@ func (db *Database) SaveUnbondingTx(
 	}
 
 	// Execute the transaction with retries
-	_, err := TxWithRetries(
-		ctx, 
-		db.Client,
+	_, err := db.txWithRetries(
+		ctx,
 		transactionWork,
 	)
 	if err != nil {
