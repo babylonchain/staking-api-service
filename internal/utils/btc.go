@@ -202,7 +202,7 @@ func GetTaprootAddressFromPk(pkHex string, netParams *chaincfg.Params) (string, 
 	}
 	address, err := bip322.PubKeyToP2TrSpendAddress(pk, netParams)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	return address.EncodeAddress(), nil
 }
