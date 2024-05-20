@@ -28,10 +28,6 @@ deployment:
     - name: staking-api-service
       mountPath: /home/staking-api-service
   annotations:
-    prometheus.io/path: /metrics
-    prometheus.io/port: "2112"
-    prometheus.io/scheme: http
-    prometheus.io/scrape: "true"
     configmap.reloader.stakater.com/reload: "staking-api-service, phase1-global-config, phase1-finality-providers"
   nodeSelector:
     workload: "webservices"
@@ -55,6 +51,11 @@ service:
       port: 2112
       targetPort: prom
       name: prom
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "2112"
+    prometheus.io/scheme: http
+    prometheus.io/scrape: "true"
 ingress:
   enabled: true
   groupName: "testnet3-public"
