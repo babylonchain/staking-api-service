@@ -191,6 +191,30 @@ func FuzzCheckStakerActiveDelegations(f *testing.F) {
 	})
 }
 
+func TestGetDelegationReturnEmptySliceWhenNoDelegation(t *testing.T) {
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+
+	stakerPk, err := randomPk()
+	assert.NoError(t, err)
+	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + stakerPk
+	resp, err := http.Get(url)
+	assert.NoError(t, err)
+
+	// Check that the status code is HTTP 200 OK
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	var response handlers.PublicResponse[[]services.DelegationPublic]
+	err = json.Unmarshal(bodyBytes, &response)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
+
+	assert.NotNil(t, response.Data, "expected response body to have data")
+	assert.Equal(t, 0, len(response.Data), "expected response body to have no data")
+}
+
 func fetchCheckStakerActiveDelegations(
 	t *testing.T, testServer *TestServer, stakerPk string,
 ) bool {
