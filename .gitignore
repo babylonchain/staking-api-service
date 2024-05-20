@@ -221,3 +221,5 @@ output/
 tests/__debug*
 
 rabbitmq_data
+
+./bin/golangci-lint
