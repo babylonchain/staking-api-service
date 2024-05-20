@@ -18,27 +18,27 @@ type DBClient struct {
 	mock.Mock
 }
 
-// CheckStakerDelegationExist provides a mock function with given fields: ctx, stakerPk, statesToCheck
-func (_m *DBClient) CheckStakerDelegationExist(ctx context.Context, stakerPk string, statesToCheck []types.DelegationState) (bool, error) {
-	ret := _m.Called(ctx, stakerPk, statesToCheck)
+// CheckDelegationExistByStakerTaprootAddress provides a mock function with given fields: ctx, address, statesToCheck
+func (_m *DBClient) CheckDelegationExistByStakerTaprootAddress(ctx context.Context, address string, statesToCheck []types.DelegationState) (bool, error) {
+	ret := _m.Called(ctx, address, statesToCheck)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CheckStakerDelegationExist")
+		panic("no return value specified for CheckDelegationExistByStakerTaprootAddress")
 	}
 
 	var r0 bool
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, []types.DelegationState) (bool, error)); ok {
-		return rf(ctx, stakerPk, statesToCheck)
+		return rf(ctx, address, statesToCheck)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, []types.DelegationState) bool); ok {
-		r0 = rf(ctx, stakerPk, statesToCheck)
+		r0 = rf(ctx, address, statesToCheck)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, []types.DelegationState) error); ok {
-		r1 = rf(ctx, stakerPk, statesToCheck)
+		r1 = rf(ctx, address, statesToCheck)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -358,17 +358,17 @@ func (_m *DBClient) Ping(ctx context.Context) error {
 	return r0
 }
 
-// SaveActiveStakingDelegation provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp, isOverflow
-func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHashHex string, stakerPkHex string, fpPkHex string, stakingTxHex string, amount uint64, startHeight uint64, timelock uint64, outputIndex uint64, startTimestamp int64, isOverflow bool) error {
-	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp, isOverflow)
+// SaveActiveStakingDelegation provides a mock function with given fields: ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp, isOverflow, stakerTaprootAddress
+func (_m *DBClient) SaveActiveStakingDelegation(ctx context.Context, stakingTxHashHex string, stakerPkHex string, fpPkHex string, stakingTxHex string, amount uint64, startHeight uint64, timelock uint64, outputIndex uint64, startTimestamp int64, isOverflow bool, stakerTaprootAddress string) error {
+	ret := _m.Called(ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp, isOverflow, stakerTaprootAddress)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveActiveStakingDelegation")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, uint64, uint64, uint64, uint64, int64, bool) error); ok {
-		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp, isOverflow)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, uint64, uint64, uint64, uint64, int64, bool, string) error); ok {
+		r0 = rf(ctx, stakingTxHashHex, stakerPkHex, fpPkHex, stakingTxHex, amount, startHeight, timelock, outputIndex, startTimestamp, isOverflow, stakerTaprootAddress)
 	} else {
 		r0 = ret.Error(0)
 	}

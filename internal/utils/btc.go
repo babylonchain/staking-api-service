@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/babylonchain/babylon/btcstaking"
+	"github.com/babylonchain/babylon/crypto/bip322"
 	bbntypes "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -194,14 +195,14 @@ func GetBtcNetParamesFromString(net string) (*chaincfg.Params, error) {
 	return &netParams, nil
 }
 
-func GetTaprootAddressFromPk(pk string, netParams *chaincfg.Params) (string, error) {
-	schnorrPk, err := GetSchnorrPkFromHex(pk)
+func GetTaprootAddressFromPk(pkHex string, netParams *chaincfg.Params) (string, error) {
+	pk, err := GetSchnorrPkFromHex(pkHex)
 	if err != nil {
 		return "", err
 	}
-	addr, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(schnorrPk), netParams)
+	address, err := bip322.PubKeyToP2TrSpendAddress(pk, netParams)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	return addr.EncodeAddress(), nil
+	return address.EncodeAddress(), nil
 }

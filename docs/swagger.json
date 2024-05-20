@@ -65,15 +65,15 @@
         },
         "/v1/staker/delegation/check": {
             "get": {
-                "description": "Check if a staker has an active delegation",
+                "description": "Check if a staker has an active delegation by the staker BTC address (Taproot only)",
                 "produces": [
                     "application/json"
                 ],
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Staker BTC Public Key",
-                        "name": "staker_btc_pk",
+                        "description": "Staker BTC address in Taproot format",
+                        "name": "btc_address",
                         "in": "query",
                         "required": true
                     }

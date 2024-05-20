@@ -45,6 +45,7 @@ type TestServer struct {
 	Queues  *queue.Queues
 	Conn    *amqp091.Connection
 	channel *amqp091.Channel
+	Config  *config.Config
 }
 
 func (ts *TestServer) Close() {
@@ -122,6 +123,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 		Queues:  queues,
 		Conn:    conn,
 		channel: ch,
+		Config:  cfg,
 	}
 }
 
