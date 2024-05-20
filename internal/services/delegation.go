@@ -70,7 +70,7 @@ func (s *Services) DelegationsByStakerPk(ctx context.Context, stakerPk string, p
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to find delegations by staker pk")
 		return nil, "", types.NewInternalServiceError(err)
 	}
-	var delegations []DelegationPublic
+	var delegations []DelegationPublic = make([]DelegationPublic, 0, len(resultMap.Data))
 	for _, d := range resultMap.Data {
 		delegations = append(delegations, fromDelegationDocument(d))
 	}
