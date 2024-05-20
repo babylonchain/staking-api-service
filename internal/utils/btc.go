@@ -193,3 +193,15 @@ func GetBtcNetParamesFromString(net string) (*chaincfg.Params, error) {
 	}
 	return &netParams, nil
 }
+
+func GetTaprootAddressFromPk(pk string, netParams *chaincfg.Params) (string, error) {
+	schnorrPk, err := GetSchnorrPkFromHex(pk)
+	if err != nil {
+		return "", err
+	}
+	addr, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(schnorrPk), netParams)
+	if err != nil {
+		return "", err
+	}
+	return addr.EncodeAddress(), nil
+}
