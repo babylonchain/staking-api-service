@@ -10,8 +10,9 @@ import (
 type DBClient interface {
 	Ping(ctx context.Context) error
 	SaveActiveStakingDelegation(
-		ctx context.Context, stakingTxHashHex, stakerPkHex, fpPkHex string, stakingTxHex string,
-		amount, startHeight, timelock, outputIndex uint64, startTimestamp int64, isOverflow bool,
+		ctx context.Context, stakingTxHashHex, stakerPkHex, fpPkHex string,
+		stakingTxHex string, amount, startHeight, timelock, outputIndex uint64,
+		startTimestamp int64, isOverflow bool, stakerTaprootAddress string,
 	) error
 	FindDelegationsByStakerPk(
 		ctx context.Context, stakerPk string, paginationToken string,
@@ -60,7 +61,7 @@ type DBClient interface {
 		ctx context.Context, height uint64, confirmedTvl uint64, unconfirmedTvl uint64,
 	) error
 	GetLatestBtcInfo(ctx context.Context) (*model.BtcInfo, error)
-	CheckStakerDelegationExist(
-		ctx context.Context, stakerPk string, statesToCheck []types.DelegationState,
+	CheckDelegationExistByStakerTaprootAddress(
+		ctx context.Context, address string, statesToCheck []types.DelegationState,
 	) (bool, error)
 }

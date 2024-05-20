@@ -128,7 +128,7 @@ func TestUnbondingRequest(t *testing.T) {
 }
 
 func TestUnbondingRequestEligibilityWhenNoMatchingDelegation(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
+	activeStakingEvent := buildActiveStakingEvent(t, 1)
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 

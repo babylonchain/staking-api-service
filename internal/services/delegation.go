@@ -70,7 +70,7 @@ func (s *Services) DelegationsByStakerPk(ctx context.Context, stakerPk string, p
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to find delegations by staker pk")
 		return nil, "", types.NewInternalServiceError(err)
 	}
-	var delegations []DelegationPublic
+	var delegations []DelegationPublic = make([]DelegationPublic, 0, len(resultMap.Data))
 	for _, d := range resultMap.Data {
 		delegations = append(delegations, fromDelegationDocument(d))
 	}
@@ -83,9 +83,16 @@ func (s *Services) SaveActiveStakingDelegation(
 	value, startHeight uint64, stakingTimestamp int64, timeLock, stakingOutputIndex uint64,
 	stakingTxHex string, isOverflow bool,
 ) *types.Error {
-	err := s.DbClient.SaveActiveStakingDelegation(
+	taprootAddress, err := utils.GetTaprootAddressFromPk(stakerPkHex, s.cfg.Server.BTCNetParam)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to get taproot address from staker pk")
+		return types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "failed to get taproot address from staker pk",
+		)
+	}
+	err = s.DbClient.SaveActiveStakingDelegation(
 		ctx, txHashHex, stakerPkHex, finalityProviderPkHex, stakingTxHex,
-		value, startHeight, timeLock, stakingOutputIndex, stakingTimestamp, isOverflow,
+		value, startHeight, timeLock, stakingOutputIndex, stakingTimestamp, isOverflow, taprootAddress,
 	)
 	if err != nil {
 		if ok := db.IsDuplicateKeyError(err); ok {
@@ -127,8 +134,10 @@ func (s *Services) GetDelegation(ctx context.Context, txHashHex string) (*model.
 	return delegation, nil
 }
 
-func (s *Services) CheckStakerHasActiveDelegation(ctx context.Context, stakerPk string) (bool, *types.Error) {
-	hasDelegation, err := s.DbClient.CheckStakerDelegationExist(ctx, stakerPk, []types.DelegationState{types.Active})
+func (s *Services) CheckStakerHasActiveDelegationByAddress(ctx context.Context, btcAddress string) (bool, *types.Error) {
+	hasDelegation, err := s.DbClient.CheckDelegationExistByStakerTaprootAddress(
+		ctx, btcAddress, []types.DelegationState{types.Active},
+	)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to check if staker has active delegation")
 		return false, types.NewInternalServiceError(err)

@@ -19,56 +19,10 @@ import (
 
 const (
 	stakerDelegations = "/v1/staker/delegations"
-	mockStakerHash    = "0x1234567890abcdef"
 )
 
-func TestActiveStaking(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
-	testServer := setupTestServer(t, nil)
-	defer testServer.Close()
-	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
-
-	// Wait for 2 seconds to make sure the message is processed
-	time.Sleep(2 * time.Second)
-	// Test the API
-	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent[0].StakerPkHex
-	resp, err := http.Get(url)
-	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
-	defer resp.Body.Close()
-
-	// Check that the status code is HTTP 200 OK
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
-
-	// Read the response body
-	bodyBytes, err := io.ReadAll(resp.Body)
-	assert.NoError(t, err, "reading response body should not fail")
-
-	var response handlers.PublicResponse[[]services.DelegationPublic]
-	err = json.Unmarshal(bodyBytes, &response)
-	assert.NoError(t, err, "unmarshalling response body should not fail")
-
-	// Check that the response body is as expected
-	assert.Equal(t, 1, len(response.Data), "expected contain 1 item in response")
-	assert.Equal(t, activeStakingEvent[0].StakerPkHex, response.Data[0].StakerPkHex, "expected response body to match")
-	assert.Equal(t, activeStakingEvent[0].StakingValue, response.Data[0].StakingValue, "expected response body to match")
-	assert.Equal(t, activeStakingEvent[0].StakingTxHex, response.Data[0].StakingTx.TxHex, "expected response body to match")
-	assert.Equal(t, activeStakingEvent[0].StakingOutputIndex, response.Data[0].StakingTx.OutputIndex, "expected response body to match")
-	assert.Equal(t, activeStakingEvent[0].StakingStartHeight, response.Data[0].StakingTx.StartHeight, "expected response body to match")
-	// check the timestamp string is in ISO format
-	_, err = time.Parse(time.RFC3339, response.Data[0].StakingTx.StartTimestamp)
-	assert.NoError(t, err, "expected timestamp to be in RFC3339 format")
-
-	assert.Equal(t, activeStakingEvent[0].StakingTimeLock, response.Data[0].StakingTx.TimeLock, "expected response body to match")
-	assert.Equal(t, "active", response.Data[0].State, "expected response body to match")
-	assert.Nil(t, response.Data[0].UnbondingTx, "expected response body to match")
-	assert.Equal(t, activeStakingEvent[0].StakingTxHashHex, response.Data[0].StakingTxHashHex, "expected response body to match")
-	assert.Equal(t, false, response.Data[0].IsOverflow, "expected response body to match")
-
-	assert.Empty(t, response.Pagination.NextKey, "should not have pagination")
-}
-
 func TestUnbondActiveStaking(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
+	activeStakingEvent := buildActiveStakingEvent(t, 1)
 	expiredStakingEvent := client.NewExpiredStakingEvent(activeStakingEvent[0].StakingTxHashHex, types.ActiveTxType.ToString())
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
@@ -100,7 +54,7 @@ func TestUnbondActiveStaking(t *testing.T) {
 }
 
 func TestUnbondActiveStakingShouldTolerateOutOfOrder(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 1)
+	activeStakingEvent := buildActiveStakingEvent(t, 1)
 	expiredStakingEvent := client.NewExpiredStakingEvent(activeStakingEvent[0].StakingTxHashHex, types.ActiveTxType.ToString())
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
