@@ -124,7 +124,7 @@ func TestCheckStakerDelegationAllowOptionRequest(t *testing.T) {
 	req, err := http.NewRequest("OPTIONS", url, nil)
 	assert.NoError(t, err)
 	req.Header.Add("Access-Control-Request-Method", "GET")
-	req.Header.Add("Origin", "https://galxe.com")
+	req.Header.Add("Origin", "https://app.galxe.com")
 	req.Header.Add("Access-Control-Request-Headers", "Content-Type")
 
 	// Send the request
@@ -134,7 +134,7 @@ func TestCheckStakerDelegationAllowOptionRequest(t *testing.T) {
 
 	// Check that the status code is HTTP 204
 	assert.Equal(t, http.StatusNoContent, resp.StatusCode, "expected HTTP 204")
-	assert.Equal(t, "https://galxe.com", resp.Header.Get("Access-Control-Allow-Origin"), "expected Access-Control-Allow-Origin to be https://galxe.com")
+	assert.Equal(t, "https://app.galxe.com", resp.Header.Get("Access-Control-Allow-Origin"), "expected Access-Control-Allow-Origin to be https://app.galxe.com")
 	assert.Equal(t, "GET, OPTIONS, POST", resp.Header.Get("Access-Control-Allow-Methods"), "expected Access-Control-Allow-Methods to be GET and OPTIONS")
 }
 
