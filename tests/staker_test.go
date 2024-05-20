@@ -89,7 +89,7 @@ func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
 }
 
 func TestActiveStakingFetchedByStakerPkWithInvalidPaginationKey(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 11)
+	activeStakingEvent := buildActiveStakingEvent(t, 11)
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)

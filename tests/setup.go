@@ -16,6 +16,7 @@ import (
 	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/go-chi/chi"
 	"github.com/rabbitmq/amqp091-go"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -296,9 +297,10 @@ func inspectDbDocuments[T any](t *testing.T, collectionName string) ([]T, error)
 	return results, nil
 }
 
-func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []*client.ActiveStakingEvent {
+func buildActiveStakingEvent(t *testing.T, numOfEvenet int) []*client.ActiveStakingEvent {
 	var activeStakingEvents []*client.ActiveStakingEvent
-
+	stakerPk, err := randomPk()
+	require.NoError(t, err)
 	// To be replaced with https://github.com/babylonchain/staking-api-service/issues/21
 	rand.New(rand.NewSource(time.Now().Unix()))
 
@@ -306,7 +308,7 @@ func buildActiveStakingEvent(stakerHash string, numOfEvenet int) []*client.Activ
 		activeStakingEvent := &client.ActiveStakingEvent{
 			EventType:             client.ActiveStakingEventType,
 			StakingTxHashHex:      "0x1234567890abcdef" + fmt.Sprint(i),
-			StakerPkHex:           stakerHash,
+			StakerPkHex:           stakerPk,
 			FinalityProviderPkHex: "0xabcdef1234567890" + fmt.Sprint(i),
 			StakingValue:          uint64(rand.Intn(1000)),
 			StakingStartHeight:    uint64(rand.Intn(200)),

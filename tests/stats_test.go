@@ -24,7 +24,7 @@ const (
 )
 
 func TestStatsShouldBeShardedInDb(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 10)
+	activeStakingEvent := buildActiveStakingEvent(t, 10)
 	// build the unbonding event based on the active staking event
 	var unbondingEvents []client.UnbondingStakingEvent
 	for _, event := range activeStakingEvent {
@@ -123,7 +123,7 @@ func TestShouldSkipStatsCalculationForOverflowedStakingEvent(t *testing.T) {
 }
 
 func TestShouldNotPerformStatsCalculationForUnbondingTxWhenDelegationIsOverflowed(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(mockStakerHash, 10)
+	activeStakingEvent := buildActiveStakingEvent(t, 10)
 	// Let's pick a random staking event and set the overflow flag to true
 	event := activeStakingEvent[6]
 	event.IsOverflow = true
@@ -266,7 +266,7 @@ func TestStatsEndpoints(t *testing.T) {
 	assert.Equal(t, int64(1), stakerStats[0].TotalDelegations)
 
 	// Send two new active events, it will increment the stats
-	activeEvents := buildActiveStakingEvent(mockStakerHash, 2)
+	activeEvents := buildActiveStakingEvent(t, 2)
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeEvents)
 	time.Sleep(2 * time.Second)
 
