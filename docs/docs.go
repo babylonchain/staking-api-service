@@ -84,7 +84,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Staker BTC address in Taproot format",
-                        "name": "btc_address",
+                        "name": "address",
                         "in": "query",
                         "required": true
                     }
