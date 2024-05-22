@@ -25,13 +25,16 @@ func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
 	attachRandomSeedsToFuzzer(f, 3)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		opts := &TestActiveEventGeneratorOpts{
+		activeStakingEventsByStaker1 := generateRandomActiveStakingEvents(t, r, &TestActiveEventGeneratorOpts{
 			NumOfEvents:       11,
 			FinalityProviders: generatePks(t, 11),
 			Stakers:           generatePks(t, 1),
-		}
-		activeStakingEventsByStaker1 := generateRandomActiveStakingEvents(t, r, opts)
-		activeStakingEventsByStaker2 := generateRandomActiveStakingEvents(t, r, opts)
+		})
+		activeStakingEventsByStaker2 := generateRandomActiveStakingEvents(t, r, &TestActiveEventGeneratorOpts{
+			NumOfEvents:       11,
+			FinalityProviders: generatePks(t, 11),
+			Stakers:           generatePks(t, 1),
+		})
 		testServer := setupTestServer(t, nil)
 		defer testServer.Close()
 		sendTestMessage(
@@ -140,7 +143,7 @@ func TestCheckStakerDelegationAllowOptionRequest(t *testing.T) {
 }
 
 func FuzzCheckStakerActiveDelegations(f *testing.F) {
-	attachRandomSeedsToFuzzer(f, 1)
+	attachRandomSeedsToFuzzer(f, 3)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		opts := &TestActiveEventGeneratorOpts{
