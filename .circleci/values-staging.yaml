@@ -50,7 +50,7 @@ service:
 ingress:
   enabled: true
   groupName: "testnet3-internal"
-  tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/46965f73-18c3-4b1e-9eb2-b09d87e53af1
+  tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/a18510a6-948f-4595-87d1-e43c8b2e0c8f
   scheme: "internal"
   hosts:
     - host: API_STAGING_FQDN
