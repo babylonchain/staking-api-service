@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -58,11 +59,12 @@ func (db *Database) SaveActiveStakingDelegation(
 // CheckDelegationExistByStakerTaprootAddress checks if a staker has any
 // delegation in the specified states by the staker's BTC address in taproot format.
 func (db *Database) CheckDelegationExistByStakerTaprootAddress(
-	ctx context.Context, address string, statesToCheck []types.DelegationState,
+	ctx context.Context, address string, extraFilter *DelegationFilter,
 ) (bool, error) {
 	client := db.Client.Database(db.DbName).Collection(model.DelegationCollection)
-	filter := bson.M{"staker_btc_address.taproot_address": address, "state": bson.M{"$in": statesToCheck}}
-
+	filter := buildAdditionalDelegationFilter(
+		bson.M{"staker_btc_address.taproot_address": address}, extraFilter,
+	)
 	var delegation model.DelegationDocument
 	err := client.FindOne(ctx, filter).Decode(&delegation)
 	if err != nil {
@@ -154,4 +156,17 @@ func (db *Database) transitionState(
 		return err
 	}
 	return nil
+}
+
+func buildAdditionalDelegationFilter(
+	baseFilter primitive.M,
+	filters *DelegationFilter,
+) primitive.M {
+	if filters.States != nil {
+		baseFilter["state"] = bson.M{"$in": filters.States}
+	}
+	if filters.AfterTimestamp != 0 {
+		baseFilter["staking_tx.start_timestamp"] = bson.M{"$gte": filters.AfterTimestamp}
+	}
+	return baseFilter
 }

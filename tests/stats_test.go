@@ -355,7 +355,7 @@ func FuzzTestTopStakersWithPaginationResponse(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		opts := &TestActiveEventGeneratorOpts{
 			NumOfEvents:        randomPositiveInt(r, 1),
-			NumberOfStakers:    1,
+			Stakers:            generatePks(t, 1),
 			EnforceNotOverflow: true,
 		}
 		numOfStakers := randomPositiveInt(r, 10)

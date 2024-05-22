@@ -62,6 +62,11 @@ type DBClient interface {
 	) error
 	GetLatestBtcInfo(ctx context.Context) (*model.BtcInfo, error)
 	CheckDelegationExistByStakerTaprootAddress(
-		ctx context.Context, address string, statesToCheck []types.DelegationState,
+		ctx context.Context, address string, extraFilter *DelegationFilter,
 	) (bool, error)
+}
+
+type DelegationFilter struct {
+	AfterTimestamp int64
+	States         []types.DelegationState
 }

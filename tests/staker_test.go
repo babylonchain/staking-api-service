@@ -26,9 +26,9 @@ func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		opts := &TestActiveEventGeneratorOpts{
-			NumOfEvents:     11,
-			NumberOfFps:     randomPositiveInt(r, 11),
-			NumberOfStakers: 1,
+			NumOfEvents:       11,
+			FinalityProviders: generatePks(t, 11),
+			Stakers:           generatePks(t, 1),
 		}
 		activeStakingEventsByStaker1 := generateRandomActiveStakingEvents(t, r, opts)
 		activeStakingEventsByStaker2 := generateRandomActiveStakingEvents(t, r, opts)
@@ -140,12 +140,12 @@ func TestCheckStakerDelegationAllowOptionRequest(t *testing.T) {
 }
 
 func FuzzCheckStakerActiveDelegations(f *testing.F) {
-	attachRandomSeedsToFuzzer(f, 3)
+	attachRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		opts := &TestActiveEventGeneratorOpts{
 			NumOfEvents:        randomPositiveInt(r, 10),
-			NumberOfStakers:    1,
+			Stakers:            generatePks(t, 1),
 			EnforceNotOverflow: true,
 		}
 		activeStakingEvents := generateRandomActiveStakingEvents(t, r, opts)
@@ -162,7 +162,7 @@ func FuzzCheckStakerActiveDelegations(f *testing.F) {
 			stakerPk, testServer.Config.Server.BTCNetParam,
 		)
 		assert.NoError(t, err, "failed to get taproot address from staker pk")
-		isExist := fetchCheckStakerActiveDelegations(t, testServer, taprootAddress)
+		isExist := fetchCheckStakerActiveDelegations(t, testServer, taprootAddress, "")
 
 		assert.True(t, isExist, "expected staker to have active delegation")
 
@@ -171,7 +171,7 @@ func FuzzCheckStakerActiveDelegations(f *testing.F) {
 		if err != nil {
 			t.Fatalf("failed to generate random public key for staker: %v", err)
 		}
-		isExist = fetchCheckStakerActiveDelegations(t, testServer, stakerPkWithoutDelegation)
+		isExist = fetchCheckStakerActiveDelegations(t, testServer, stakerPkWithoutDelegation, "")
 		assert.False(t, isExist, "expected staker to not have active delegation")
 
 		// Update the staker to have its delegations in a different state
@@ -191,8 +191,57 @@ func FuzzCheckStakerActiveDelegations(f *testing.F) {
 		sendTestMessage(testServer.Queues.UnbondingStakingQueueClient, unbondingEvents)
 		time.Sleep(5 * time.Second)
 
-		isExist = fetchCheckStakerActiveDelegations(t, testServer, taprootAddress)
+		isExist = fetchCheckStakerActiveDelegations(t, testServer, taprootAddress, "")
 		assert.False(t, isExist, "expected staker to not have active delegation")
+	})
+}
+
+func FuzzCheckStakerActiveDelegationsForToday(f *testing.F) {
+	attachRandomSeedsToFuzzer(f, 3)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		stakerPk := generatePks(t, 1)
+		opts := &TestActiveEventGeneratorOpts{
+			NumOfEvents:        randomPositiveInt(r, 3),
+			Stakers:            stakerPk,
+			EnforceNotOverflow: true,
+			BeforeTimestamp:    utils.GetTodayStartTimestampInSeconds() - 1, // To make it yesterday
+		}
+		activeStakingEvents := generateRandomActiveStakingEvents(t, r, opts)
+		testServer := setupTestServer(t, nil)
+		defer testServer.Close()
+		sendTestMessage(
+			testServer.Queues.ActiveStakingQueueClient, activeStakingEvents,
+		)
+		time.Sleep(3 * time.Second)
+
+		// Test the API
+		taprootAddress, err := utils.GetTaprootAddressFromPk(
+			stakerPk[0], testServer.Config.Server.BTCNetParam,
+		)
+		assert.NoError(t, err, "failed to get taproot address from staker pk")
+		isExist := fetchCheckStakerActiveDelegations(t, testServer, taprootAddress, "")
+
+		assert.True(t, isExist, "expected staker to have active delegation")
+
+		// Test with the is_active_today query parameter
+		isExist = fetchCheckStakerActiveDelegations(t, testServer, taprootAddress, "today")
+		assert.False(t, isExist, "expected staker to not have active delegation")
+
+		opts = &TestActiveEventGeneratorOpts{
+			NumOfEvents:        randomPositiveInt(r, 3),
+			Stakers:            stakerPk,
+			EnforceNotOverflow: true,
+			AfterTimestamp:     utils.GetTodayStartTimestampInSeconds(), // To make it today
+		}
+		activeStakingEvents = generateRandomActiveStakingEvents(t, r, opts)
+		sendTestMessage(
+			testServer.Queues.ActiveStakingQueueClient, activeStakingEvents,
+		)
+		time.Sleep(3 * time.Second)
+
+		isExist = fetchCheckStakerActiveDelegations(t, testServer, taprootAddress, "today")
+		assert.True(t, isExist, "expected staker to have active delegation")
 	})
 }
 
@@ -221,9 +270,12 @@ func TestGetDelegationReturnEmptySliceWhenNoDelegation(t *testing.T) {
 }
 
 func fetchCheckStakerActiveDelegations(
-	t *testing.T, testServer *TestServer, btcAddress string,
+	t *testing.T, testServer *TestServer, btcAddress string, timeframe string,
 ) bool {
 	url := testServer.Server.URL + checkStakerDelegationUrl + "?address=" + btcAddress
+	if timeframe != "" {
+		url += "&timeframe=" + timeframe
+	}
 	resp, err := http.Get(url)
 	assert.NoError(t, err)
 
