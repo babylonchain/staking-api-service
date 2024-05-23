@@ -261,7 +261,7 @@ paths:
       description: |-
         Check if a staker has an active delegation by the staker BTC address (Taproot only)
         Optionally, you can provide a timeframe to check if the delegation is active within the provided timeframe
-        The avaiable timefram is "today" which checks after UTC 12AM of the current day
+        The available timeframe is "today" which checks after UTC 12AM of the current day
       parameters:
       - description: Staker BTC address in Taproot format
         in: query

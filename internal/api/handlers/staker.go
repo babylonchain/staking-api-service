@@ -34,7 +34,7 @@ func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.E
 // CheckStakerDelegationExist @Summary Check if a staker has an active delegation
 // @Description Check if a staker has an active delegation by the staker BTC address (Taproot only)
 // @Description Optionally, you can provide a timeframe to check if the delegation is active within the provided timeframe
-// @Description The avaiable timefram is "today" which checks after UTC 12AM of the current day
+// @Description The available timeframe is "today" which checks after UTC 12AM of the current day
 // @Produce json
 // @Param address query string true "Staker BTC address in Taproot format"
 // @Param timeframe query string false "Check if the delegation is active within the provided timeframe" Enums(today)
