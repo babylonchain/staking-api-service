@@ -19,6 +19,15 @@ import (
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
+type TestActiveEventGeneratorOpts struct {
+	NumOfEvents        int
+	FinalityProviders  []string
+	Stakers            []string
+	EnforceNotOverflow bool
+	BeforeTimestamp    int64
+	AfterTimestamp     int64
+}
+
 func generateRandomFinalityProviderDetail(t *testing.T, r *rand.Rand, numOfFps uint64) []types.FinalityProviderDetails {
 	var finalityProviders []types.FinalityProviderDetails
 
@@ -132,11 +141,33 @@ func generateRandomTx(r *rand.Rand) (*wire.MsgTx, string, error) {
 	return tx, txHex, nil
 }
 
-type TestActiveEventGeneratorOpts struct {
-	NumOfEvents        int
-	NumberOfFps        int
-	NumberOfStakers    int
-	EnforceNotOverflow bool
+// generateRandomTimestamp generates a random timestamp before the specified timestamp.
+// If beforeTimestamp is 0, then the current time is used.
+func generateRandomTimestamp(afterTimestamp, beforeTimestamp int64) int64 {
+	timeNow := time.Now().Unix()
+	if beforeTimestamp == 0 && afterTimestamp == 0 {
+		return timeNow
+	}
+	if beforeTimestamp == 0 {
+		return afterTimestamp + rand.Int63n(timeNow-afterTimestamp)
+	} else if afterTimestamp == 0 {
+		// Generate a reasonable timestamp between 1 second to 6 months in the past
+		sixMonthsInSeconds := int64(6 * 30 * 24 * 60 * 60)
+		return beforeTimestamp - rand.Int63n(sixMonthsInSeconds)
+	}
+	return afterTimestamp + rand.Int63n(beforeTimestamp-afterTimestamp)
+}
+
+func generatePks(t *testing.T, numOfKeys int) []string {
+	var pks []string
+	for i := 0; i < numOfKeys; i++ {
+		k, err := randomPk()
+		if err != nil {
+			t.Fatalf("failed to generate random public keys: %v", err)
+		}
+		pks = append(pks, k)
+	}
+	return pks
 }
 
 // generateRandomActiveStakingEvents generates a random number of active staking events
@@ -147,40 +178,25 @@ func generateRandomActiveStakingEvents(
 ) []*client.ActiveStakingEvent {
 	var activeStakingEvents []*client.ActiveStakingEvent
 	genOpts := &TestActiveEventGeneratorOpts{
-		NumOfEvents:     11,
-		NumberOfFps:     11,
-		NumberOfStakers: 11,
+		NumOfEvents:       11,
+		FinalityProviders: generatePks(t, 11),
+		Stakers:           generatePks(t, 11),
 	}
 
 	if opts != nil {
 		if opts.NumOfEvents > 0 {
 			genOpts.NumOfEvents = opts.NumOfEvents
 		}
-		if opts.NumberOfFps > 0 {
-			genOpts.NumberOfFps = opts.NumberOfFps
+		if len(opts.FinalityProviders) > 0 {
+			genOpts.FinalityProviders = opts.FinalityProviders
 		}
-		if opts.NumberOfStakers > 0 {
-			genOpts.NumberOfStakers = opts.NumberOfStakers
+		if len(opts.Stakers) > 0 {
+			genOpts.Stakers = opts.Stakers
 		}
 	}
 
-	var fpPks []string
-	for i := 0; i < genOpts.NumberOfFps; i++ {
-		fpPk, err := randomPk()
-		if err != nil {
-			t.Fatalf("failed to generate random public key for FP: %v", err)
-		}
-		fpPks = append(fpPks, fpPk)
-	}
-
-	var stakerPks []string
-	for i := 0; i < genOpts.NumberOfStakers; i++ {
-		stakerPk, err := randomPk()
-		if err != nil {
-			t.Fatalf("failed to generate random public key for staker: %v", err)
-		}
-		stakerPks = append(stakerPks, stakerPk)
-	}
+	fpPks := genOpts.FinalityProviders
+	stakerPks := genOpts.Stakers
 
 	for i := 0; i < genOpts.NumOfEvents; i++ {
 		randomFpPk := fpPks[rand.Intn(len(fpPks))]
@@ -202,11 +218,13 @@ func generateRandomActiveStakingEvents(
 			FinalityProviderPkHex: randomFpPk,
 			StakingValue:          uint64(randomAmount(r)),
 			StakingStartHeight:    randomBtcHeight(r, 0),
-			StakingStartTimestamp: time.Now().Unix(),
-			StakingTimeLock:       uint64(rand.Intn(100)),
-			StakingOutputIndex:    uint64(rand.Intn(100)),
-			StakingTxHex:          hex,
-			IsOverflow:            isOverflow,
+			StakingStartTimestamp: generateRandomTimestamp(
+				opts.AfterTimestamp, opts.BeforeTimestamp,
+			),
+			StakingTimeLock:    uint64(rand.Intn(100)),
+			StakingOutputIndex: uint64(rand.Intn(100)),
+			StakingTxHex:       hex,
+			IsOverflow:         isOverflow,
 		}
 		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
 	}

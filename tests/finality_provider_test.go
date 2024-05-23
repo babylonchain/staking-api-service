@@ -184,10 +184,11 @@ func FuzzTestGetFinalityProviderWithPaginationResponse(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		opts := &TestActiveEventGeneratorOpts{
-			NumOfEvents:     20,
-			NumberOfFps:     10,
-			NumberOfStakers: randomPositiveInt(r, 10),
+			NumOfEvents:       20,
+			FinalityProviders: generatePks(t, 20),
+			Stakers:           generatePks(t, 20),
 		}
+
 		activeStakingEvents := generateRandomActiveStakingEvents(t, r, opts)
 		cfg, err := config.New("./config/config-test.yml")
 		if err != nil {

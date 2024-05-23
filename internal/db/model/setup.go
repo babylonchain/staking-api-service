@@ -37,7 +37,7 @@ var collections = map[string][]index{
 	StakerStatsCollection:           {{Indexes: map[string]int{"active_tvl": -1}, Unique: false}},
 	DelegationCollection: {
 		{Indexes: map[string]int{"staker_pk_hex": 1, "staking_tx.start_height": -1}, Unique: false},
-		{Indexes: map[string]int{"staker_btc_address.taproot_address": 1}, Unique: false},
+		{Indexes: map[string]int{"staker_btc_address.taproot_address": 1, "staking_tx.start_timestamp": -1}, Unique: false},
 	},
 	TimeLockCollection:         {{Indexes: map[string]int{"expire_height": 1}, Unique: false}},
 	UnbondingCollection:        {{Indexes: map[string]int{"unbonding_tx_hash_hex": 1}, Unique: true}},

@@ -134,9 +134,15 @@ func (s *Services) GetDelegation(ctx context.Context, txHashHex string) (*model.
 	return delegation, nil
 }
 
-func (s *Services) CheckStakerHasActiveDelegationByAddress(ctx context.Context, btcAddress string) (bool, *types.Error) {
+func (s *Services) CheckStakerHasActiveDelegationByAddress(
+	ctx context.Context, btcAddress string, afterTimestamp int64,
+) (bool, *types.Error) {
+	filter := &db.DelegationFilter{
+		States:         []types.DelegationState{types.Active},
+		AfterTimestamp: afterTimestamp,
+	}
 	hasDelegation, err := s.DbClient.CheckDelegationExistByStakerTaprootAddress(
-		ctx, btcAddress, []types.DelegationState{types.Active},
+		ctx, btcAddress, filter,
 	)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to check if staker has active delegation")

@@ -18,9 +18,9 @@ type DBClient struct {
 	mock.Mock
 }
 
-// CheckDelegationExistByStakerTaprootAddress provides a mock function with given fields: ctx, address, statesToCheck
-func (_m *DBClient) CheckDelegationExistByStakerTaprootAddress(ctx context.Context, address string, statesToCheck []types.DelegationState) (bool, error) {
-	ret := _m.Called(ctx, address, statesToCheck)
+// CheckDelegationExistByStakerTaprootAddress provides a mock function with given fields: ctx, address, extraFilter
+func (_m *DBClient) CheckDelegationExistByStakerTaprootAddress(ctx context.Context, address string, extraFilter *db.DelegationFilter) (bool, error) {
+	ret := _m.Called(ctx, address, extraFilter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CheckDelegationExistByStakerTaprootAddress")
@@ -28,17 +28,17 @@ func (_m *DBClient) CheckDelegationExistByStakerTaprootAddress(ctx context.Conte
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, []types.DelegationState) (bool, error)); ok {
-		return rf(ctx, address, statesToCheck)
+	if rf, ok := ret.Get(0).(func(context.Context, string, *db.DelegationFilter) (bool, error)); ok {
+		return rf(ctx, address, extraFilter)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, []types.DelegationState) bool); ok {
-		r0 = rf(ctx, address, statesToCheck)
+	if rf, ok := ret.Get(0).(func(context.Context, string, *db.DelegationFilter) bool); ok {
+		r0 = rf(ctx, address, extraFilter)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, []types.DelegationState) error); ok {
-		r1 = rf(ctx, address, statesToCheck)
+	if rf, ok := ret.Get(1).(func(context.Context, string, *db.DelegationFilter) error); ok {
+		r1 = rf(ctx, address, extraFilter)
 	} else {
 		r1 = ret.Error(1)
 	}

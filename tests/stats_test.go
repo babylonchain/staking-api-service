@@ -353,15 +353,15 @@ func FuzzTestTopStakersWithPaginationResponse(f *testing.F) {
 	attachRandomSeedsToFuzzer(f, 3)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		opts := &TestActiveEventGeneratorOpts{
-			NumOfEvents:        randomPositiveInt(r, 1),
-			NumberOfStakers:    1,
-			EnforceNotOverflow: true,
-		}
 		numOfStakers := randomPositiveInt(r, 10)
 		paginationSize := randomPositiveInt(r, 10)
 		var events []*client.ActiveStakingEvent
 		for i := 0; i < numOfStakers; i++ {
+			opts := &TestActiveEventGeneratorOpts{
+				NumOfEvents:        randomPositiveInt(r, 1),
+				Stakers:            generatePks(t, 1),
+				EnforceNotOverflow: true,
+			}
 			activeStakingEventsByStaker := generateRandomActiveStakingEvents(t, r, opts)
 			events = append(events, activeStakingEventsByStaker...)
 		}
