@@ -9,7 +9,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
-func isValidPk(pubKeyStr string) bool {
+func IsValidPk(pubKeyStr string) bool {
 	// check if the public key string is decodable to bytes
 	pubKeyBytes, err := hex.DecodeString(pubKeyStr)
 	if err != nil {
@@ -21,34 +21,33 @@ func isValidPk(pubKeyStr string) bool {
 	return err == nil
 }
 
-func isValidAddress(btcAddress string, params *chaincfg.Params) bool {
-	// check if address has a valid format
+// IsValidBtcAddress checks if the provided address is a valid BTC address
+// We only support Taproot addresses and native SegWit addresses
+func IsValidBtcAddress(btcAddress string, params *chaincfg.Params) bool {
+	// Check if address has a valid format
 	decodedAddr, err := btcutil.DecodeAddress(btcAddress, params)
 	if err != nil {
 		return false
 	}
 
-	// Cast the address to AddressSegWit
-	segwitAddr, ok := decodedAddr.(*btcutil.AddressSegWit)
-	if !ok {
-		return false
-	}
-
 	// Check if address is for the network we are using
-	if !segwitAddr.IsForNet(params) {
+	if !decodedAddr.IsForNet(params) {
 		return false
 	}
-
-    // Check if it's taproot address
-    witnessProg := segwitAddr.WitnessProgram()
-    if len(witnessProg) != 32 || segwitAddr.WitnessVersion() != 1 {
-        return false
-    }
-
-    return true
+	// Check if it's either a native SegWit (P2WPKH) or Taproot address
+	switch decodedAddr.(type) {
+	case *btcutil.AddressWitnessPubKeyHash:
+		// Native SegWit (P2WPKH)
+		return true
+	case *btcutil.AddressTaproot:
+		// Taproot address
+		return true
+	default:
+		return false
+	}
 }
 
-func isValidTxHash(txHash string) bool {
+func IsValidTxHash(txHash string) bool {
 	// Check if the hash is valid
 	_, err := chainhash.NewHashFromStr(txHash)
 	return err == nil

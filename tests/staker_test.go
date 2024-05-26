@@ -174,7 +174,13 @@ func FuzzCheckStakerActiveDelegations(f *testing.F) {
 		if err != nil {
 			t.Fatalf("failed to generate random public key for staker: %v", err)
 		}
-		isExist = fetchCheckStakerActiveDelegations(t, testServer, stakerPkWithoutDelegation, "")
+		taprootAddressWithNoDelegation, err := utils.GetTaprootAddressFromPk(
+			stakerPkWithoutDelegation, testServer.Config.Server.BTCNetParam,
+		)
+		assert.NoError(t, err, "failed to get taproot address from staker pk")
+		isExist = fetchCheckStakerActiveDelegations(
+			t, testServer, taprootAddressWithNoDelegation, "",
+		)
 		assert.False(t, isExist, "expected staker to not have active delegation")
 
 		// Update the staker to have its delegations in a different state

@@ -48,6 +48,13 @@ func (h *Handler) CheckStakerDelegationExist(request *http.Request) (*Result, *t
 			http.StatusBadRequest, types.BadRequest, "address is required",
 		)
 	}
+	isValid := utils.IsValidBtcAddress(address, h.config.Server.BTCNetParam)
+	if !isValid {
+		return nil, types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "invalid address",
+		)
+	}
+
 	afterTimestamp, err := parseTimeframeToAfterTimestamp(request.URL.Query().Get("timeframe"))
 	if err != nil {
 		return nil, err
