@@ -32,6 +32,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/delegation/": {
+            "get": {
+                "description": "Retrieves a delegation by a given transaction hash",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Transaction Hash",
+                        "name": "tx_hash",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Delegation",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PublicResponse-services_DelegationPublic"
+                        }
+                    },
+                    "400": {
+                        "description": "Error: Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/finality-providers": {
             "get": {
                 "description": "Fetches details of all active finality providers sorted by their active total value locked (ActiveTvl) in descending order.",
@@ -312,6 +343,17 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/services.StakerStatsPublic"
                     }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/handlers.paginationResponse"
+                }
+            }
+        },
+        "handlers.PublicResponse-services_DelegationPublic": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/services.DelegationPublic"
                 },
                 "pagination": {
                     "$ref": "#/definitions/handlers.paginationResponse"

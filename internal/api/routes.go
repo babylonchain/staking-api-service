@@ -1,10 +1,9 @@
 package api
 
 import (
+	_ "github.com/babylonchain/staking-api-service/docs"
 	"github.com/go-chi/chi"
 	httpSwagger "github.com/swaggo/http-swagger"
-
-	_ "github.com/babylonchain/staking-api-service/docs"
 )
 
 func (a *Server) SetupRoutes(r *chi.Mux) {
