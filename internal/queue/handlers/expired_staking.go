@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/babylonchain/staking-api-service/internal/types"
-	"github.com/babylonchain/staking-api-service/internal/utils"
 	queueClient "github.com/babylonchain/staking-queue-client/client"
 	"github.com/rs/zerolog/log"
+
+	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/babylonchain/staking-api-service/internal/utils"
 )
 
 func (h *QueueHandler) ExpiredStakingHandler(ctx context.Context, messageBody string) *types.Error {
