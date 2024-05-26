@@ -1,9 +1,10 @@
 package api
 
 import (
-	_ "github.com/babylonchain/staking-api-service/docs"
 	"github.com/go-chi/chi"
 	httpSwagger "github.com/swaggo/http-swagger"
+
+	_ "github.com/babylonchain/staking-api-service/docs"
 )
 
 func (a *Server) SetupRoutes(r *chi.Mux) {
@@ -18,6 +19,7 @@ func (a *Server) SetupRoutes(r *chi.Mux) {
 	r.Get("/v1/stats", registerHandler(handlers.GetOverallStats))
 	r.Get("/v1/stats/staker", registerHandler(handlers.GetTopStakerStats))
 	r.Get("/v1/staker/delegation/check", registerHandler(handlers.CheckStakerDelegationExist))
+	r.Get("/v1/delegation", registerHandler(handlers.GetDelegationByTxHash))
 
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 }
