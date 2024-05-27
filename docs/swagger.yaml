@@ -34,6 +34,13 @@ definitions:
       pagination:
         $ref: '#/definitions/handlers.paginationResponse'
     type: object
+  handlers.PublicResponse-services_DelegationPublic:
+    properties:
+      data:
+        $ref: '#/definitions/services.DelegationPublic'
+      pagination:
+        $ref: '#/definitions/handlers.paginationResponse'
+    type: object
   handlers.PublicResponse-services_GlobalParamsPublic:
     properties:
       data:
@@ -226,6 +233,26 @@ paths:
           schema:
             type: string
       summary: Health check endpoint
+  /v1/delegation/:
+    get:
+      description: Retrieves a delegation by a given transaction hash
+      parameters:
+      - description: Transaction Hash
+        in: query
+        name: tx_hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Delegation
+          schema:
+            $ref: '#/definitions/handlers.PublicResponse-services_DelegationPublic'
+        "400":
+          description: 'Error: Bad Request'
+          schema:
+            $ref: '#/definitions/github_com_babylonchain_staking-api-service_internal_types.Error'
   /v1/finality-providers:
     get:
       description: Fetches details of all active finality providers sorted by their
