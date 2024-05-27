@@ -44,17 +44,9 @@ func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.E
 // @Failure 400 {object} types.Error "Error: Bad Request"
 // @Router /v1/staker/delegation/check [get]
 func (h *Handler) CheckStakerDelegationExist(request *http.Request) (*Result, *types.Error) {
-	address := request.URL.Query().Get("address")
-	if address == "" {
-		return nil, types.NewErrorWithMsg(
-			http.StatusBadRequest, types.BadRequest, "address is required",
-		)
-	}
-	isValid := utils.IsValidBtcAddress(address, h.config.Server.BTCNetParam)
-	if !isValid {
-		return nil, types.NewErrorWithMsg(
-			http.StatusBadRequest, types.BadRequest, "invalid address",
-		)
+	address, err := parseBtcAddressQuery(request, "address", h.config.Server.BTCNetParam)
+	if err != nil {
+		return nil, err
 	}
 
 	afterTimestamp, err := parseTimeframeToAfterTimestamp(request.URL.Query().Get("timeframe"))

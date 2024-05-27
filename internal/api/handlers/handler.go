@@ -8,6 +8,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/babylonchain/staking-api-service/internal/utils"
+	"github.com/btcsuite/btcd/chaincfg"
 )
 
 type Handler struct {
@@ -91,4 +92,22 @@ func parseTxHashQuery(r *http.Request, queryName string) (string, *types.Error) 
 		)
 	}
 	return txHashHex, nil
+}
+
+func parseBtcAddressQuery(
+	r *http.Request, queryName string, netParam *chaincfg.Params,
+) (string, *types.Error) {
+	address := r.URL.Query().Get(queryName)
+	if address == "" {
+		return "", types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, queryName+" is required",
+		)
+	}
+	err := utils.IsValidBtcAddress(address, netParam)
+	if err != nil {
+		return "", types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, err.Error(),
+		)
+	}
+	return address, nil
 }

@@ -3,9 +3,11 @@ package utils
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"regexp"
 
 	bbntypes "github.com/babylonchain/babylon/types"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -13,27 +15,22 @@ import (
 
 // IsValidBtcAddress checks if the provided address is a valid BTC address
 // We only support Taproot addresses and native SegWit addresses
-func IsValidBtcAddress(btcAddress string, params *chaincfg.Params) bool {
+func IsValidBtcAddress(btcAddress string, params *chaincfg.Params) error {
 	// Check if address has a valid format
 	decodedAddr, err := btcutil.DecodeAddress(btcAddress, params)
 	if err != nil {
-		return false
-	}
-
-	// Check if address is for the network we are using
-	if !decodedAddr.IsForNet(params) {
-		return false
+		return fmt.Errorf("can not decode btc address: %w", err)
 	}
 	// Check if it's either a native SegWit (P2WPKH) or Taproot address
 	switch decodedAddr.(type) {
 	case *btcutil.AddressWitnessPubKeyHash:
 		// Native SegWit (P2WPKH)
-		return true
+		return nil
 	case *btcutil.AddressTaproot:
 		// Taproot address
-		return true
+		return nil
 	default:
-		return false
+		return fmt.Errorf("unsupported btc address type")
 	}
 }
 
@@ -75,5 +72,9 @@ func IsValidTxHex(txHex string) bool {
 // Note: it does not check the actual content of the signature.
 func IsValidSignatureFormat(sigHex string) bool {
 	sigBytes, err := hex.DecodeString(sigHex)
-	return err == nil && len(sigBytes) > 0
+	if err != nil {
+		return false
+	}
+	_, err = schnorr.ParseSignature(sigBytes)
+	return err == nil
 }

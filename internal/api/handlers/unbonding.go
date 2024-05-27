@@ -22,17 +22,25 @@ func parseUnbondDelegationRequestPayload(request *http.Request) (*UnbondDelegati
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid request payload")
 	}
 	// Validate the payload fields
-	var txHashFields = []string{payload.StakingTxHashHex, payload.UnbondingTxHashHex}
-	for _, txHash := range txHashFields {
-		if !utils.IsValidTxHash(txHash) {
-			return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid transaction hash")
-		}
+	if !utils.IsValidTxHash(payload.StakingTxHashHex) {
+		return nil, types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "invalid staking transaction hash",
+		)
+	}
+	if !utils.IsValidTxHash(payload.UnbondingTxHashHex) {
+		return nil, types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "invalid unbonding transaction hash",
+		)
 	}
 	if !utils.IsValidTxHex(payload.UnbondingTxHex) {
-		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid unbonding transaction hex")
+		return nil, types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "invalid unbonding transaction hex",
+		)
 	}
 	if !utils.IsValidSignatureFormat(payload.StakerSignedSignatureHex) {
-		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid staker signed signature hex")
+		return nil, types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "invalid staker signed signature hex",
+		)
 	}
 
 	return payload, nil
