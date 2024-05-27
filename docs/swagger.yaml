@@ -237,7 +237,7 @@ paths:
     get:
       description: Retrieves a delegation by a given transaction hash
       parameters:
-      - description: Transaction Hash
+      - description: Staking transaction hash in hex format
         in: query
         name: staking_tx_hash_hex
         required: true

@@ -41,7 +41,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Transaction Hash",
+                        "description": "Staking transaction hash in hex format",
                         "name": "staking_tx_hash_hex",
                         "in": "query",
                         "required": true
