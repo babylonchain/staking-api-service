@@ -239,7 +239,7 @@ paths:
       parameters:
       - description: Transaction Hash
         in: query
-        name: tx_hash
+        name: staking_tx_hash_hex
         required: true
         type: string
       produces:

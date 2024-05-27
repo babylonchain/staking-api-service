@@ -42,7 +42,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Transaction Hash",
-                        "name": "tx_hash",
+                        "name": "staking_tx_hash_hex",
                         "in": "query",
                         "required": true
                     }
