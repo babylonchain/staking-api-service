@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
@@ -128,7 +129,12 @@ func TestUnbondingRequest(t *testing.T) {
 }
 
 func TestUnbondingRequestEligibilityWhenNoMatchingDelegation(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(t, 1)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	activeStakingEvent := generateRandomActiveStakingEvents(t, r, &TestActiveEventGeneratorOpts{
+		NumOfEvents:       1,
+		FinalityProviders: generatePks(t, 1),
+		Stakers:           generatePks(t, 1),
+	})
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 

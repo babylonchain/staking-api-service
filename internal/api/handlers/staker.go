@@ -16,12 +16,14 @@ import (
 // @Failure 400 {object} types.Error "Error: Bad Request"
 // @Router /v1/staker/delegations [get]
 func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.Error) {
-	stakerBtcPk := request.URL.Query().Get("staker_btc_pk")
-	if stakerBtcPk == "" {
-		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "staker_btc_pk is required")
+	stakerBtcPk, err := parsePublicKeyQuery(request, "staker_btc_pk")
+	if err != nil {
+		return nil, err
 	}
-
-	paginationKey := request.URL.Query().Get("pagination_key")
+	paginationKey, err := parsePaginationQuery(request)
+	if err != nil {
+		return nil, err
+	}
 
 	delegations, newPaginationKey, err := h.services.DelegationsByStakerPk(request.Context(), stakerBtcPk, paginationKey)
 	if err != nil {
