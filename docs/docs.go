@@ -32,7 +32,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/delegation/": {
+        "/v1/delegation": {
             "get": {
                 "description": "Retrieves a delegation by a given transaction hash",
                 "produces": [
