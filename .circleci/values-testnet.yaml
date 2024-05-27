@@ -61,6 +61,7 @@ ingress:
   groupName: "testnet3-public"
   tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/46965f73-18c3-4b1e-9eb2-b09d87e53af1
   scheme: "internet-facing"
+  healthCheckPath: "/healthcheck"
   hosts:
     - host: API_FQDN
       http:
