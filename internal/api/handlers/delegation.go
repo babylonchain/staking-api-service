@@ -9,17 +9,16 @@ import (
 // GetDelegationByTxHash @Summary Get a delegation
 // @Description Retrieves a delegation by a given transaction hash
 // @Produce json
-// @Param tx_hash query string true "Transaction Hash"
+// @Param staking_tx_hash_hex query string true "Staking transaction hash in hex format"
 // @Success 200 {object} PublicResponse[services.DelegationPublic] "Delegation"
 // @Failure 400 {object} types.Error "Error: Bad Request"
 // @Router /v1/delegation/ [get]
 func (h *Handler) GetDelegationByTxHash(request *http.Request) (*Result, *types.Error) {
-	txHash := request.URL.Query().Get("tx_hash")
-	if txHash == "" {
-		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "tx_hash is required")
+	stakingTxHash, err := parseTxHashQuery(request, "staking_tx_hash_hex")
+	if err != nil {
+		return nil, err
 	}
-
-	delegation, err := h.services.GetDelegation(request.Context(), txHash)
+	delegation, err := h.services.GetDelegation(request.Context(), stakingTxHash)
 	if err != nil {
 		return nil, err
 	}

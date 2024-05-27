@@ -6,7 +6,7 @@ server:
   idle-timeout: 60s
   allowed-origins: [ "*" ]
   log-level: debug
-  btc-net: "mainnet"
+  btc-net: "signet"
 db:
   address: "mongodb://localhost:27017/?directConnection=true"
   db-name: staking-api-service

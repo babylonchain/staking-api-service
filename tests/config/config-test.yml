@@ -5,8 +5,8 @@ server:
   read-timeout: 60s
   idle-timeout: 60s
   allowed-origins: [ "*" ]
-  log-level: debug
-  btc-net: "regtest"
+  log-level: error
+  btc-net: "signet"
 db:
   address: "mongodb://localhost:27017"
   db-name: staking-api-service

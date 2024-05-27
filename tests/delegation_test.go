@@ -3,6 +3,7 @@ package tests
 import (
 	"encoding/json"
 	"io"
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
@@ -20,7 +21,13 @@ const (
 )
 
 func TestActiveStaking(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(t, 1)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	activeStakingEvent := generateRandomActiveStakingEvents(t, r, &TestActiveEventGeneratorOpts{
+		NumOfEvents:       1,
+		FinalityProviders: generatePks(t, 1),
+		Stakers:           generatePks(t, 1),
+	})
+
 	expiredStakingEvent := client.NewExpiredStakingEvent(activeStakingEvent[0].StakingTxHashHex, types.ActiveTxType.ToString())
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
@@ -30,7 +37,7 @@ func TestActiveStaking(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Test the API
-	url := testServer.Server.URL + delegationRouter + "?tx_hash=" + activeStakingEvent[0].StakingTxHashHex
+	url := testServer.Server.URL + delegationRouter + "?staking_tx_hash_hex=" + activeStakingEvent[0].StakingTxHashHex
 	resp, err := http.Get(url)
 	assert.NoError(t, err, "making GET request to delegation by tx hash should not fail")
 	defer resp.Body.Close()

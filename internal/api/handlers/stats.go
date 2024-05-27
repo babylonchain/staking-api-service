@@ -30,7 +30,10 @@ func (h *Handler) GetOverallStats(request *http.Request) (*Result, *types.Error)
 // @Failure 400 {object} types.Error "Error: Bad Request"
 // @Router /v1/stats/staker [get]
 func (h *Handler) GetTopStakerStats(request *http.Request) (*Result, *types.Error) {
-	paginationKey := request.URL.Query().Get("pagination_key")
+	paginationKey, err := parsePaginationQuery(request)
+	if err != nil {
+		return nil, err
+	}
 	topStakerStats, paginationToken, err := h.services.GetTopStakersByActiveTvl(request.Context(), paginationKey)
 	if err != nil {
 		return nil, err

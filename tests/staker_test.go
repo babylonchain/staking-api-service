@@ -92,7 +92,12 @@ func FuzzTestStakerDelegationsWithPaginationResponse(f *testing.F) {
 }
 
 func TestActiveStakingFetchedByStakerPkWithInvalidPaginationKey(t *testing.T) {
-	activeStakingEvent := buildActiveStakingEvent(t, 11)
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	activeStakingEvent := generateRandomActiveStakingEvents(t, r, &TestActiveEventGeneratorOpts{
+		NumOfEvents:       11,
+		FinalityProviders: generatePks(t, 11),
+		Stakers:           generatePks(t, 1),
+	})
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, activeStakingEvent)
@@ -116,7 +121,7 @@ func TestActiveStakingFetchedByStakerPkWithInvalidPaginationKey(t *testing.T) {
 	err = json.Unmarshal(bodyBytes, &response)
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 
-	assert.Equal(t, "Invalid pagination token", response.Message, "expected error message does not match")
+	assert.Equal(t, "invalid pagination key format", response.Message)
 }
 
 func TestCheckStakerDelegationAllowOptionRequest(t *testing.T) {
@@ -174,7 +179,13 @@ func FuzzCheckStakerActiveDelegations(f *testing.F) {
 		if err != nil {
 			t.Fatalf("failed to generate random public key for staker: %v", err)
 		}
-		isExist = fetchCheckStakerActiveDelegations(t, testServer, stakerPkWithoutDelegation, "")
+		taprootAddressWithNoDelegation, err := utils.GetTaprootAddressFromPk(
+			stakerPkWithoutDelegation, testServer.Config.Server.BTCNetParam,
+		)
+		assert.NoError(t, err, "failed to get taproot address from staker pk")
+		isExist = fetchCheckStakerActiveDelegations(
+			t, testServer, taprootAddressWithNoDelegation, "",
+		)
 		assert.False(t, isExist, "expected staker to not have active delegation")
 
 		// Update the staker to have its delegations in a different state

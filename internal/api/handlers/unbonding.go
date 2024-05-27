@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/babylonchain/staking-api-service/internal/utils"
 )
 
 type UnbondDelegationRequestPayload struct {
@@ -12,6 +13,37 @@ type UnbondDelegationRequestPayload struct {
 	UnbondingTxHashHex       string `json:"unbonding_tx_hash_hex"`
 	UnbondingTxHex           string `json:"unbonding_tx_hex"`
 	StakerSignedSignatureHex string `json:"staker_signed_signature_hex"`
+}
+
+func parseUnbondDelegationRequestPayload(request *http.Request) (*UnbondDelegationRequestPayload, *types.Error) {
+	payload := &UnbondDelegationRequestPayload{}
+	err := json.NewDecoder(request.Body).Decode(payload)
+	if err != nil {
+		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid request payload")
+	}
+	// Validate the payload fields
+	if !utils.IsValidTxHash(payload.StakingTxHashHex) {
+		return nil, types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "invalid staking transaction hash",
+		)
+	}
+	if !utils.IsValidTxHash(payload.UnbondingTxHashHex) {
+		return nil, types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "invalid unbonding transaction hash",
+		)
+	}
+	if !utils.IsValidTxHex(payload.UnbondingTxHex) {
+		return nil, types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "invalid unbonding transaction hex",
+		)
+	}
+	if !utils.IsValidSignatureFormat(payload.StakerSignedSignatureHex) {
+		return nil, types.NewErrorWithMsg(
+			http.StatusBadRequest, types.BadRequest, "invalid staker signed signature hex",
+		)
+	}
+
+	return payload, nil
 }
 
 // UnbondDelegation godoc
@@ -24,10 +56,9 @@ type UnbondDelegationRequestPayload struct {
 // @Failure 400 {object} types.Error "Invalid request payload"
 // @Router /v1/unbonding [post]
 func (h *Handler) UnbondDelegation(request *http.Request) (*Result, *types.Error) {
-	payload := &UnbondDelegationRequestPayload{}
-	err := json.NewDecoder(request.Body).Decode(payload)
+	payload, err := parseUnbondDelegationRequestPayload(request)
 	if err != nil {
-		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid request payload")
+		return nil, err
 	}
 	unbondErr := h.services.UnbondDelegation(
 		request.Context(), payload.StakingTxHashHex,
@@ -50,12 +81,11 @@ func (h *Handler) UnbondDelegation(request *http.Request) (*Result, *types.Error
 // @Failure 400 {object} types.Error "Missing or invalid 'staking_tx_hash_hex' query parameter"
 // @Router /v1/unbonding/eligibility [get]
 func (h *Handler) GetUnbondingEligibility(request *http.Request) (*Result, *types.Error) {
-	stakingTxHashHex := request.URL.Query().Get("staking_tx_hash_hex")
-	if stakingTxHashHex == "" {
-		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "staking_tx_hash_hex is required")
+	stakingTxHashHex, err := parseTxHashQuery(request, "staking_tx_hash_hex")
+	if err != nil {
+		return nil, err
 	}
-
-	err := h.services.IsEligibleForUnbondingRequest(request.Context(), stakingTxHashHex)
+	err = h.services.IsEligibleForUnbondingRequest(request.Context(), stakingTxHashHex)
 	if err != nil {
 		return nil, err
 	}

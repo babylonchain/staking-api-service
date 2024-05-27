@@ -47,6 +47,23 @@ func GetCovenantPksFromStrings(pkStrings []string) ([]*btcec.PublicKey, error) {
 	return pks, nil
 }
 
+func parseUnbondingTxHex(unbondingTxHex string) (*wire.MsgTx, error) {
+	unbondingTx, _, err := bbntypes.NewBTCTxFromHex(unbondingTxHex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode unbonding tx from hex: %w", err)
+	}
+	if len(unbondingTx.TxIn) != 1 {
+		return nil, fmt.Errorf("unbonding tx must have 1 input, got %d", len(unbondingTx.TxIn))
+	}
+	if len(unbondingTx.TxOut) != 1 {
+		return nil, fmt.Errorf("unbonding tx must have 1 output, got %d", len(unbondingTx.TxOut))
+	}
+	if unbondingTx.LockTime != 0 {
+		return nil, fmt.Errorf("unbonding tx must have lock time equal to 0, got %d", unbondingTx.LockTime)
+	}
+	return unbondingTx, nil
+}
+
 func VerifyUnbondingRequest(
 	stakingTxHashHex,
 	unbondingTxHex,
@@ -60,18 +77,9 @@ func VerifyUnbondingRequest(
 	btcNetParam *chaincfg.Params,
 ) error {
 	// 1. validate that un-bonding transaction has proper shape
-	unbondingTx, _, err := bbntypes.NewBTCTxFromHex(unbondingTxHex)
+	unbondingTx, err := parseUnbondingTxHex(unbondingTxHex)
 	if err != nil {
-		return fmt.Errorf("failed to decode unbonding tx from hex: %w", err)
-	}
-	if len(unbondingTx.TxIn) != 1 {
-		return fmt.Errorf("unbonding tx must have 1 input, got %d", len(unbondingTx.TxIn))
-	}
-	if len(unbondingTx.TxOut) != 1 {
-		return fmt.Errorf("unbonding tx must have 1 output, got %d", len(unbondingTx.TxOut))
-	}
-	if unbondingTx.LockTime != 0 {
-		return fmt.Errorf("unbonding tx must have lock time equal to 0, got %d", unbondingTx.LockTime)
+		return fmt.Errorf("failed to parse unbonding tx hex: %w", err)
 	}
 
 	// 2. validate the un-bonding transaction points to the previous staking tx

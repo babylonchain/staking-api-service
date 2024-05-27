@@ -16,12 +16,14 @@ import (
 // @Failure 400 {object} types.Error "Error: Bad Request"
 // @Router /v1/staker/delegations [get]
 func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.Error) {
-	stakerBtcPk := request.URL.Query().Get("staker_btc_pk")
-	if stakerBtcPk == "" {
-		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "staker_btc_pk is required")
+	stakerBtcPk, err := parsePublicKeyQuery(request, "staker_btc_pk")
+	if err != nil {
+		return nil, err
 	}
-
-	paginationKey := request.URL.Query().Get("pagination_key")
+	paginationKey, err := parsePaginationQuery(request)
+	if err != nil {
+		return nil, err
+	}
 
 	delegations, newPaginationKey, err := h.services.DelegationsByStakerPk(request.Context(), stakerBtcPk, paginationKey)
 	if err != nil {
@@ -42,12 +44,11 @@ func (h *Handler) GetStakerDelegations(request *http.Request) (*Result, *types.E
 // @Failure 400 {object} types.Error "Error: Bad Request"
 // @Router /v1/staker/delegation/check [get]
 func (h *Handler) CheckStakerDelegationExist(request *http.Request) (*Result, *types.Error) {
-	address := request.URL.Query().Get("address")
-	if address == "" {
-		return nil, types.NewErrorWithMsg(
-			http.StatusBadRequest, types.BadRequest, "address is required",
-		)
+	address, err := parseBtcAddressQuery(request, "address", h.config.Server.BTCNetParam)
+	if err != nil {
+		return nil, err
 	}
+
 	afterTimestamp, err := parseTimeframeToAfterTimestamp(request.URL.Query().Get("timeframe"))
 	if err != nil {
 		return nil, err

@@ -10,6 +10,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/go-chi/chi"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -22,6 +23,12 @@ func New(
 	ctx context.Context, cfg *config.Config, services *services.Services,
 ) (*Server, error) {
 	r := chi.NewRouter()
+
+	logLevel, err := zerolog.ParseLevel(cfg.Server.LogLevel)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while parsing log level")
+	}
+	zerolog.SetGlobalLevel(logLevel)
 
 	r.Use(middlewares.CorsMiddleware(cfg))
 	r.Use(middlewares.TracingMiddleware)
