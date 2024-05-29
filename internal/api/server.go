@@ -31,6 +31,7 @@ func New(
 	zerolog.SetGlobalLevel(logLevel)
 
 	r.Use(middlewares.CorsMiddleware(cfg))
+	r.Use(middlewares.SecurityHeadersMiddleware())
 	r.Use(middlewares.TracingMiddleware)
 	r.Use(middlewares.LoggingMiddleware)
 
