@@ -2,8 +2,11 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/babylonchain/staking-api-service/internal/config"
+	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
+	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -20,8 +23,7 @@ type DbResultMap[T any] struct {
 }
 
 func New(ctx context.Context, cfg config.DbConfig) (*Database, error) {
-	clientOps := options.Client().ApplyURI(cfg.Address)
-	client, err := mongo.Connect(ctx, clientOps)
+	client, err := connect(ctx, cfg.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -33,9 +35,51 @@ func New(ctx context.Context, cfg config.DbConfig) (*Database, error) {
 	}, nil
 }
 
+func connect(ctx context.Context, addressUri string) (*mongo.Client, error) {
+	clientOps := options.Client().ApplyURI(addressUri)
+	client, err := mongo.Connect(ctx, clientOps)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func (db *Database) reconnect(ctx context.Context) error {
+	client, err := connect(ctx, db.cfg.Address)
+	if err != nil {
+		return err
+	}
+	db.Client = client
+	return nil
+}
+
+// StartConnectionCheckRoutine starts a routine to check the database connection
+// If the ping fails, it will attempt to reconnect.
+func (db *Database) StartConnectionCheckRoutine(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(db.cfg.ConnectionCheckPeriod)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				if err := db.Ping(ctx); err != nil {
+					log.Ctx(ctx).Error().Err(err).Msg("Failed to ping database, reconnecting!")
+					metrics.RecordDbOperationFailure("ping")
+					// Attempt to reconnect if ping fails
+					db.reconnect(ctx)
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+}
+
 func (db *Database) Ping(ctx context.Context) error {
 	err := db.Client.Ping(ctx, nil)
 	if err != nil {
+		metrics.RecordDbOperationFailure("ping")
 		return err
 	}
 	return nil

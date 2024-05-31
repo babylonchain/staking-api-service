@@ -30,6 +30,7 @@ var (
 	eventProcessingDurationHistogram *prometheus.HistogramVec
 	unprocessableEntityCounter       *prometheus.CounterVec
 	queueOperationFailureCounter     *prometheus.CounterVec
+	dbOperationFailureCounter        *prometheus.CounterVec
 )
 
 // Init initializes the metrics package.
@@ -94,11 +95,20 @@ func registerMetrics() {
 		[]string{"operation", "queuename"},
 	)
 
+	dbOperationFailureCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "db_operation_failure_total",
+			Help: "Total number of failed db operations per operation type.",
+		},
+		[]string{"operation"},
+	)
+
 	prometheus.MustRegister(
 		httpRequestDurationHistogram,
 		eventProcessingDurationHistogram,
 		unprocessableEntityCounter,
 		queueOperationFailureCounter,
+		dbOperationFailureCounter,
 	)
 }
 
@@ -135,4 +145,9 @@ func RecordUnprocessableEntity(entity string) {
 // RecordQueueOperationFailure increments the queue operation failure counter.
 func RecordQueueOperationFailure(operation, queuename string) {
 	queueOperationFailureCounter.WithLabelValues(operation, queuename).Inc()
+}
+
+// RecordDbOperationFailure increments the db operation failure counter.
+func RecordDbOperationFailure(operation string) {
+	dbOperationFailureCounter.WithLabelValues(operation).Inc()
 }

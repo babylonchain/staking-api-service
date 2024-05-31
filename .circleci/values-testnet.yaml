@@ -99,6 +99,7 @@ configFiles:
     db:
       address: mongodb://mongodb-headless.mongodb-staking-api:27017
       db-name: staking-api-service
+      connection-check-period: 60s
       max-pagination-limit: 20
       db-batch-size-limit: 100
       logical-shard-count: 10

@@ -31,6 +31,8 @@ func New(
 		log.Ctx(ctx).Fatal().Err(err).Msg("error while creating db client")
 		return nil, err
 	}
+
+	dbClient.StartConnectionCheckRoutine(ctx)
 	return &Services{
 		DbClient:          dbClient,
 		cfg:               cfg,

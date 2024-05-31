@@ -10,6 +10,7 @@ server:
 db:
   address: "mongodb://localhost:27017/?directConnection=true"
   db-name: staking-api-service
+  connection-check-period: 60s
   max-pagination-limit: 10
   db-batch-size-limit: 100
   logical-shard-count: 2
