@@ -109,9 +109,9 @@ func TestSecurityHeaders(t *testing.T) {
 	assert.Equal(t, "1; mode=block", resp.Header.Get("X-Xss-Protection"), "expected X-Xss-Protection to be 1; mode=block")
 	assert.Equal(t, "DENY", resp.Header.Get("X-Frame-Options"), "expected X-Frame-Options to be DENY")
 	assert.Equal(t,
-		"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';",
+		"default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com; img-src 'self' data: https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com; font-src 'self' https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com; object-src 'none'; frame-ancestors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';",
 		resp.Header.Get("Content-Security-Policy"),
-		"expected Content-Security-Policy to be default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; frame-anceors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';",
+		"expected Content-Security-Policy to be default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com; img-src 'self' data: https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com; font-src 'self' https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com; object-src 'none'; frame-ancestors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';",
 	)
 	assert.Equal(t, "strict-origin-when-cross-origin", resp.Header.Get("Referrer-Policy"), "expected Referrer-Policy to be strict-origin-when-cross-origin")
 }
