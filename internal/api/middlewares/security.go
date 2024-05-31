@@ -13,8 +13,19 @@ func SecurityHeadersMiddleware() func(http.Handler) http.Handler {
 		FrameDeny:             true, // Equivalent to X-Frame-Options: DENY
 		ContentTypeNosniff:    true, // Equivalent to X-Content-Type-Options: nosniff
 		BrowserXssFilter:      true, // Equivalent to X-XSS-Protection: 1; mode=block
-		ContentSecurityPolicy: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';",
-		ReferrerPolicy:        "strict-origin-when-cross-origin", // Setting Referrer-Policy
+		ContentSecurityPolicy: `
+			default-src 'self'; 
+			script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com;
+			style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com;
+			img-src 'self' data: https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com;
+			font-src 'self' https://cdnjs.cloudflare.com https://stackpath.bootstrapcdn.com;
+			object-src 'none';
+			frame-ancestors 'self';
+			form-action 'self';
+			block-all-mixed-content;
+			base-uri 'self';
+		`,
+		ReferrerPolicy: "strict-origin-when-cross-origin", // Setting Referrer-Policy
 	})
 
 	return func(next http.Handler) http.Handler {
