@@ -81,5 +81,8 @@ func writeResponse(w http.ResponseWriter, r *http.Request, statusCode int, res i
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	w.Write(respBytes) // nolint:errcheck
+	if _, err := w.Write(respBytes); err != nil {
+		logger.Ctx(r.Context()).Err(err).Msg("failed to write response")
+		metrics.RecordHttpResponseWriteFailure(statusCode)
+	}
 }
