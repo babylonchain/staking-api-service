@@ -2,7 +2,7 @@
 
 The Staking API Service is a critical component of the Babylon Phase-1 system, 
 focused on serving information about the state of the network and 
-receiving unbonding requests for further processing. 
+receiving unbonding requests for furt12312her processing. 
 The API can be utilised by user facing applications, such as staking dApps. 
 
 ## Architectural Design
