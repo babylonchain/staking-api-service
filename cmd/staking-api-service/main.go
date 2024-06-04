@@ -53,7 +53,10 @@ func main() {
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
 
-	model.Setup(ctx, cfg)
+	err = model.Setup(ctx, cfg)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error while setting up staking db model")
+	}
 	services, err := services.New(ctx, cfg, params, finalityProviders)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up staking services layer")
