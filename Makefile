@@ -46,6 +46,15 @@ run-local:
 		--params config/global-params.json \
 		--finality-providers config/finality-providers.json
 
+run-replay-local:
+	./bin/local-startup.sh;
+	sleep 5;
+	go run cmd/staking-api-service/main.go \
+		--config config/config-local.yml \
+		--params config/global-params.json \
+		--finality-providers config/finality-providers.json \
+		--replay
+
 generate-mock-interface:
 	cd internal/db && mockery --name=DBClient --output=../../tests/mocks --outpkg=dbmock --filename=mock_db_client.go
 

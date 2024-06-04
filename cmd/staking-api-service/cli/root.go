@@ -18,6 +18,7 @@ var (
 	cfgPath               string
 	globalParamsPath      string
 	finalityProvidersPath string
+	replayFlag            bool
 	rootCmd               = &cobra.Command{
 		Use: "start-server",
 	}
@@ -51,6 +52,12 @@ func Setup() error {
 		defaultFinalityProvidersPath,
 		fmt.Sprintf("finality providers file (default %s)", defaultFinalityProvidersPath),
 	)
+	rootCmd.PersistentFlags().BoolVar(
+		&replayFlag,
+		"replay",
+		false,
+		"Replay unprocessable messages",
+	)
 	if err := rootCmd.Execute(); err != nil {
 		return err
 	}
@@ -72,4 +79,8 @@ func GetGlobalParamsPath() string {
 
 func GetFinalityProvidersPath() string {
 	return finalityProvidersPath
+}
+
+func GetReplayFlag() bool {
+	return replayFlag
 }
