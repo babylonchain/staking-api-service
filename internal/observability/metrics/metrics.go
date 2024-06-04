@@ -30,6 +30,7 @@ var (
 	eventProcessingDurationHistogram *prometheus.HistogramVec
 	unprocessableEntityCounter       *prometheus.CounterVec
 	queueOperationFailureCounter     *prometheus.CounterVec
+	httpResponseWriteFailureCounter  *prometheus.CounterVec
 )
 
 // Init initializes the metrics package.
@@ -94,11 +95,20 @@ func registerMetrics() {
 		[]string{"operation", "queuename"},
 	)
 
+	httpResponseWriteFailureCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_response_write_failure_total",
+			Help: "Total number of failed http response writes.",
+		},
+		[]string{"status"},
+	)
+
 	prometheus.MustRegister(
 		httpRequestDurationHistogram,
 		eventProcessingDurationHistogram,
 		unprocessableEntityCounter,
 		queueOperationFailureCounter,
+		httpResponseWriteFailureCounter,
 	)
 }
 
@@ -135,4 +145,9 @@ func RecordUnprocessableEntity(entity string) {
 // RecordQueueOperationFailure increments the queue operation failure counter.
 func RecordQueueOperationFailure(operation, queuename string) {
 	queueOperationFailureCounter.WithLabelValues(operation, queuename).Inc()
+}
+
+// RecordHttpResponseWriteFailure increments the http response write failure counter.
+func RecordHttpResponseWriteFailure(statusCode int) {
+	httpResponseWriteFailureCounter.WithLabelValues(fmt.Sprintf("%d", statusCode)).Inc()
 }
