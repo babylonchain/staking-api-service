@@ -141,6 +141,11 @@ func generateRandomTx(r *rand.Rand) (*wire.MsgTx, string, error) {
 	return tx, txHex, nil
 }
 
+func randomBytes(r *rand.Rand, n uint64) ([]byte, string) {
+	randomBytes := bbndatagen.GenRandomByteArray(r, n)
+	return randomBytes, hex.EncodeToString(randomBytes)
+}
+
 // generateRandomTimestamp generates a random timestamp before the specified timestamp.
 // If beforeTimestamp is 0, then the current time is used.
 func generateRandomTimestamp(afterTimestamp, beforeTimestamp int64) int64 {
