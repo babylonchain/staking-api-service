@@ -96,22 +96,32 @@ func TestOptionsRequest(t *testing.T) {
 }
 
 func TestSecurityHeaders(t *testing.T) {
+	// Create a test server with the SecurityHeadersMiddleware
 	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 
+	// Test the default CSP by making a request to a non-swagger endpoint
 	url := testServer.Server.URL + healthCheckPath
 
-	// Make a GET request to the health check endpoint
 	resp, err := http.Get(url)
-	assert.NoError(t, err, "making GET request to health check endpoint should not fail")
+	assert.NoError(t, err, "making GET request to /somepath should not fail")
 	defer resp.Body.Close()
+
 	assert.Equal(t, "nosniff", resp.Header.Get("X-Content-Type-Options"), "expected X-Content-Type-Options to be nosniff")
 	assert.Equal(t, "1; mode=block", resp.Header.Get("X-Xss-Protection"), "expected X-Xss-Protection to be 1; mode=block")
 	assert.Equal(t, "DENY", resp.Header.Get("X-Frame-Options"), "expected X-Frame-Options to be DENY")
-	assert.Equal(t,
-		"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';",
-		resp.Header.Get("Content-Security-Policy"),
-		"expected Content-Security-Policy to be default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; frame-anceors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';",
-	)
+	assert.Equal(t, "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';", resp.Header.Get("Content-Security-Policy"), "expected default Content-Security-Policy")
+	assert.Equal(t, "strict-origin-when-cross-origin", resp.Header.Get("Referrer-Policy"), "expected Referrer-Policy to be strict-origin-when-cross-origin")
+
+	// Test the Swagger CSP by making a request to the /swagger/* endpoint
+	swaggerURL := testServer.Server.URL + "/swagger/index.html"
+	resp, err = http.Get(swaggerURL)
+	assert.NoError(t, err, "making GET request to /swagger/index.html should not fail")
+	defer resp.Body.Close()
+
+	assert.Equal(t, "nosniff", resp.Header.Get("X-Content-Type-Options"), "expected X-Content-Type-Options to be nosniff")
+	assert.Equal(t, "1; mode=block", resp.Header.Get("X-Xss-Protection"), "expected X-Xss-Protection to be 1; mode=block")
+	assert.Equal(t, "DENY", resp.Header.Get("X-Frame-Options"), "expected X-Frame-Options to be DENY")
+	assert.Equal(t, "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrap.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrap.com; img-src 'self' data: https://cdnjs.cloudflare.com https://stackpath.bootstrap.com; font-src 'self' https://cdnjs.cloudflare.com https://stackpath.bootstrap.com; object-src 'none'; frame-ancestors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';", resp.Header.Get("Content-Security-Policy"), "expected Swagger Content-Security-Policy")
 	assert.Equal(t, "strict-origin-when-cross-origin", resp.Header.Get("Referrer-Policy"), "expected Referrer-Policy to be strict-origin-when-cross-origin")
 }
