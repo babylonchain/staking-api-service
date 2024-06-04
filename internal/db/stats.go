@@ -165,13 +165,12 @@ func (db *Database) GetOverallStats(ctx context.Context) (*model.OverallStatsDoc
 	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(ctx)
 
 	var overallStats []model.OverallStatsDocument
 	if err = cursor.All(ctx, &overallStats); err != nil {
-		cursor.Close(ctx)
 		return nil, err
 	}
-	cursor.Close(ctx)
 
 	// Sum up the stats for the overall stats
 	var result model.OverallStatsDocument
@@ -422,13 +421,12 @@ func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken str
 	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(ctx)
 
 	var stakerStats []*model.StakerStatsDocument
 	if err = cursor.All(ctx, &stakerStats); err != nil {
-		cursor.Close(ctx)
 		return nil, err
 	}
-	cursor.Close(ctx)
 
 	return toResultMapWithPaginationToken(db.cfg, stakerStats, model.BuildStakerStatsByStakerPaginationToken)
 }
