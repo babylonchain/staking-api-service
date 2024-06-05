@@ -14,7 +14,12 @@ import (
 // UnbondDelegation verifies the unbonding request and saves the unbonding tx into the DB.
 // It returns an error if the delegation is not eligible for unbonding or if the unbonding request is invalid.
 // If successful, it will change the delegation state to `unbonding_requested`
-func (s *Services) UnbondDelegation(ctx context.Context, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex string) *types.Error {
+func (s *Services) UnbondDelegation(
+	ctx context.Context,
+	stakingTxHashHex,
+	unbondingTxHashHex,
+	unbondingTxHex,
+	signatureHex string) *types.Error {
 	// 1. check the delegation is eligible for unbonding
 	delegationDoc, err := s.DbClient.FindDelegationByTxHashHex(ctx, stakingTxHashHex)
 	if err != nil {
@@ -43,7 +48,8 @@ func (s *Services) UnbondDelegation(ctx context.Context, stakingTxHashHex, unbon
 	// 2. verify the unbonding request
 	if err := utils.VerifyUnbondingRequest(
 		delegationDoc.StakingTxHashHex,
-		txHex,
+		unbondingTxHashHex,
+		unbondingTxHex,
 		delegationDoc.StakerPkHex,
 		delegationDoc.FinalityProviderPkHex,
 		signatureHex,
@@ -58,7 +64,7 @@ func (s *Services) UnbondDelegation(ctx context.Context, stakingTxHashHex, unbon
 	}
 
 	// 3. save unbonding tx into DB
-	err = s.DbClient.SaveUnbondingTx(ctx, stakingTxHashHex, unbondingTxHashHex, txHex, signatureHex)
+	err = s.DbClient.SaveUnbondingTx(ctx, stakingTxHashHex, unbondingTxHashHex, unbondingTxHex, signatureHex)
 	if err != nil {
 		if ok := db.IsDuplicateKeyError(err); ok {
 			log.Ctx(ctx).Warn().Err(err).Msg("unbonding request already been submitted into the system")
