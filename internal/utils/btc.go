@@ -66,6 +66,7 @@ func parseUnbondingTxHex(unbondingTxHex string) (*wire.MsgTx, error) {
 
 func VerifyUnbondingRequest(
 	stakingTxHashHex,
+	unbondingTxHashHex,
 	unbondingTxHex,
 	stakerPkHex,
 	finalityProviderPkHex,
@@ -82,7 +83,21 @@ func VerifyUnbondingRequest(
 		return fmt.Errorf("failed to parse unbonding tx hex: %w", err)
 	}
 
-	// 2. validate the un-bonding transaction points to the previous staking tx
+	// 2. validate that un-bonding tx hash is valid and matches the hash of the
+	// provided unbonding tx
+	unbondingTxHash, err := chainhash.NewHashFromStr(unbondingTxHashHex)
+
+	if err != nil {
+		return fmt.Errorf("failed to decode unbonding tx hash from hex: %w", err)
+	}
+
+	unbondingTxHashFromTx := unbondingTx.TxHash()
+
+	if !unbondingTxHashFromTx.IsEqual(unbondingTxHash) {
+		return fmt.Errorf("unbonding_tx_hash_hex must match the hash calculated from the provided unbonding tx")
+	}
+
+	// 3. validate the un-bonding transaction points to the previous staking tx
 	stakingTxHash, err := chainhash.NewHashFromStr(stakingTxHashHex)
 	if err != nil {
 		return fmt.Errorf("failed to decode staking tx hash from hex: %w", err)
@@ -100,7 +115,7 @@ func VerifyUnbondingRequest(
 		)
 	}
 
-	// 3. verify that the unbonding output is constructed as expected
+	// 4. verify that the unbonding output is constructed as expected
 	covenantPks, err := GetCovenantPksFromStrings(params.CovenantPks)
 	if err != nil {
 		return fmt.Errorf("failed to decode coveant public keys from strings: %w", err)
@@ -139,7 +154,7 @@ func VerifyUnbondingRequest(
 		return fmt.Errorf("unbonding output does not match expected output")
 	}
 
-	// 4. verify the signature
+	// 5. verify the signature
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		stakerPk,
 		[]*btcec.PublicKey{finalityProviderPk},

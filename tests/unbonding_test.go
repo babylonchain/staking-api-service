@@ -11,6 +11,7 @@ import (
 
 	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/staking-api-service/internal/api"
@@ -18,6 +19,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
+	testmock "github.com/babylonchain/staking-api-service/tests/mocks"
 )
 
 const (
@@ -476,4 +478,52 @@ func TestProcessUnbondingStakingEventShouldTolerateEventMsgOutOfOrder(t *testing
 	assert.Equal(t, activeStakingEvent.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
 	assert.Equal(t, requestBody.StakingTxHashHex, timeLockResults[1].StakingTxHashHex)
 	assert.Equal(t, types.UnbondingTxType.ToString(), timeLockResults[1].TxType)
+}
+
+func TestUnbondingRequestValidation(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	mockDB := new(testmock.DBClient)
+	mockDB.On("FindDelegationByTxHashHex", mock.Anything, mock.Anything).Return(
+		&model.DelegationDocument{
+			State: "active",
+			StakingTx: &model.TimelockTransaction{
+				StartHeight: 300,
+			},
+		},
+		nil,
+	)
+	testServer := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
+	defer testServer.Close()
+	unbondingUrl := testServer.Server.URL + unbondingPath
+
+	// TODO: Convert this to a table driven test, and test for all validations.
+	// Test case 1: Hash from unbonding request does not match the hash on unbonding tranactions
+	_, stakingTxHashHex := randomBytes(r, 32)
+	_, unbondingTxHashHex := randomBytes(r, 32)
+	_, unbondingTxHex, _ := generateRandomTx(r)
+	_, fakeSig := randomBytes(r, 64)
+
+	payload := handlers.UnbondDelegationRequestPayload{
+		StakingTxHashHex: stakingTxHashHex,
+		// unbondingTxHashHex does not match the hash of unbondingTxHex as it is
+		// generated randomly
+		UnbondingTxHashHex:       unbondingTxHashHex,
+		UnbondingTxHex:           unbondingTxHex,
+		StakerSignedSignatureHex: fakeSig,
+	}
+
+	requestBodyBytes, err := json.Marshal(payload)
+	assert.NoError(t, err, "marshalling request body should not fail")
+
+	resp, err := http.Post(unbondingUrl, "application/json", bytes.NewReader(requestBodyBytes))
+	assert.NoError(t, err, "making POST request to unbonding endpoint should not fail")
+	defer resp.Body.Close()
+	bodyBytes, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	var unbondingResponse api.ErrorResponse
+	err = json.Unmarshal(bodyBytes, &unbondingResponse)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
+	assert.Equal(t, types.ValidationError.String(), unbondingResponse.ErrorCode)
+	assert.Equal(t, "unbonding_tx_hash_hex must match the hash calculated from the provided unbonding tx", unbondingResponse.Message)
 }
