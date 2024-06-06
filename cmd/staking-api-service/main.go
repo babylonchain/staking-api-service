@@ -68,7 +68,10 @@ func main() {
 	// Check if the replay flag is set
 	if cli.GetReplayFlag() {
 		log.Info().Msg("Replay flag is set. Starting replay of unprocessable messages.")
-		scripts.ReplayUnprocessableMessages(ctx, cfg, queues)
+		err := scripts.ReplayUnprocessableMessages(ctx, cfg, queues, services.DbClient)
+		if err != nil {
+			log.Fatal().Err(err).Msg("error while replaying unprocessable messages")
+		}
 		return
 	}
 
