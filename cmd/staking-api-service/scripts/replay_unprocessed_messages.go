@@ -14,10 +14,12 @@ import (
 )
 
 type GenericEvent struct {
-	EventType	queueClient.EventType `json:"event_type"`
+	EventType queueClient.EventType `json:"event_type"`
 }
 
 func ReplayUnprocessableMessages(ctx context.Context, cfg *config.Config, queues *queue.Queues, db db.DBClient) (err error) {
+	fmt.Println("Starting to replay unprocessable messages...")
+
 	// Fetch unprocessable messages
 	unprocessableMessages, err := db.FindUnprocessableMessages(ctx)
 	if err != nil {
@@ -34,10 +36,11 @@ func ReplayUnprocessableMessages(ctx context.Context, cfg *config.Config, queues
 	}
 
 	// Process each unprocessable message
-	for _, msg := range unprocessableMessages {
+	for i, msg := range unprocessableMessages {
+		fmt.Printf("Processing message %d/%d: %s\n", i+1, messageCount, msg.MessageBody)
+
 		var genericEvent GenericEvent
 		if err := json.Unmarshal([]byte(msg.MessageBody), &genericEvent); err != nil {
-			fmt.Printf("Failed to unmarshal event message: %v", err)
 			return errors.New("failed to unmarshal event message")
 		}
 
@@ -50,14 +53,19 @@ func ReplayUnprocessableMessages(ctx context.Context, cfg *config.Config, queues
 		if err := db.DeleteUnprocessableMessage(ctx, msg.Receipt); err != nil {
 			return errors.New("failed to delete unprocessable message")
 		}
+
+		fmt.Printf("Message %d/%d processed and deleted successfully.\n", i+1, messageCount)
 	}
 
-	log.Info().Msg("Reprocessing of unprocessable messages completed.")	
+	log.Info().Msg("Reprocessing of unprocessable messages completed.")
+	fmt.Println("Reprocessing of unprocessable messages completed.")
 	return
 }
 
 // processEventMessage processes the event message based on its EventType.
 func processEventMessage(ctx context.Context, queues *queue.Queues, event GenericEvent, messageBody string) error {
+	fmt.Printf("Sending message to the queue for event type: %v\n", event.EventType)
+
 	switch event.EventType {
 	case queueClient.ActiveStakingEventType:
 		return queues.ActiveStakingQueueClient.SendMessage(ctx, messageBody)
@@ -72,6 +80,7 @@ func processEventMessage(ctx context.Context, queues *queue.Queues, event Generi
 	case queueClient.BtcInfoEventType:
 		return queues.BtcInfoQueueClient.SendMessage(ctx, messageBody)
 	default:
+		fmt.Printf("Error: unknown event type: %v\n", event.EventType)
 		return fmt.Errorf("unknown event type: %v", event.EventType)
 	}
 }
