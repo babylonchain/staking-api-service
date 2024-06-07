@@ -53,7 +53,7 @@ jobs:
           path: ./contrib/images/staking-api-service/
           build-path: ./
           tag: "$CIRCLE_SHA1,$CIRCLE_TAG"
-          repo: "$CIRCLE_PROJECT_REPONAME"
+          repo: "staking-api-service"
           extra-build-args: "--secret id=sshKey,src=/home/circleci/.ssh/$DEPLOY_KEY_NAME"
       - run:
           name: Save Docker image to export it to workspace
@@ -83,7 +83,7 @@ jobs:
       - aws-ecr/push-image:
           registry-id: AWS_ECR_REGISTRY_ID
           region: "$AWS_REGION"
-          repo: "$CIRCLE_PROJECT_REPONAME"
+          repo: "staking-api-service"
           tag: "$CIRCLE_SHA1,$CIRCLE_TAG"
 
   deploy_staging:
