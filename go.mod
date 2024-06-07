@@ -1,9 +1,12 @@
 module github.com/babylonchain/staking-api-service
 
-go 1.21.6
+go 1.22.3
+
+toolchain go1.22.4
 
 require (
 	github.com/babylonchain/babylon v0.8.6-0.20240426101001-7778c798e236
+	github.com/babylonchain/networks/parameters v0.2.0
 	github.com/babylonchain/staking-queue-client v0.2.1
 	github.com/btcsuite/btcd v0.24.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
@@ -12,6 +15,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.18.2
 	github.com/swaggo/swag v1.16.3
+	github.com/unrolled/secure v1.14.0
 )
 
 require (
@@ -171,7 +175,6 @@ require (
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
-	github.com/unrolled/secure v1.14.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
