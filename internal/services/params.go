@@ -8,6 +8,7 @@ type VersionedGlobalParamsPublic struct {
 	Version           uint64   `json:"version"`
 	ActivationHeight  uint64   `json:"activation_height"`
 	StakingCap        uint64   `json:"staking_cap"`
+	CapHeight         uint64   `json:"cap_height"`
 	Tag               string   `json:"tag"`
 	CovenantPks       []string `json:"covenant_pks"`
 	CovenantQuorum    uint64   `json:"covenant_quorum"`
@@ -31,6 +32,7 @@ func (s *Services) GetGlobalParamsPublic() *GlobalParamsPublic {
 			Version:           version.Version,
 			ActivationHeight:  version.ActivationHeight,
 			StakingCap:        version.StakingCap,
+			CapHeight:         version.CapHeight,
 			Tag:               version.Tag,
 			CovenantPks:       version.CovenantPks,
 			CovenantQuorum:    version.CovenantQuorum,
