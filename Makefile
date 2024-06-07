@@ -46,7 +46,7 @@ run-local:
 		--params config/global-params.json \
 		--finality-providers config/finality-providers.json
 
-run-replay-local:
+run-unprocessed-events-replay-local:
 	./bin/local-startup.sh;
 	sleep 5;
 	go run cmd/staking-api-service/main.go \

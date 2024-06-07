@@ -14,12 +14,12 @@ import (
 )
 
 type GenericEvent struct {
-	EventType queueClient.EventType `json:"event_type"`
+	EventType	queueClient.EventType `json:"event_type"`
 }
 
-func ReplayUnprocessableMessages(ctx context.Context, cfg *config.Config, queues *queue.Queues, dbClient db.DBClient) (err error) {
+func ReplayUnprocessableMessages(ctx context.Context, cfg *config.Config, queues *queue.Queues, db *db.Database) (err error) {
 	// Fetch unprocessable messages
-	unprocessableMessages, err := dbClient.FindUnprocessableMessages(ctx)
+	unprocessableMessages, err := db.FindUnprocessableMessages(ctx)
 	if err != nil {
 		return errors.New("failed to retrieve unprocessable messages")
 	}
@@ -37,19 +37,17 @@ func ReplayUnprocessableMessages(ctx context.Context, cfg *config.Config, queues
 	for _, msg := range unprocessableMessages {
 		var genericEvent GenericEvent
 		if err := json.Unmarshal([]byte(msg.MessageBody), &genericEvent); err != nil {
-			log.Printf("Failed to unmarshal event message: %v", err)
+			fmt.Printf("Failed to unmarshal event message: %v", err)
 			return errors.New("failed to unmarshal event message")
 		}
 
 		// Process the event message
 		if err := processEventMessage(ctx, queues, genericEvent, msg.MessageBody); err != nil {
-			log.Printf("Failed to process message: %v", err)
 			return errors.New("failed to process message")
 		}
 
 		// Delete the processed message from the database
-		if err := dbClient.DeleteUnprocessableMessage(ctx, msg.Receipt); err != nil {	
-			log.Printf("Failed to delete unprocessable message: %v", err)
+		if err := db.DeleteUnprocessableMessage(ctx, msg.Receipt); err != nil {
 			return errors.New("failed to delete unprocessable message")
 		}
 	}
@@ -60,22 +58,20 @@ func ReplayUnprocessableMessages(ctx context.Context, cfg *config.Config, queues
 
 // processEventMessage processes the event message based on its EventType.
 func processEventMessage(ctx context.Context, queues *queue.Queues, event GenericEvent, messageBody string) error {
-	// Define a map of event types to their corresponding SendMessage functions.
-	eventHandlers := map[queueClient.EventType]func(context.Context, string) error{
-		queueClient.ActiveStakingEventType:    queues.ActiveStakingQueueClient.SendMessage,
-		queueClient.UnbondingStakingEventType: queues.UnbondingStakingQueueClient.SendMessage,
-		queueClient.WithdrawStakingEventType:  queues.WithdrawStakingQueueClient.SendMessage,
-		queueClient.ExpiredStakingEventType:   queues.ExpiredStakingQueueClient.SendMessage,
-		queueClient.StatsEventType:            queues.StatsQueueClient.SendMessage,
-		queueClient.BtcInfoEventType:          queues.BtcInfoQueueClient.SendMessage,
-	}
-
-	// Get the appropriate handler based on the event type.
-	handler, ok := eventHandlers[event.EventType]
-	if !ok {
+	switch event.EventType {
+	case queueClient.ActiveStakingEventType:
+		return queues.ActiveStakingQueueClient.SendMessage(ctx, messageBody)
+	case queueClient.UnbondingStakingEventType:
+		return queues.UnbondingStakingQueueClient.SendMessage(ctx, messageBody)
+	case queueClient.WithdrawStakingEventType:
+		return queues.WithdrawStakingQueueClient.SendMessage(ctx, messageBody)
+	case queueClient.ExpiredStakingEventType:
+		return queues.ExpiredStakingQueueClient.SendMessage(ctx, messageBody)
+	case queueClient.StatsEventType:
+		return queues.StatsQueueClient.SendMessage(ctx, messageBody)
+	case queueClient.BtcInfoEventType:
+		return queues.BtcInfoQueueClient.SendMessage(ctx, messageBody)
+	default:
 		return fmt.Errorf("unknown event type: %v", event.EventType)
 	}
-
-	// Call the handler with the context and message body.
-	return handler(ctx, messageBody)
 }

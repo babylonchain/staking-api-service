@@ -2,64 +2,89 @@ package tests
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
+	"io"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/babylonchain/staking-api-service/cmd/staking-api-service/scripts"
-	testmock "github.com/babylonchain/staking-api-service/tests/mocks"
+	"github.com/babylonchain/staking-api-service/internal/api/handlers"
+	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-func TestReplayUnprocessableMessages(t *testing.T) {    
+func TestReplayUnprocessableMessages(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	mockDB := new(testmock.DBClient)
-	mockDB.On("FindUnprocessableMessages", mock.Anything).Return(nil, errors.New("just an error"))
-
-	testServer := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB})
+	testServer := setupTestServer(t, nil)
 	defer testServer.Close()
 
-	activeStakingEvent := getTestActiveStakingEvent()
+	activeStakingEvents := buildActiveStakingEvent(t, 1)
+	activeStakingEvent := activeStakingEvents[0]
 
-	// Send a test message to the queue
-	sendTestMessage(testServer.Queues.ActiveStakingQueueClient, []client.ActiveStakingEvent{*activeStakingEvent})
-	err := addQueueJobToUnprocessedMessage(ctx, testServer.Queues.ActiveStakingQueueClient, testServer)
-	assert.NoError(t, err, "addQueueJobToUnprocessedMessage should not return an error")
+	data, err := json.Marshal(activeStakingEvent)
+	assert.NoError(t, err, "marshal events should not return an error")
 
-	time.Sleep(2 * time.Second)
+	doc := string(data)
 
-	// Capture log output to verify correct log messages
-	err = scripts.ReplayUnprocessableMessages(ctx, testServer.Config, testServer.Queues, mockDB)
+	injectDbDocuments(t, model.UnprocessableMsgCollection, model.NewUnprocessableMessageDocument(doc, "receipt"))
 
-	// Assert that the function returned an error, indicating it logged the error and did not proceed further
-	assert.Error(t, err, "ReplayUnprocessableMessages should return an error if FindUnprocessableMessages fails")
-	assert.Equal(t, "failed to retrieve unprocessable messages", err.Error())
+	db := directDbConnection(t)
 
-	mockDB.AssertCalled(t, "FindUnprocessableMessages", mock.Anything)
-	mockDB.AssertNotCalled(t, "DeleteUnprocessableMessage", mock.Anything, mock.Anything)
-}
+	scripts.ReplayUnprocessableMessages(ctx, testServer.Config, testServer.Queues, db)
 
-// FailJob simulates the failure of a specific job message
-func addQueueJobToUnprocessedMessage(ctx context.Context, queueClient client.QueueClient, testServer *TestServer) error {
-	// Simulate job failure
-	messagesChan, err := queueClient.ReceiveMessages()
-	if err != nil {
-			return err
+	time.Sleep(3 * time.Second)
+
+	url := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
+	resp, err := http.Get(url)
+	assert.NoError(t, err, "making GET request to delegations by staker pk should not fail")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "HTTP response status should be OK")
+
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	var responseJSON handlers.PublicResponse[[]client.ActiveStakingEvent]
+	err = json.Unmarshal(body, &responseJSON)
+	assert.NoError(t, err, "unmarshal response JSON should not return an error")
+
+	// Verify the response contains expected fields
+	expectedFields := []string{
+		"StakingTxHashHex",
+		"IsOverflow",
+		"StakingTxHex",
+		"StakingTimeLock",
+		"StakingOutputIndex",
+		"StakingStartTimestamp",
+		"StakingStartHeight",
+		"StakingValue",
+		"FinalityProviderPkHex",
+		"StakerPkHex",
 	}
+	
+	assert.Greater(t, len(responseJSON.Data), 0, "'data' array should not be empty")
 
-	for message := range messagesChan {
-			// Save job to unprocessable messages table
-			if err := testServer.Queues.Handlers.HandleUnprocessedMessage(ctx, message.Body, message.Receipt); err != nil {
-					return err
-			}
-			if delErr := queueClient.DeleteMessage(message.Receipt); delErr != nil {
-					return delErr
-			}
+	for _, item := range responseJSON.Data {
+		itemMap := map[string]interface{}{
+			"StakingTxHashHex":      item.StakingTxHashHex,
+			"IsOverflow":            item.IsOverflow,
+			"StakingTxHex":          item.StakingTxHex,
+			"StakingTimeLock":       item.StakingTimeLock,
+			"StakingOutputIndex":    item.StakingOutputIndex,
+			"StakingStartTimestamp": item.StakingStartTimestamp,
+			"StakingStartHeight":    item.StakingStartHeight,
+			"StakingValue":          item.StakingValue,
+			"FinalityProviderPkHex": item.FinalityProviderPkHex,
+			"StakerPkHex":           item.StakerPkHex,
+		}
+
+		for _, field := range expectedFields {
+			_, exists := itemMap[field]
+			assert.True(t, exists, "response should contain field %s", field)
+		}
 	}
-
-	return nil
 }
