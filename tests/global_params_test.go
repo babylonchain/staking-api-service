@@ -46,7 +46,7 @@ func TestGlobalParams(t *testing.T) {
 	versionedGlobalParam := result[0]
 	assert.Equal(t, uint64(0), versionedGlobalParam.Version)
 	assert.Equal(t, uint64(100), versionedGlobalParam.ActivationHeight)
-	assert.Equal(t, uint64(50), versionedGlobalParam.StakingCap)
+	assert.Equal(t, uint64(5000000), versionedGlobalParam.StakingCap)
 	assert.Equal(t, "01020304", versionedGlobalParam.Tag)
 	assert.Equal(t, 5, len(versionedGlobalParam.CovenantPks))
 	assert.Equal(t, uint64(3), versionedGlobalParam.CovenantQuorum)
@@ -61,7 +61,7 @@ func TestGlobalParams(t *testing.T) {
 	versionedGlobalParam2 := result[1]
 	assert.Equal(t, uint64(1), versionedGlobalParam2.Version)
 	assert.Equal(t, uint64(200), versionedGlobalParam2.ActivationHeight)
-	assert.Equal(t, uint64(500), versionedGlobalParam2.StakingCap)
+	assert.Equal(t, uint64(50000000), versionedGlobalParam2.StakingCap)
 	assert.Equal(t, "01020304", versionedGlobalParam2.Tag)
 	assert.Equal(t, 4, len(versionedGlobalParam2.CovenantPks))
 	assert.Equal(t, uint64(2), versionedGlobalParam2.CovenantQuorum)
