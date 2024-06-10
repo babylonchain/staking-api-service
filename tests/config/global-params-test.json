@@ -3,7 +3,7 @@
         {
             "version": 0,
             "activation_height": 100,
-            "staking_cap": 50,
+            "staking_cap": 5000000,
             "tag": "01020304",
             "covenant_pks": [
                 "03ffeaec52a9b407b355ef6967a7ffc15fd6c3fe07de2844d61550475e7a5233e5",
@@ -24,7 +24,7 @@
         {
             "version": 1,
             "activation_height": 200,
-            "staking_cap": 500,
+            "staking_cap": 50000000,
             "tag": "01020304",
             "covenant_pks": [
                 "03ffeaec52a9b407b355ef6967a7ffc15fd6c3fe07de2844d61550475e7a5233e5",
