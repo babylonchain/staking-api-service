@@ -100,7 +100,7 @@ func FuzzGetFinalityProviderShouldReturnAllRegisteredFps(f *testing.F) {
 	attachRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		fpParams, registeredFpsStats, notRegisteredFpsStats := setUpFinalityProvidersStatsDataSet(t, r)
+		fpParams, registeredFpsStats, notRegisteredFpsStats := setUpFinalityProvidersStatsDataSet(t, r, nil)
 
 		mockDB := new(testmock.DBClient)
 		mockDB.On("FindFinalityProviderStatsByFinalityProviderPkHex",
@@ -238,15 +238,17 @@ func FuzzGetFinalityProviderShouldNotReturnRegisteredFpWithoutStakingForPaginate
 	attachRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		fpParams, registeredFpsStats, notRegisteredFpsStats := setUpFinalityProvidersStatsDataSet(t, r)
+		fpParams, registeredFpsStats, notRegisteredFpsStats := setUpFinalityProvidersStatsDataSet(t, r, nil)
 
 		mockDB := new(testmock.DBClient)
 		mockDB.On("FindFinalityProviderStatsByFinalityProviderPkHex",
 			mock.Anything, mock.Anything,
 		).Return(registeredFpsStats, nil)
 
+		registeredWithoutStakeFpsStats := registeredFpsStats[:len(registeredFpsStats)-randomPositiveInt(r, len(registeredFpsStats))]
+
 		mockedFinalityProviderStats := &db.DbResultMap[*model.FinalityProviderStatsDocument]{
-			Data:            append(registeredFpsStats, notRegisteredFpsStats...),
+			Data:            append(registeredWithoutStakeFpsStats, notRegisteredFpsStats...),
 			PaginationToken: "abcd",
 		}
 		mockDB.On("FindFinalityProviderStats", mock.Anything, mock.Anything).Return(mockedFinalityProviderStats, nil)
@@ -272,18 +274,58 @@ func FuzzGetFinalityProviderShouldNotReturnRegisteredFpWithoutStakingForPaginate
 		assert.NoError(t, err, "unmarshalling response body should not fail")
 		result := responseBody.Data
 
-		var fpParamWithStakingMap []string
+		var registeredFpsWithoutStaking []string
 		for _, fp := range fpParams {
-			for _, fpStat := range registeredFpsStats {
+			for _, fpStat := range registeredWithoutStakeFpsStats {
 				if fp.BtcPk == fpStat.FinalityProviderPkHex {
-					fpParamWithStakingMap = append(fpParamWithStakingMap, fp.BtcPk)
+					registeredFpsWithoutStaking = append(registeredFpsWithoutStaking, fp.BtcPk)
 					break
 				}
 			}
 		}
 
-		assert.Equal(t, len(registeredFpsStats)+len(notRegisteredFpsStats), len(result))
-		assert.Less(t, len(fpParamWithStakingMap), len(fpParams))
+		assert.Equal(t, len(registeredWithoutStakeFpsStats)+len(notRegisteredFpsStats), len(result))
+		assert.Less(t, len(registeredFpsWithoutStaking), len(fpParams))
+	})
+}
+
+func FuzzShouldNotReturnDefaultFpFromParamsWhenPageTokenIsPresent(f *testing.F) {
+	attachRandomSeedsToFuzzer(f, 100)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		opts := &SetupFpStatsDataSetOpts{
+			NumOfRegisterFps:      randomPositiveInt(r, 10),
+			NumOfNotRegisteredFps: randomPositiveInt(r, 10),
+		}
+		fpParams, registeredFpsStats, _ := setUpFinalityProvidersStatsDataSet(t, r, opts)
+
+		mockDB := new(testmock.DBClient)
+		// Mock the response for the registered finality providers
+		numOfFpNotHaveStats := randomPositiveInt(r, int(opts.NumOfRegisterFps))
+		mockDB.On("FindFinalityProviderStatsByFinalityProviderPkHex",
+			mock.Anything, mock.Anything,
+		).Return(registeredFpsStats[:len(registeredFpsStats)-numOfFpNotHaveStats], nil)
+
+		// We are mocking the last page of the response where there is no more data to fetch
+		mockedFinalityProviderStats := &db.DbResultMap[*model.FinalityProviderStatsDocument]{
+			Data:            []*model.FinalityProviderStatsDocument{},
+			PaginationToken: "",
+		}
+		mockDB.On("FindFinalityProviderStats", mock.Anything, mock.Anything).Return(mockedFinalityProviderStats, nil)
+
+		testServer := setupTestServer(t, &TestServerDependency{MockDbClient: mockDB, MockedFinalityProviders: fpParams})
+
+		url := testServer.Server.URL + finalityProvidersPath + "?pagination_key=abcd"
+		defer testServer.Close()
+		// Make a GET request to the finality providers endpoint
+		resp, err := http.Get(url)
+		assert.NoError(t, err, "making GET request to finality providers endpoint should not fail")
+		bodyBytes, err := io.ReadAll(resp.Body)
+		assert.NoError(t, err, "reading response body should not fail")
+		var response handlers.PublicResponse[[]services.FpDetailsPublic]
+		err = json.Unmarshal(bodyBytes, &response)
+		assert.NoError(t, err, "unmarshalling response body should not fail")
+		assert.Equal(t, numOfFpNotHaveStats, len(response.Data))
 	})
 }
 
@@ -297,20 +339,29 @@ func generateFinalityProviderStatsDocument(r *rand.Rand, pk string) *model.Final
 	}
 }
 
-func setUpFinalityProvidersStatsDataSet(t *testing.T, r *rand.Rand) ([]types.FinalityProviderDetails, []*model.FinalityProviderStatsDocument, []*model.FinalityProviderStatsDocument) {
-	numOfRegisterFps := r.Uint64()%10 + 1
-	fpParams := generateRandomFinalityProviderDetail(t, r, numOfRegisterFps)
+type SetupFpStatsDataSetOpts struct {
+	NumOfRegisterFps      int
+	NumOfNotRegisteredFps int
+}
+
+func setUpFinalityProvidersStatsDataSet(t *testing.T, r *rand.Rand, opts *SetupFpStatsDataSetOpts) ([]types.FinalityProviderDetails, []*model.FinalityProviderStatsDocument, []*model.FinalityProviderStatsDocument) {
+	numOfRegisterFps := randomPositiveInt(r, 10)
+	numOfNotRegisteredFps := randomPositiveInt(r, 10)
+	if opts != nil {
+		numOfRegisterFps = opts.NumOfRegisterFps
+		numOfNotRegisteredFps = opts.NumOfNotRegisteredFps
+	}
+	fpParams := generateRandomFinalityProviderDetail(t, r, uint64(numOfRegisterFps))
 
 	// Generate a set of registered finality providers
 	var registeredFpsStats []*model.FinalityProviderStatsDocument
-	for i := uint64(0); i < r.Uint64()%numOfRegisterFps; i++ {
+	for i := 0; i < numOfRegisterFps; i++ {
 		fpStats := generateFinalityProviderStatsDocument(r, fpParams[i].BtcPk)
 		registeredFpsStats = append(registeredFpsStats, fpStats)
 	}
 
 	var notRegisteredFpsStats []*model.FinalityProviderStatsDocument
-	numOfNotRegisteredFps := r.Uint64()%10 + 1
-	for i := uint64(0); i < numOfNotRegisteredFps; i++ {
+	for i := 0; i < numOfNotRegisteredFps; i++ {
 		fpNotRegisteredPk, err := randomPk()
 		assert.NoError(t, err, "generating random public key should not fail")
 
