@@ -249,7 +249,6 @@ func (db *Database) SubtractFinalityProviderStats(
 func (db *Database) FindFinalityProviderStats(ctx context.Context, paginationToken string) (*DbResultMap[*model.FinalityProviderStatsDocument], error) {
 	client := db.Client.Database(db.DbName).Collection(model.FinalityProviderStatsCollection)
 	options := options.Find().SetSort(bson.D{{Key: "active_tvl", Value: -1}}) // Sorting in descending order
-	options.SetLimit(db.cfg.MaxPaginationLimit)
 	var filter bson.M
 
 	// Decode the pagination token first if it exist
@@ -268,18 +267,10 @@ func (db *Database) FindFinalityProviderStats(ctx context.Context, paginationTok
 		}
 	}
 
-	cursor, err := client.Find(ctx, filter, options)
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var finalityProviders []*model.FinalityProviderStatsDocument
-	if err = cursor.All(ctx, &finalityProviders); err != nil {
-		return nil, err
-	}
-
-	return toResultMapWithPaginationToken(db.cfg, finalityProviders, model.BuildFinalityProviderStatsPaginationToken)
+	return findWithPagination(
+		ctx, client, filter, options, db.cfg.MaxPaginationLimit,
+		model.BuildFinalityProviderStatsPaginationToken,
+	)
 }
 
 func (db *Database) FindFinalityProviderStatsByFinalityProviderPkHex(
@@ -398,8 +389,7 @@ func (db *Database) updateStakerStats(ctx context.Context, state, stakingTxHashH
 func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken string) (*DbResultMap[*model.StakerStatsDocument], error) {
 	client := db.Client.Database(db.DbName).Collection(model.StakerStatsCollection)
 
-	opts := options.Find().SetSort(bson.D{{Key: "active_tvl", Value: -1}}).
-		SetLimit(db.cfg.MaxPaginationLimit)
+	opts := options.Find().SetSort(bson.D{{Key: "active_tvl", Value: -1}})
 	var filter bson.M
 	// Decode the pagination token first if it exist
 	if paginationToken != "" {
@@ -417,16 +407,8 @@ func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken str
 		}
 	}
 
-	cursor, err := client.Find(ctx, filter, opts)
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var stakerStats []*model.StakerStatsDocument
-	if err = cursor.All(ctx, &stakerStats); err != nil {
-		return nil, err
-	}
-
-	return toResultMapWithPaginationToken(db.cfg, stakerStats, model.BuildStakerStatsByStakerPaginationToken)
+	return findWithPagination(
+		ctx, client, filter, opts, db.cfg.MaxPaginationLimit,
+		model.BuildStakerStatsByStakerPaginationToken,
+	)
 }

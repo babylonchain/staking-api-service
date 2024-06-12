@@ -82,7 +82,6 @@ func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 	filter := bson.M{"staker_pk_hex": stakerPk}
 	options := options.Find().SetSort(bson.M{"staking_tx.start_height": -1}) // Sorting in descending order
 
-	options.SetLimit(db.cfg.MaxPaginationLimit)
 	// Decode the pagination token first if it exist
 	if paginationToken != "" {
 		decodedToken, err := model.DecodePaginationToken[model.DelegationByStakerPagination](paginationToken)
@@ -99,18 +98,10 @@ func (db *Database) FindDelegationsByStakerPk(ctx context.Context, stakerPk stri
 		}
 	}
 
-	cursor, err := client.Find(ctx, filter, options)
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var delegations []model.DelegationDocument
-	if err = cursor.All(ctx, &delegations); err != nil {
-		return nil, err
-	}
-
-	return toResultMapWithPaginationToken(db.cfg, delegations, model.BuildDelegationByStakerPaginationToken)
+	return findWithPagination(
+		ctx, client, filter, options, db.cfg.MaxPaginationLimit,
+		model.BuildDelegationByStakerPaginationToken,
+	)
 }
 
 // SaveUnbondingTx saves the unbonding transaction details for a staking transaction
