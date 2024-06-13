@@ -110,6 +110,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 
 	r.Use(middlewares.CorsMiddleware(cfg))
 	r.Use(middlewares.SecurityHeadersMiddleware())
+	r.Use(middlewares.ContentLengthMiddleware(cfg))
 	apiServer.SetupRoutes(r)
 
 	queues, conn, ch, err := setUpTestQueue(&cfg.Queue, services)

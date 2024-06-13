@@ -34,6 +34,7 @@ func New(
 	r.Use(middlewares.SecurityHeadersMiddleware())
 	r.Use(middlewares.TracingMiddleware)
 	r.Use(middlewares.LoggingMiddleware)
+	r.Use(middlewares.ContentLengthMiddleware(cfg))
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
