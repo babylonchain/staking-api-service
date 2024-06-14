@@ -48,6 +48,10 @@ func (cfg *ServerConfig) Validate() error {
 		return errors.New("idle timeout cannot be negative")
 	}
 
+	if cfg.MaxContentLength <= 0 {
+		return fmt.Errorf("MaxContentLength must be a positive integer")
+	}
+
 	btcNet, err := utils.GetBtcNetParamesFromString(cfg.BTCNet)
 	if err != nil {
 		return errors.New("invalid btc-net")

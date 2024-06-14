@@ -538,7 +538,7 @@ func TestContentLength(t *testing.T) {
 
 	cfg, err := config.New("./config/config-test.yml")
 	if err != nil {
-			t.Fatal(err)
+		t.Fatal(err)
 	}
 
 	maxContentLength := cfg.Server.MaxContentLength
@@ -547,7 +547,7 @@ func TestContentLength(t *testing.T) {
 	exceedingPayloadLen := maxContentLength + 1
 	exceedingPayload := make([]byte, exceedingPayloadLen)
 	for i := range exceedingPayload {
-			exceedingPayload[i] = 'a'
+		exceedingPayload[i] = 'a'
 	}
 
 	// Make a POST request with the exceeding payload
@@ -557,6 +557,25 @@ func TestContentLength(t *testing.T) {
 
 	// Check that the status code is HTTP 413 Request Entity Too Large
 	assert.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected HTTP 413 Request Entity Too Large status")
+
+	// Test payload exactly at the limit
+	exactPayload := make([]byte, maxContentLength)
+	for i := range exactPayload {
+		exactPayload[i] = 'a'
+	}
+
+	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader(exactPayload))
+	assert.NoError(t, err, "making POST request with exact payload should not fail")
+	defer resp.Body.Close()
+
+	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
+
+	// Test empty payload
+	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader([]byte{}))
+	assert.NoError(t, err, "making POST request with empty payload should not fail")
+	defer resp.Body.Close()
+
+	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
 
 	// Create a normal payload that's below the max content length
 	activeStakingEvent := getTestActiveStakingEvent()
@@ -570,4 +589,12 @@ func TestContentLength(t *testing.T) {
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "expected HTTP 403 OK status")
+
+	// Test non-POST request
+	getStakerDelegationUrl := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
+	resp, err = http.Get(getStakerDelegationUrl)
+	assert.NoError(t, err, "making GET request should not fail")
+	defer resp.Body.Close()
+
+	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
 }
