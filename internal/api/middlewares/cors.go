@@ -22,7 +22,7 @@ func CorsMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 				// Return CORS options specific to this route
 				return cors.Options{
 					AllowedOrigins: []string{galxeOrigin},
-					AllowedMethods: []string{"GET", "OPTIONS, POST"},
+					AllowedMethods: []string{"GET", "OPTIONS", "POST"},
 					MaxAge:         maxAge,
 					// Below is a workaround to allow the custom CORS header to be set.
 					// i.e OPTIONS will be manually injected into `Access-Control-Allow-Methods` header
