@@ -96,6 +96,7 @@ configFiles:
       allowed-origins: [ "*" ]
       log-level: debug
       btc-net: "signet"
+      max-request-size: 40960
     db:
       address: mongodb://mongodb-headless.mongodb-staking-api:27017
       db-name: staking-api-service

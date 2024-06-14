@@ -21,6 +21,7 @@ type ServerConfig struct {
 	AllowedOrigins []string      `mapstructure:"allowed-origins"`
 	BTCNet         string        `mapstructure:"btc-net"`
 	LogLevel       string        `mapstructure:"log-level"`
+	MaxRequestSize int64         `mapstructure:"max-request-size"`
 
 	BTCNetParam *chaincfg.Params
 }
@@ -53,6 +54,10 @@ func (cfg *ServerConfig) Validate() error {
 	}
 
 	cfg.BTCNetParam = btcNet
+
+	if cfg.MaxRequestSize < 0 {
+		return errors.New("max request size cannot be negative")
+	}
 
 	return nil
 }

@@ -108,6 +108,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 	// Setup routes
 	r := chi.NewRouter()
 
+	r.Use(middlewares.LimitRequestBodySize(cfg.Server.MaxRequestSize))
 	r.Use(middlewares.CorsMiddleware(cfg))
 	r.Use(middlewares.SecurityHeadersMiddleware())
 	apiServer.SetupRoutes(r)

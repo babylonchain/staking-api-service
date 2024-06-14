@@ -7,6 +7,7 @@ server:
   allowed-origins: [ "*" ]
   log-level: error
   btc-net: "signet"
+  max-request-size: 2048
 db:
   address: "mongodb://localhost:27017"
   db-name: staking-api-service

@@ -30,6 +30,7 @@ func New(
 	}
 	zerolog.SetGlobalLevel(logLevel)
 
+	r.Use(middlewares.LimitRequestBodySize(cfg.Server.MaxRequestSize))
 	r.Use(middlewares.CorsMiddleware(cfg))
 	r.Use(middlewares.SecurityHeadersMiddleware())
 	r.Use(middlewares.TracingMiddleware)

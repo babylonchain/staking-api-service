@@ -7,6 +7,7 @@ server:
   allowed-origins: [ "*" ]
   log-level: debug
   btc-net: "mainnet"
+  max-request-size: 40960
 db:
   address: "mongodb://mongodb:27017"
   db-name: staking-api-service

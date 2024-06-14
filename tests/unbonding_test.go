@@ -130,6 +130,34 @@ func TestUnbondingRequest(t *testing.T) {
 	assert.Equal(t, activeStakingEvent.StakingValue, results[0].StakingAmount)
 }
 
+func generate1MBBytes() []byte {
+	const size = 1 * 1024 * 1024 // 1MB in bytes
+	data := make([]byte, size)
+
+	// Fill the byte slice with a repeating pattern (e.g., the byte value 97 which is 'a')
+	for i := range data {
+		data[i] = byte('a') // You can use any byte value here
+	}
+
+	return data
+}
+func TestUnbondingRequestRequestBodySizeTooBig(t *testing.T) {
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+	// Let's make a POST request to the unbonding endpoint
+	unbondingUrl := testServer.Server.URL + unbondingPath
+
+	// generate a 1MB payload with random string
+	requestBody := generate1MBBytes()
+	resp, err := http.Post(unbondingUrl, "application/json", bytes.NewReader(requestBody))
+	// it shall fail due to the request body size is too big
+	assert.NoError(t, err, "making POST request to unbonding endpoint should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 400 Bad Request
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
 func TestUnbondingRequestEligibilityWhenNoMatchingDelegation(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	activeStakingEvent := generateRandomActiveStakingEvents(t, r, &TestActiveEventGeneratorOpts{
