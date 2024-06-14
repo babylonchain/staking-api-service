@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"math"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -354,7 +355,8 @@ func FuzzTestTopStakersWithPaginationResponse(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		numOfStakers := randomPositiveInt(r, 10)
-		paginationSize := randomPositiveInt(r, 10)
+		// Pagination size shall alway be greater than 2
+		paginationSize := randomPositiveInt(r, 10) + 1
 		var events []*client.ActiveStakingEvent
 		for i := 0; i < numOfStakers; i++ {
 			opts := &TestActiveEventGeneratorOpts{
@@ -382,8 +384,9 @@ func FuzzTestTopStakersWithPaginationResponse(f *testing.F) {
 		url := testServer.Server.URL + topStakerStatsPath
 		var paginationKey string
 		var allDataCollected []services.StakerStatsPublic
-		var numOfPaginatedResponse int
+		var numOfRequestsToFetchAllResults int
 		for {
+			numOfRequestsToFetchAllResults++
 			resp, err := http.Get(url + "?pagination_key=" + paginationKey)
 			assert.NoError(t, err, "making GET request to staker stats endpoint should not fail")
 			assert.Equal(t, http.StatusOK, resp.StatusCode, "expected HTTP 200 OK status")
@@ -396,15 +399,14 @@ func FuzzTestTopStakersWithPaginationResponse(f *testing.F) {
 			allDataCollected = append(allDataCollected, response.Data...)
 			if response.Pagination.NextKey != "" {
 				assert.NotEmptyf(t, response.Data, "expected response body to have data")
-				assert.Equal(t, paginationSize, len(response.Data), "expected 10 items in the pagination response")
+				assert.Equal(t, paginationSize, len(response.Data))
 				paginationKey = response.Pagination.NextKey
-				numOfPaginatedResponse++
 			} else {
 				break
 			}
 		}
 
-		assert.Equal(t, numOfStakers/paginationSize, numOfPaginatedResponse)
+		assert.Equal(t, math.Ceil(float64(numOfStakers)/float64(paginationSize)), float64(numOfRequestsToFetchAllResults))
 		assert.Equal(t, numOfStakers, len(allDataCollected))
 		for i := 0; i < len(allDataCollected)-1; i++ {
 			assert.True(t, allDataCollected[i].ActiveTvl >= allDataCollected[i+1].ActiveTvl, "expected collected data to be sorted by start height")

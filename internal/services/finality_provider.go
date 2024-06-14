@@ -88,9 +88,14 @@ func (s *Services) GetFinalityProviders(ctx context.Context, page string) ([]*Fp
 		// Return the finality providers from global params as a fallback
 		return buildFallbackFpDetailsPublic(fpParams), "", nil
 	}
-	// If no finality providers are found in the DB,
-	// return the finality providers from global params as a fallback
-	if len(resultMap.Data) == 0 {
+
+	/*
+		If no finality providers are found in the database and no pagination token
+		is provided (indicating this is the first page), return the finality providers
+		from the global parameters as a fallback. This fallback is only necessary when
+		launching the service for the first time and no finality providers are found in the database.
+	*/
+	if (len(resultMap.Data) == 0) && (page == "") {
 		return buildFallbackFpDetailsPublic(fpParams), "", nil
 	}
 

@@ -54,8 +54,8 @@ func (cfg *DbConfig) Validate() error {
 		return fmt.Errorf("port number must be between 1024 and 65535 (inclusive)")
 	}
 
-	if cfg.MaxPaginationLimit <= 0 {
-		return fmt.Errorf("max pagination limit must be greater than 0")
+	if cfg.MaxPaginationLimit < 2 {
+		return fmt.Errorf("max pagination limit must be greater than 1")
 	}
 
 	if cfg.DbBatchSizeLimit <= 0 {
