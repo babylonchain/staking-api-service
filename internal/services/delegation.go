@@ -30,7 +30,7 @@ type DelegationPublic struct {
 	IsOverflow            bool               `json:"is_overflow"`
 }
 
-func fromDelegationDocument(d model.DelegationDocument) DelegationPublic {
+func FromDelegationDocument(d *model.DelegationDocument) DelegationPublic {
 	delPublic := DelegationPublic{
 		StakingTxHashHex:      d.StakingTxHashHex,
 		StakerPkHex:           d.StakerPkHex,
@@ -72,7 +72,7 @@ func (s *Services) DelegationsByStakerPk(ctx context.Context, stakerPk string, p
 	}
 	var delegations []DelegationPublic = make([]DelegationPublic, 0, len(resultMap.Data))
 	for _, d := range resultMap.Data {
-		delegations = append(delegations, fromDelegationDocument(d))
+		delegations = append(delegations, FromDelegationDocument(&d))
 	}
 	return delegations, resultMap.PaginationToken, nil
 }
