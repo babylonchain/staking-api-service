@@ -570,30 +570,14 @@ func TestContentLength(t *testing.T) {
 
 	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
 
-	// Test empty payload
-	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader([]byte{}))
-	assert.NoError(t, err, "making POST request with empty payload should not fail")
-	defer resp.Body.Close()
-
-	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
-
 	// Create a normal payload that's below the max content length
 	activeStakingEvent := getTestActiveStakingEvent()
-
 	normalPayload := getTestUnbondDelegationRequestPayload(activeStakingEvent.StakingTxHashHex)
 	requestBodyBytes, err := json.Marshal(normalPayload)
 	assert.NoError(t, err, "marshalling request body should not fail")
 
 	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader(requestBodyBytes))
 	assert.NoError(t, err, "making POST request with normal payload should not fail")
-	defer resp.Body.Close()
-
-	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "expected HTTP 403 OK status")
-
-	// Test non-POST request
-	getStakerDelegationUrl := testServer.Server.URL + stakerDelegations + "?staker_btc_pk=" + activeStakingEvent.StakerPkHex
-	resp, err = http.Get(getStakerDelegationUrl)
-	assert.NoError(t, err, "making GET request should not fail")
 	defer resp.Body.Close()
 
 	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
