@@ -16,6 +16,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
+	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
@@ -526,4 +527,58 @@ func TestUnbondingRequestValidation(t *testing.T) {
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 	assert.Equal(t, types.ValidationError.String(), unbondingResponse.ErrorCode)
 	assert.Equal(t, "unbonding_tx_hash_hex must match the hash calculated from the provided unbonding tx", unbondingResponse.Message)
+}
+
+func TestContentLength(t *testing.T) {
+	// Setup test server with ContentLengthMiddleware
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+
+	unbondingUrl := testServer.Server.URL + unbondingPath
+
+	cfg, err := config.New("./config/config-test.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	maxContentLength := cfg.Server.MaxContentLength
+
+	// Create a payload that exceeds the max content length
+	exceedingPayloadLen := maxContentLength + 1
+	exceedingPayload := make([]byte, exceedingPayloadLen)
+	for i := range exceedingPayload {
+		exceedingPayload[i] = 'a'
+	}
+
+	// Make a POST request with the exceeding payload
+	resp, err := http.Post(unbondingUrl, "application/json", bytes.NewReader(exceedingPayload))
+	assert.NoError(t, err, "making POST request with exceeding payload should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 413 Request Entity Too Large
+	assert.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected HTTP 413 Request Entity Too Large status")
+
+	// Test payload exactly at the limit
+	exactPayload := make([]byte, maxContentLength)
+	for i := range exactPayload {
+		exactPayload[i] = 'a'
+	}
+
+	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader(exactPayload))
+	assert.NoError(t, err, "making POST request with exact payload should not fail")
+	defer resp.Body.Close()
+
+	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
+
+	// Create a normal payload that's below the max content length
+	activeStakingEvent := getTestActiveStakingEvent()
+	normalPayload := getTestUnbondDelegationRequestPayload(activeStakingEvent.StakingTxHashHex)
+	requestBodyBytes, err := json.Marshal(normalPayload)
+	assert.NoError(t, err, "marshalling request body should not fail")
+
+	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader(requestBodyBytes))
+	assert.NoError(t, err, "making POST request with normal payload should not fail")
+	defer resp.Body.Close()
+
+	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
 }
