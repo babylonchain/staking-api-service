@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
@@ -23,5 +24,5 @@ func (h *Handler) GetDelegationByTxHash(request *http.Request) (*Result, *types.
 		return nil, err
 	}
 
-	return NewResult(delegation), nil
+	return NewResult(services.FromDelegationDocument(delegation)), nil
 }
