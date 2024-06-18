@@ -20,7 +20,7 @@ const (
 	delegationRouter = "/v1/delegation"
 )
 
-func TestActiveStaking(t *testing.T) {
+func TestGetDelegationByTxHashHex(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	activeStakingEvent := generateRandomActiveStakingEvents(t, r, &TestActiveEventGeneratorOpts{
 		NumOfEvents:       1,
@@ -55,4 +55,5 @@ func TestActiveStaking(t *testing.T) {
 
 	// Check that the response body is as expected
 	assert.Equal(t, "unbonded", response.Data.State)
+	assert.Equal(t, activeStakingEvent[0].StakingTxHashHex, response.Data.StakingTxHashHex)
 }
