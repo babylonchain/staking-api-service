@@ -571,6 +571,9 @@ const docTemplate = `{
                 "activation_height": {
                     "type": "integer"
                 },
+                "cap_height": {
+                    "type": "integer"
+                },
                 "confirmation_depth": {
                     "type": "integer"
                 },

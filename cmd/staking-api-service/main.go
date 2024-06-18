@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/babylonchain/staking-api-service/cmd/staking-api-service/cli"
+	"github.com/babylonchain/staking-api-service/cmd/staking-api-service/scripts"
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
@@ -63,6 +64,17 @@ func main() {
 	}
 	// Start the event queue processing
 	queues := queue.New(&cfg.Queue, services)
+
+	// Check if the replay flag is set
+	if cli.GetReplayFlag() {
+		log.Info().Msg("Replay flag is set. Starting replay of unprocessable messages.")
+		err := scripts.ReplayUnprocessableMessages(ctx, cfg, queues, services.DbClient)
+		if err != nil {
+			log.Fatal().Err(err).Msg("error while replaying unprocessable messages")
+		}
+		return
+	}
+
 	queues.StartReceivingMessages()
 
 	apiServer, err := api.New(ctx, cfg, services)

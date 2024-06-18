@@ -265,8 +265,7 @@ func sendTestMessage[T any](client client.QueueClient, data []T) error {
 	return nil
 }
 
-// Inspect the items in the real database
-func inspectDbDocuments[T any](t *testing.T, collectionName string) ([]T, error) {
+func directDbConnection(t *testing.T) (*db.Database) {
 	cfg, err := config.New("./config/config-test.yml")
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
@@ -276,8 +275,26 @@ func inspectDbDocuments[T any](t *testing.T, collectionName string) ([]T, error)
 	if err != nil {
 		log.Fatal(err)
 	}
-	database := client.Database(cfg.Db.DbName)
-	collection := database.Collection(collectionName)
+	return &db.Database{
+		DbName: cfg.Db.DbName,
+		Client: client,
+	}
+}
+
+func injectDbDocuments[T any](t *testing.T, collectionName string, doc T) {
+	connection := directDbConnection(t)
+	collection := connection.Client.Database(connection.DbName).Collection(collectionName)
+
+	_, err := collection.InsertOne(context.Background(), doc)
+	if err != nil {
+		t.Fatalf("Failed to insert document: %v", err)
+	}
+}
+
+// Inspect the items in the real database
+func inspectDbDocuments[T any](t *testing.T, collectionName string) ([]T, error) {
+		connection := directDbConnection(t)
+	collection := connection.Client.Database(connection.DbName).Collection(collectionName)
 
 	cursor, err := collection.Find(context.Background(), bson.D{})
 	if err != nil {

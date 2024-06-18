@@ -23,6 +23,8 @@ type DBClient interface {
 	FindDelegationByTxHashHex(ctx context.Context, txHashHex string) (*model.DelegationDocument, error)
 	SaveTimeLockExpireCheck(ctx context.Context, stakingTxHashHex string, expireHeight uint64, txType string) error
 	SaveUnprocessableMessage(ctx context.Context, messageBody, receipt string) error
+	FindUnprocessableMessages(ctx context.Context) ([]model.UnprocessableMessageDocument, error)
+	DeleteUnprocessableMessage(ctx context.Context, Receipt interface{}) error
 	TransitionToUnbondedState(
 		ctx context.Context, stakingTxHashHex string, eligiblePreviousState []types.DelegationState,
 	) error
