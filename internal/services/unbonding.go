@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
@@ -59,7 +60,8 @@ func (s *Services) UnbondDelegation(
 		paramsVersion,
 		s.cfg.Server.BTCNetParam,
 	); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msg("did not pass unbonding request verification")
+		log.Ctx(ctx).Warn().Err(err).Msg(fmt.Sprintf("unbonding request did not pass unbonding request verification, staking tx hash: %s, unbonding tx hash: %s",
+			delegationDoc.StakingTxHashHex, unbondingTxHashHex))
 		return types.NewError(http.StatusForbidden, types.ValidationError, err)
 	}
 

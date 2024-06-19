@@ -55,7 +55,7 @@ func parseUnbondingTxHex(unbondingTxHex string) (*wire.MsgTx, error) {
 	}
 
 	if err := btcstaking.IsSimpleTransfer(unbondingTx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("the unbonding tx is not a simple transfer: %w", err)
 	}
 
 	return unbondingTx, nil
@@ -77,7 +77,7 @@ func VerifyUnbondingRequest(
 	// 1. validate that un-bonding transaction has proper shape
 	unbondingTx, err := parseUnbondingTxHex(unbondingTxHex)
 	if err != nil {
-		return fmt.Errorf("failed to parse unbonding tx hex: %w", err)
+		return fmt.Errorf("invalid unbonding tx hex: %w", err)
 	}
 
 	// 2. validate that un-bonding tx hash is valid and matches the hash of the
