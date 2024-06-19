@@ -17,7 +17,7 @@ type OverallStatsPublic struct {
 	TotalDelegations  int64  `json:"total_delegations"`
 	TotalStakers      uint64 `json:"total_stakers"`
 	UnconfirmedTvl    uint64 `json:"unconfirmed_tvl"`
-	PendingTvl				uint64 `json:"pending_tvl"`
+	PendingTvl        uint64 `json:"pending_tvl"`
 }
 
 type StakerStatsPublic struct {
