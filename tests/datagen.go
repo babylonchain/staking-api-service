@@ -9,12 +9,13 @@ import (
 	"time"
 
 	bbndatagen "github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+
+	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -122,6 +123,36 @@ func generateRandomTx(r *rand.Rand) (*wire.MsgTx, string, error) {
 				},
 				SignatureScript: bbndatagen.GenRandomByteArray(r, 10),
 				Sequence:        r.Uint32(),
+			},
+		},
+		TxOut: []*wire.TxOut{
+			{
+				Value:    int64(r.Int31()),
+				PkScript: bbndatagen.GenRandomByteArray(r, 80),
+			},
+		},
+		LockTime: 0,
+	}
+	var buf bytes.Buffer
+	if err := tx.Serialize(&buf); err != nil {
+		return nil, "", err
+	}
+	txHex := hex.EncodeToString(buf.Bytes())
+
+	return tx, txHex, nil
+}
+
+func generateRandomTxWithRbfDisabled(r *rand.Rand) (*wire.MsgTx, string, error) {
+	tx := &wire.MsgTx{
+		Version: 1,
+		TxIn: []*wire.TxIn{
+			{
+				PreviousOutPoint: wire.OutPoint{
+					Hash:  chainhash.HashH(bbndatagen.GenRandomByteArray(r, 10)),
+					Index: r.Uint32(),
+				},
+				SignatureScript: bbndatagen.GenRandomByteArray(r, 10),
+				Sequence:        wire.MaxTxInSequenceNum,
 			},
 		},
 		TxOut: []*wire.TxOut{
