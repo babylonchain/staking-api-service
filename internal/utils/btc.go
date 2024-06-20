@@ -8,13 +8,14 @@ import (
 	"github.com/babylonchain/babylon/btcstaking"
 	"github.com/babylonchain/babylon/crypto/bip322"
 	bbntypes "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+
+	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 // GetSchnorrPkFromHex parses Schnorr public keys in 32 bytes
@@ -52,15 +53,11 @@ func parseUnbondingTxHex(unbondingTxHex string) (*wire.MsgTx, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode unbonding tx from hex: %w", err)
 	}
-	if len(unbondingTx.TxIn) != 1 {
-		return nil, fmt.Errorf("unbonding tx must have 1 input, got %d", len(unbondingTx.TxIn))
+
+	if err := btcstaking.IsSimpleTransfer(unbondingTx); err != nil {
+		return nil, fmt.Errorf("the unbonding tx is not a simple transfer: %w", err)
 	}
-	if len(unbondingTx.TxOut) != 1 {
-		return nil, fmt.Errorf("unbonding tx must have 1 output, got %d", len(unbondingTx.TxOut))
-	}
-	if unbondingTx.LockTime != 0 {
-		return nil, fmt.Errorf("unbonding tx must have lock time equal to 0, got %d", unbondingTx.LockTime)
-	}
+
 	return unbondingTx, nil
 }
 
@@ -80,7 +77,7 @@ func VerifyUnbondingRequest(
 	// 1. validate that un-bonding transaction has proper shape
 	unbondingTx, err := parseUnbondingTxHex(unbondingTxHex)
 	if err != nil {
-		return fmt.Errorf("failed to parse unbonding tx hex: %w", err)
+		return fmt.Errorf("invalid unbonding tx hex: %w", err)
 	}
 
 	// 2. validate that un-bonding tx hash is valid and matches the hash of the

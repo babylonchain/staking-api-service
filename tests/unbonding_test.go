@@ -16,6 +16,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
+	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
@@ -163,15 +164,15 @@ func TestUnbondingRequestEligibilityWhenNoMatchingDelegation(t *testing.T) {
 func getTestActiveStakingEvent() *client.ActiveStakingEvent {
 	return &client.ActiveStakingEvent{
 		EventType:             client.ActiveStakingEventType,
-		StakingTxHashHex:      "379155a9a081771ca64b5f73d3bf9d7611eb767d5a9f5c40aa6d769576fd35bc",
-		StakerPkHex:           "b0f61bfae41af83d851a8211f82df861e93b3d39fd40a9b0e7f83bb655dad70b",
+		StakingTxHashHex:      "06cb98777a9cc5d3556498f6e5607947759e60f01e1441b6ce375174b8588037",
+		StakerPkHex:           "91fef91f0f00d010d6c918acb9197db6cd33d99ee617090fa8cb61fa2a31405a",
 		FinalityProviderPkHex: "03d5a0bb72d71993e435d6c5a70e2aa4db500a62cfaae33c56050deefee64ec0",
 		StakingValue:          100000,
 		StakingStartTimestamp: 1714035159,
-		StakingStartHeight:    111,
-		StakingTimeLock:       10000,
+		StakingStartHeight:    102,
+		StakingTimeLock:       100,
 		StakingOutputIndex:    1,
-		StakingTxHex:          "010000000001019c867aa13a8562bc3bc53e1c59d2b4a83a9013557df575c44329d26105312d4c0000000000ffffffff030000000000000000496a476262743400b0f61bfae41af83d851a8211f82df861e93b3d39fd40a9b0e7f83bb655dad70b03d5a0bb72d71993e435d6c5a70e2aa4db500a62cfaae33c56050deefee64ec02710a0860100000000002251209e18982db19feae01b8dc208eca14b9dd7272774f0c06abc8c136b4783646fe2756a042a0100000016001403bff551edfca4d8eaaf0e5df31e391a9ed2c0360247304402204999ab524edc59ad93e6d96774f80c1dd6802f8efa53ad1f34bbcf56aa0ce889022014563a81ff980236f00c62bbf945093551f995beb806d37429729a4b998c8bd5012102b0f61bfae41af83d851a8211f82df861e93b3d39fd40a9b0e7f83bb655dad70b00000000",
+		StakingTxHex:          "0100000000010103f23a34f828a8335be0ce0400b0f1b8a5a26fd04b94abcff2ce59443b373fff0000000000ffffffff030000000000000000496a47010203040091fef91f0f00d010d6c918acb9197db6cd33d99ee617090fa8cb61fa2a31405a03d5a0bb72d71993e435d6c5a70e2aa4db500a62cfaae33c56050deefee64ec00064a08601000000000022512072a6ef79c17676fb1b54a157a4921fa57f4295dae778a423523a378171b09f3e756a042a01000000160014257cf22a8f4502076820609a30d7370856c342c40247304402203fd7b14cd32f7640c8575fe7516b2b3233c9eb3b956fe9d26bb67c156287787d0220093a1a2cd9276b53f60435fbbc55e9c007f607987c1d62f259f14ddd14a5cab501210291fef91f0f00d010d6c918acb9197db6cd33d99ee617090fa8cb61fa2a31405a00000000",
 		IsOverflow:            false,
 	}
 }
@@ -179,9 +180,9 @@ func getTestActiveStakingEvent() *client.ActiveStakingEvent {
 func getTestUnbondDelegationRequestPayload(stakingTxHashHex string) handlers.UnbondDelegationRequestPayload {
 	return handlers.UnbondDelegationRequestPayload{
 		StakingTxHashHex:         stakingTxHashHex,
-		UnbondingTxHashHex:       "47ed9d80620b118c4ca558c9dd51b59fb03598eeb1674fbe57c6f7dfbbd97c7e",
-		UnbondingTxHex:           "02000000000101bc35fd7695766daa405c9f5a7d76eb11769dbfd3735f4ba61c7781a0a95591370100000000ffffffff01905f01000000000022512088ae21776ea179e439e771e649a0d3b39a755e308ba0af8c71d0c2047933d6870440d780fa0e6dd463db09ad35df89c2be1eb23ad1a3d6b4dd7307894941621189a5f694d3d3eb059d7af6918695dd725c1de5abe80fb6d96f613e213af4aba303b340d0eaabc52fb941616e2da0c4a506e2694a7f82f73a4c29fef031e6a6de7982431a5eabf40ed45674c8f72d6f0c93c68dcca6706ff6009e26914f68cfa1d31411ce20b0f61bfae41af83d851a8211f82df861e93b3d39fd40a9b0e7f83bb655dad70bad2057349e985e742d5131e1e2b227b5170f6350ac2e2feb72254fcc25b3cee21a18ac2059d3532148a597a2d05c0395bf5f7176044b1cd312f37701a9b4d0aad70bc5a4ba20a5c60c2188e833d39d0fa798ab3f69aa12ed3dd2f3bad659effa252782de3c31ba20c8ccb03c379e452f10c81232b41a1ca8b63d0baf8387e57d302c987e5abb8527ba20ffeaec52a9b407b355ef6967a7ffc15fd6c3fe07de2844d61550475e7a5233e5ba539c61c050929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac07f9cd831c337b41bc9c6768468ea1eadb6f43285948e24ccc789629a72ddc116b83fc844969081daa83469d937e5aad55b7ae93c2df837496391c5e8d927a06700000000",
-		StakerSignedSignatureHex: "d0eaabc52fb941616e2da0c4a506e2694a7f82f73a4c29fef031e6a6de7982431a5eabf40ed45674c8f72d6f0c93c68dcca6706ff6009e26914f68cfa1d31411",
+		UnbondingTxHashHex:       "17aad3b01a9fa134f0e6374b9ad1b049376a9bdbd889afc369dcb8074bbdf1b3",
+		UnbondingTxHex:           "02000000000101378058b8745137ceb641141ef0609e75477960e5f6986455d3c59c7a7798cb060100000000ffffffff01905f010000000000225120ba296d88e83fd2faf5864ddda74ac8d0df6a7d76b39d5ef4c0751117a26cfd3104403c3d32c844ff751de59190ffc57427794450ba97b0d6ead43d53d865b34021abb52a6370382cfc46416f42f28d32704e504f84720d8458b5d51fee69d28cf94940728ab06ac8ab2f14b4c60cacb0e8932760f1559df93dd9053327e72cec53fc9749d5abaa4a96758b7f3588b3ad80e4c157233f1e689a37bea3ccaa9e50ba153ece2091fef91f0f00d010d6c918acb9197db6cd33d99ee617090fa8cb61fa2a31405aad2057349e985e742d5131e1e2b227b5170f6350ac2e2feb72254fcc25b3cee21a18ac2059d3532148a597a2d05c0395bf5f7176044b1cd312f37701a9b4d0aad70bc5a4ba20a5c60c2188e833d39d0fa798ab3f69aa12ed3dd2f3bad659effa252782de3c31ba20c8ccb03c379e452f10c81232b41a1ca8b63d0baf8387e57d302c987e5abb8527ba20ffeaec52a9b407b355ef6967a7ffc15fd6c3fe07de2844d61550475e7a5233e5ba539c61c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0957294d847c7353393803c6a2c03d6b777bb2cbb69aa4c85291d2d9bb981bb59cc2f4c8bba33b96629a6e942aad0c9815a4e5e7322f63e521e762371b71e3c1300000000",
+		StakerSignedSignatureHex: "728ab06ac8ab2f14b4c60cacb0e8932760f1559df93dd9053327e72cec53fc9749d5abaa4a96758b7f3588b3ad80e4c157233f1e689a37bea3ccaa9e50ba153e",
 	}
 }
 
@@ -500,7 +501,7 @@ func TestUnbondingRequestValidation(t *testing.T) {
 	// Test case 1: Hash from unbonding request does not match the hash on unbonding tranactions
 	_, stakingTxHashHex := randomBytes(r, 32)
 	_, unbondingTxHashHex := randomBytes(r, 32)
-	_, unbondingTxHex, _ := generateRandomTx(r)
+	_, unbondingTxHex, _ := generateRandomTxWithRbfDisabled(r)
 	_, fakeSig := randomBytes(r, 64)
 
 	payload := handlers.UnbondDelegationRequestPayload{
@@ -526,4 +527,87 @@ func TestUnbondingRequestValidation(t *testing.T) {
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 	assert.Equal(t, types.ValidationError.String(), unbondingResponse.ErrorCode)
 	assert.Equal(t, "unbonding_tx_hash_hex must match the hash calculated from the provided unbonding tx", unbondingResponse.Message)
+
+	// Test case 2: unbonding tx input enables rbf
+	_, stakingTxHashHex = randomBytes(r, 32)
+	unbondingTx, unbondingTxHex, _ := generateRandomTx(r)
+	unbondingTxHashHex = unbondingTx.TxHash().String()
+	_, fakeSig = randomBytes(r, 64)
+
+	payload = handlers.UnbondDelegationRequestPayload{
+		StakingTxHashHex: stakingTxHashHex,
+		// unbondingTxHashHex does not match the hash of unbondingTxHex as it is
+		// generated randomly
+		UnbondingTxHashHex:       unbondingTxHashHex,
+		UnbondingTxHex:           unbondingTxHex,
+		StakerSignedSignatureHex: fakeSig,
+	}
+
+	requestBodyBytes, err = json.Marshal(payload)
+	assert.NoError(t, err, "marshalling request body should not fail")
+
+	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader(requestBodyBytes))
+	assert.NoError(t, err, "making POST request to unbonding endpoint should not fail")
+	defer resp.Body.Close()
+	bodyBytes, err = io.ReadAll(resp.Body)
+	assert.NoError(t, err, "reading response body should not fail")
+
+	err = json.Unmarshal(bodyBytes, &unbondingResponse)
+	assert.NoError(t, err, "unmarshalling response body should not fail")
+	assert.Equal(t, types.ValidationError.String(), unbondingResponse.ErrorCode)
+	assert.Equal(t, "invalid unbonding tx hex: the unbonding tx is not a simple transfer: simple transfer tx must not be replacable", unbondingResponse.Message)
+}
+
+func TestContentLength(t *testing.T) {
+	// Setup test server with ContentLengthMiddleware
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+
+	unbondingUrl := testServer.Server.URL + unbondingPath
+
+	cfg, err := config.New("./config/config-test.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	maxContentLength := cfg.Server.MaxContentLength
+
+	// Create a payload that exceeds the max content length
+	exceedingPayloadLen := maxContentLength + 1
+	exceedingPayload := make([]byte, exceedingPayloadLen)
+	for i := range exceedingPayload {
+		exceedingPayload[i] = 'a'
+	}
+
+	// Make a POST request with the exceeding payload
+	resp, err := http.Post(unbondingUrl, "application/json", bytes.NewReader(exceedingPayload))
+	assert.NoError(t, err, "making POST request with exceeding payload should not fail")
+	defer resp.Body.Close()
+
+	// Check that the status code is HTTP 413 Request Entity Too Large
+	assert.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected HTTP 413 Request Entity Too Large status")
+
+	// Test payload exactly at the limit
+	exactPayload := make([]byte, maxContentLength)
+	for i := range exactPayload {
+		exactPayload[i] = 'a'
+	}
+
+	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader(exactPayload))
+	assert.NoError(t, err, "making POST request with exact payload should not fail")
+	defer resp.Body.Close()
+
+	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
+
+	// Create a normal payload that's below the max content length
+	activeStakingEvent := getTestActiveStakingEvent()
+	normalPayload := getTestUnbondDelegationRequestPayload(activeStakingEvent.StakingTxHashHex)
+	requestBodyBytes, err := json.Marshal(normalPayload)
+	assert.NoError(t, err, "marshalling request body should not fail")
+
+	resp, err = http.Post(unbondingUrl, "application/json", bytes.NewReader(requestBodyBytes))
+	assert.NoError(t, err, "making POST request with normal payload should not fail")
+	defer resp.Body.Close()
+
+	assert.NotEqual(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "expected status other than HTTP 413 Request Entity Too Large")
 }
