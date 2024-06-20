@@ -6,7 +6,7 @@ toolchain go1.22.4
 
 require (
 	github.com/babylonchain/babylon v0.8.6-0.20240426101001-7778c798e236
-	github.com/babylonchain/networks/parameters v0.2.0
+	github.com/babylonchain/networks/parameters v0.2.1
 	github.com/babylonchain/staking-queue-client v0.2.1
 	github.com/btcsuite/btcd v0.24.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2

@@ -16,7 +16,7 @@
             "unbonding_time": 1000,
             "unbonding_fee": 10000,
             "max_staking_amount": 300000,
-            "min_staking_amount": 3000,
+            "min_staking_amount": 30000,
             "max_staking_time": 10000,
             "min_staking_time": 100,
             "confirmation_depth": 10
@@ -36,7 +36,7 @@
             "unbonding_time": 2000,
             "unbonding_fee": 20000,
             "max_staking_amount": 200000,
-            "min_staking_amount": 2000,
+            "min_staking_amount": 30000,
             "max_staking_time": 20000,
             "min_staking_time": 200,
             "confirmation_depth": 10
@@ -56,7 +56,7 @@
             "unbonding_time": 2000,
             "unbonding_fee": 20000,
             "max_staking_amount": 200000,
-            "min_staking_amount": 2000,
+            "min_staking_amount": 30000,
             "max_staking_time": 20000,
             "min_staking_time": 200,
             "confirmation_depth": 10
@@ -76,7 +76,7 @@
             "unbonding_time": 2000,
             "unbonding_fee": 20000,
             "max_staking_amount": 200000,
-            "min_staking_amount": 2000,
+            "min_staking_amount": 30000,
             "max_staking_time": 20000,
             "min_staking_time": 200,
             "confirmation_depth": 10

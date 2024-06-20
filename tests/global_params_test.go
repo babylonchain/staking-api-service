@@ -10,7 +10,6 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
 	"github.com/babylonchain/staking-api-service/internal/services"
-	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 const (
@@ -53,7 +52,7 @@ func TestGlobalParams(t *testing.T) {
 	assert.Equal(t, uint64(1000), versionedGlobalParam.UnbondingTime)
 	assert.Equal(t, uint64(10000), versionedGlobalParam.UnbondingFee)
 	assert.Equal(t, uint64(300000), versionedGlobalParam.MaxStakingAmount)
-	assert.Equal(t, uint64(3000), versionedGlobalParam.MinStakingAmount)
+	assert.Equal(t, uint64(30000), versionedGlobalParam.MinStakingAmount)
 	assert.Equal(t, uint64(10000), versionedGlobalParam.MaxStakingTime)
 	assert.Equal(t, uint64(100), versionedGlobalParam.MinStakingTime)
 	assert.Equal(t, uint64(10), versionedGlobalParam.ConfirmationDepth)
@@ -68,7 +67,7 @@ func TestGlobalParams(t *testing.T) {
 	assert.Equal(t, uint64(2000), versionedGlobalParam2.UnbondingTime)
 	assert.Equal(t, uint64(20000), versionedGlobalParam2.UnbondingFee)
 	assert.Equal(t, uint64(200000), versionedGlobalParam2.MaxStakingAmount)
-	assert.Equal(t, uint64(2000), versionedGlobalParam2.MinStakingAmount)
+	assert.Equal(t, uint64(30000), versionedGlobalParam2.MinStakingAmount)
 	assert.Equal(t, uint64(20000), versionedGlobalParam2.MaxStakingTime)
 	assert.Equal(t, uint64(200), versionedGlobalParam2.MinStakingTime)
 	assert.Equal(t, uint64(10), versionedGlobalParam2.ConfirmationDepth)
@@ -84,26 +83,4 @@ func TestGlobalParams(t *testing.T) {
 	assert.Equal(t, uint64(400), versionedGlobalParam4.ActivationHeight)
 	assert.Equal(t, uint64(1000), versionedGlobalParam4.CapHeight)
 	assert.Equal(t, uint64(0), versionedGlobalParam4.StakingCap)
-}
-
-var defaultParam = types.VersionedGlobalParams{
-	Version:          0,
-	ActivationHeight: 100,
-	StakingCap:       50,
-	Tag:              "01020304",
-	CovenantPks: []string{
-		"03ffeaec52a9b407b355ef6967a7ffc15fd6c3fe07de2844d61550475e7a5233e5",
-		"03a5c60c2188e833d39d0fa798ab3f69aa12ed3dd2f3bad659effa252782de3c31",
-		"0359d3532148a597a2d05c0395bf5f7176044b1cd312f37701a9b4d0aad70bc5a4",
-		"0357349e985e742d5131e1e2b227b5170f6350ac2e2feb72254fcc25b3cee21a18",
-		"03c8ccb03c379e452f10c81232b41a1ca8b63d0baf8387e57d302c987e5abb8527",
-	},
-	CovenantQuorum:    3,
-	UnbondingTime:     1000,
-	UnbondingFee:      10000,
-	MaxStakingAmount:  300000,
-	MinStakingAmount:  3000,
-	MaxStakingTime:    10000,
-	MinStakingTime:    100,
-	ConfirmationDepth: 10,
 }
