@@ -26,6 +26,7 @@ type StakerStatsPublic struct {
 	TotalTvl          int64  `json:"total_tvl"`
 	ActiveDelegations int64  `json:"active_delegations"`
 	TotalDelegations  int64  `json:"total_delegations"`
+	WithdrawableTvl   int64  `json:"withdrawable_tvl"`
 }
 
 // ProcessStakingStatsCalculation calculates the staking stats and updates the database.
@@ -198,4 +199,45 @@ func (s *Services) ProcessBtcInfoStats(
 		return types.NewInternalServiceError(err)
 	}
 	return nil
+}
+
+func (s *Services) GetStakerStats(ctx context.Context, stakerPkHex string) (*StakerStatsPublic, *types.Error) {
+	stats, err := s.DbClient.FindStakerStatsByPkHex(ctx, stakerPkHex)
+	if err != nil {
+		if db.IsNotFoundError(err) {
+			log.Ctx(ctx).Warn().Err(err).Str("stakerPkHex", stakerPkHex).Msg("staker stats not found")
+			return nil, types.NewError(http.StatusNotFound, types.NotFound, fmt.Errorf("staker stats not found"))
+		}
+		log.Ctx(ctx).Error().Err(err).Str("stakerPkHex", stakerPkHex).Msg("error while fetching staker stats")
+		return nil, types.NewInternalServiceError(err)
+	}
+
+	return &StakerStatsPublic{
+		StakerPkHex:       stats.StakerPkHex,
+		ActiveTvl:         stats.ActiveTvl,
+		TotalTvl:          stats.TotalTvl,
+		ActiveDelegations: stats.ActiveDelegations,
+		TotalDelegations:  stats.TotalDelegations,
+		WithdrawableTvl:   stats.WithdrawableTvl,
+	}, nil
+}
+
+func (s *Services) UpdateWithdrawableTvl(ctx context.Context, stakerPkHex string, amount uint64) *types.Error {
+    err := s.DbClient.IncrementWithdrawableTvl(ctx, stakerPkHex, int64(amount))
+    if err != nil {
+        log.Ctx(ctx).Error().Err(err).Str("StakerPkHex", stakerPkHex).Msg("Error while updating withdrawable TVL")
+        return types.NewInternalServiceError(err)
+    }
+    
+    return nil
+}
+
+func (s *Services) SubtractWithdrawableTvl(ctx context.Context, stakerPkHex string, amount uint64) *types.Error {
+    err := s.DbClient.SubtractWithdrawableTvl(ctx, stakerPkHex, int64(amount))
+    if err != nil {
+        log.Ctx(ctx).Error().Err(err).Str("StakerPkHex", stakerPkHex).Msg("Error while updating withdrawable TVL")
+        return types.NewInternalServiceError(err)
+    }
+    
+    return nil
 }

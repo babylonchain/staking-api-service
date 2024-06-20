@@ -59,6 +59,9 @@ type DBClient interface {
 		ctx context.Context, stakingTxHashHex, stakerPkHex string, amount uint64,
 	) error
 	FindTopStakersByTvl(ctx context.Context, paginationToken string) (*DbResultMap[*model.StakerStatsDocument], error)
+	FindStakerStatsByPkHex(ctx context.Context, stakerPkHex string) (*model.StakerStatsDocument, error)
+	IncrementWithdrawableTvl(ctx context.Context, stakerPkHex string, amount int64) error
+	SubtractWithdrawableTvl(ctx context.Context, stakerPkHex string, amount int64) error
 	UpsertLatestBtcInfo(
 		ctx context.Context, height uint64, confirmedTvl uint64, unconfirmedTvl uint64,
 	) error

@@ -53,5 +53,13 @@ func (h *QueueHandler) WithdrawStakingHandler(ctx context.Context, messageBody s
 		return transitionErr
 	}
 
+	// Perform the stats calculation for the staker by subtracting from the withdrawable TVL
+	statsErr := h.Services.SubtractWithdrawableTvl(ctx, del.StakerPkHex, del.StakingValue)
+	if statsErr != nil {
+		log.Ctx(ctx).Error().Err(statsErr).Str("StakerPkHex", del.StakerPkHex).
+			Msg("Failed to update withdrawable TVL for staker")
+		return statsErr
+	}
+
 	return nil
 }

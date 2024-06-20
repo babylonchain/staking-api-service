@@ -29,6 +29,7 @@ type OverallStatsDocument struct {
 	ActiveDelegations int64  `bson:"active_delegations"`
 	TotalDelegations  int64  `bson:"total_delegations"`
 	TotalStakers      uint64 `bson:"total_stakers"`
+	WithdrawableTvl   int64  `bson:"withdrawable_tvl"`
 }
 
 type FinalityProviderStatsDocument struct {
@@ -60,6 +61,7 @@ type StakerStatsDocument struct {
 	StakerPkHex       string `bson:"_id"`
 	ActiveTvl         int64  `bson:"active_tvl"`
 	TotalTvl          int64  `bson:"total_tvl"`
+	WithdrawableTvl   int64  `bson:"withdrawable_tvl"`
 	ActiveDelegations int64  `bson:"active_delegations"`
 	TotalDelegations  int64  `bson:"total_delegations"`
 }

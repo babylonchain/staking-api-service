@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
@@ -40,4 +41,30 @@ func (h *Handler) GetTopStakerStats(request *http.Request) (*Result, *types.Erro
 	}
 
 	return NewResultWithPagination(topStakerStats, paginationToken), nil
+}
+
+// GetStakerStats gets stats for a specific staker
+// @Summary Get Staker Stats
+// @Description Fetches stats for a specific staker including tvl, total delegations, active tvl, active delegations, and withdrawable tvl.
+// @Produce json
+// @Param staker_pk_hex query string true "user public key hex"
+// @Success 200 {object} PublicResponse[services.StakerStatsPublic] "Stats for the specific staker"
+// @Failure 400 {object} types.Error "Error: Bad Request"
+// @Router /v1/stats/single-staker [get]
+func (h *Handler) GetStakerStats(request *http.Request) (*Result, *types.Error) {
+	stakerPkHex := request.URL.Query().Get("staker_pk_hex")
+	if stakerPkHex == "" {
+		return nil, &types.Error{
+			StatusCode:   http.StatusBadRequest,
+			ErrorCode:    types.BadRequest,
+			Err:          fmt.Errorf("staker_pk_hex query parameter is required"),
+		}
+	}
+
+	stats, err := h.services.GetStakerStats(request.Context(), stakerPkHex)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewResult(stats), nil
 }

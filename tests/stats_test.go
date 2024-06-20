@@ -14,14 +14,16 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/services"
+	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const (
-	overallStatsEndpoint = "/v1/stats"
-	topStakerStatsPath   = "/v1/stats/staker"
+	overallStatsEndpoint  = "/v1/stats"
+	topStakerStatsPath    = "/v1/stats/staker"
+	singleStakerStatsPath = "/v1/stats/single-staker"
 )
 
 func TestStatsShouldBeShardedInDb(t *testing.T) {
@@ -311,6 +313,41 @@ func TestStatsEndpoints(t *testing.T) {
 	overallStats = fetchOverallStatsEndpoint(t, testServer)
 	assert.Equal(t, uint64(100), overallStats.UnconfirmedTvl)
 	assert.Equal(t, int64(90), overallStats.ActiveTvl)
+
+	// send the timelock expire event so that the state change to "unbonded"
+	expiredEvent := client.ExpiredStakingEvent{
+		EventType:        client.ExpiredStakingEventType,
+		StakingTxHashHex: activeStakingEvent.StakingTxHashHex,
+		TxType:           types.UnbondingTxType.ToString(),
+	}
+	sendTestMessage(testServer.Queues.ExpiredStakingQueueClient, []client.ExpiredStakingEvent{expiredEvent})
+	time.Sleep(2 * time.Second)
+
+	// verify stats after sending expired event
+	singleStakerStats := fetchSingleStakerStatsEndpoint(t, testServer, activeStakingEvent.StakerPkHex)
+	assert.Equal(t, activeStakingEvent.StakerPkHex, singleStakerStats.StakerPkHex)
+	assert.Equal(t, int64(0), singleStakerStats.ActiveTvl)
+	assert.Equal(t, int64(activeStakingEvent.StakingValue), singleStakerStats.TotalTvl)
+	assert.Equal(t, int64(0), singleStakerStats.ActiveDelegations)
+	assert.Equal(t, int64(1), singleStakerStats.TotalDelegations)
+	assert.Equal(t, int64(activeStakingEvent.StakingValue), singleStakerStats.WithdrawableTvl)
+
+	// send a withdraw event
+	withdrawEvent := client.WithdrawStakingEvent{
+		EventType:        client.WithdrawStakingEventType,
+		StakingTxHashHex: activeStakingEvent.StakingTxHashHex,
+	}
+	sendTestMessage(testServer.Queues.WithdrawStakingQueueClient, []client.WithdrawStakingEvent{withdrawEvent})
+	time.Sleep(2 * time.Second)
+
+	// verify stats after sending withdraw event
+	singleStakerStats = fetchSingleStakerStatsEndpoint(t, testServer, activeStakingEvent.StakerPkHex)
+	assert.Equal(t, activeStakingEvent.StakerPkHex, singleStakerStats.StakerPkHex)
+	assert.Equal(t, int64(0), singleStakerStats.ActiveTvl)
+	assert.Equal(t, int64(activeStakingEvent.StakingValue), singleStakerStats.TotalTvl)
+	assert.Equal(t, int64(0), singleStakerStats.ActiveDelegations)
+	assert.Equal(t, int64(1), singleStakerStats.TotalDelegations)
+	assert.Equal(t, int64(0), singleStakerStats.WithdrawableTvl)
 }
 
 func FuzzStatsEndpointReturnHighestUnconfirmedTvlFromEvents(f *testing.F) {
@@ -476,4 +513,32 @@ func fetchStakerStatsEndpoint(t *testing.T, testServer *TestServer) ([]services.
 	assert.NoError(t, err, "unmarshalling response body should not fail")
 
 	return responseBody.Data, responseBody.Pagination.NextKey
+}
+
+func fetchSingleStakerStatsEndpoint(t *testing.T, testServer *TestServer, stakerPkHex string) services.StakerStatsPublic {
+	url := testServer.Server.URL + singleStakerStatsPath + "?staker_pk_hex=" + stakerPkHex
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Errorf("making GET request to single staker stats failed: %v", err)
+	}
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			t.Errorf("closing response body failed: %v", err)
+		}
+	}()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("reading response body failed: %v", err)
+	}
+
+	var responseBody handlers.PublicResponse[services.StakerStatsPublic]
+	err = json.Unmarshal(body, &responseBody)
+	if err != nil {
+		t.Errorf("unmarshalling response body failed: %v", err)
+	}
+
+	return responseBody.Data
 }

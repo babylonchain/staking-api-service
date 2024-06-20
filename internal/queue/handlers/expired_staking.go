@@ -44,5 +44,10 @@ func (h *QueueHandler) ExpiredStakingHandler(ctx context.Context, messageBody st
 		return transitionErr
 	}
 
+	statsErr := h.Services.UpdateWithdrawableTvl(ctx, del.StakerPkHex, del.StakingValue)
+	if statsErr != nil {
+		return statsErr
+	}
+
 	return nil
 }

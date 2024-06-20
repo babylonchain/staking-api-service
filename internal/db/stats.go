@@ -7,6 +7,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -411,4 +412,88 @@ func (db *Database) FindTopStakersByTvl(ctx context.Context, paginationToken str
 		ctx, client, filter, opts, db.cfg.MaxPaginationLimit,
 		model.BuildStakerStatsByStakerPaginationToken,
 	)
+}
+
+func (db *Database) FindStakerStatsByPkHex(ctx context.Context, stakerPkHex string) (*model.StakerStatsDocument, error) {
+	client := db.Client.Database(db.DbName).Collection(model.StakerStatsCollection)
+	filter := bson.M{"_id": stakerPkHex}
+	var stakerStats model.StakerStatsDocument
+	err := client.FindOne(ctx, filter).Decode(&stakerStats)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &stakerStats, nil
+}
+
+func (db *Database) IncrementWithdrawableTvl(ctx context.Context, stakerPkHex string, amount int64) error {
+	filter := bson.M{"_id": stakerPkHex}
+	update := bson.M{
+		"$inc": bson.M{"withdrawable_tvl": amount},
+	}
+	stakerStatsClient := db.Client.Database(db.DbName).Collection(model.StakerStatsCollection)
+
+	log.Ctx(ctx).Info().
+		Str("StakerPkHex", stakerPkHex).
+		Int64("Amount", amount).
+		Msg("Incrementing withdrawable TVL")
+
+	log.Ctx(ctx).Debug().
+		Interface("Filter", filter).
+		Interface("Update", update).
+		Msg("MongoDB UpdateOne parameters")
+
+	result, err := stakerStatsClient.UpdateOne(ctx, filter, update)
+	if err != nil {
+		log.Ctx(ctx).Error().
+			Err(err).
+			Str("StakerPkHex", stakerPkHex).
+			Msg("Error incrementing withdrawable TVL")
+		return err
+	}
+
+	log.Ctx(ctx).Info().
+		Str("StakerPkHex", stakerPkHex).
+		Int64("MatchedCount", result.MatchedCount).
+		Int64("ModifiedCount", result.ModifiedCount).
+		Msg("Successfully incremented withdrawable TVL")
+
+	return nil
+}
+
+func (db *Database) SubtractWithdrawableTvl(ctx context.Context, stakerPkHex string, amount int64) error {
+	filter := bson.M{"_id": stakerPkHex}
+	update := bson.M{
+		"$inc": bson.M{"withdrawable_tvl": -amount},
+	}
+	stakerStatsClient := db.Client.Database(db.DbName).Collection(model.StakerStatsCollection)
+
+	log.Ctx(ctx).Info().
+		Str("StakerPkHex", stakerPkHex).
+		Int64("Amount", amount).
+		Msg("Subtracting withdrawable TVL")
+
+	log.Ctx(ctx).Debug().
+		Interface("Filter", filter).
+		Interface("Update", update).
+		Msg("MongoDB UpdateOne parameters")
+
+	result, err := stakerStatsClient.UpdateOne(ctx, filter, update)
+	if err != nil {
+		log.Ctx(ctx).Error().
+			Err(err).
+			Str("StakerPkHex", stakerPkHex).
+			Msg("Error subtracting withdrawable TVL")
+		return err
+	}
+
+	log.Ctx(ctx).Info().
+		Str("StakerPkHex", stakerPkHex).
+		Int64("MatchedCount", result.MatchedCount).
+		Int64("ModifiedCount", result.ModifiedCount).
+		Msg("Successfully subtracted withdrawable TVL")
+
+	return nil
 }
