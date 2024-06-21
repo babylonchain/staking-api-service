@@ -272,10 +272,8 @@ github.com/aws/aws-sdk-go v1.44.312/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/babylonchain/babylon v0.8.6-0.20240426101001-7778c798e236 h1:Ydna4VcP56xu1+zdgygqHdSCeMduZjuznVhr4exO5do=
 github.com/babylonchain/babylon v0.8.6-0.20240426101001-7778c798e236/go.mod h1:lfeASLNJgcUsX7LEns3HRUv0k+MjzcB2q2AMasfz38M=
-github.com/babylonchain/networks/parameters v0.0.0-20240607061738-e995db439421 h1:0SmmRRYQuFBgJ2d0AZWqPRjGUPJCShep/OAIIMMtyJc=
-github.com/babylonchain/networks/parameters v0.0.0-20240607061738-e995db439421/go.mod h1:nejhvrL7Iwh5Vunvkg7pnomQZlHnyNzOY9lQaDp6tOA=
-github.com/babylonchain/networks/parameters v0.2.0 h1:f3e1MwMFm33mIKji7AgQk39aO9YIfbCbbjXtQHEQ99E=
-github.com/babylonchain/networks/parameters v0.2.0/go.mod h1:nejhvrL7Iwh5Vunvkg7pnomQZlHnyNzOY9lQaDp6tOA=
+github.com/babylonchain/networks/parameters v0.2.1 h1:OKHiCnwL/UdVN17cMwCrHz/bAjO/USauLiPyNlnVl6E=
+github.com/babylonchain/networks/parameters v0.2.1/go.mod h1:nejhvrL7Iwh5Vunvkg7pnomQZlHnyNzOY9lQaDp6tOA=
 github.com/babylonchain/staking-queue-client v0.2.1 h1:FKbxUUOoCydAsUoj9XQMIQT1S79ThX9p7vVc5yjWm8c=
 github.com/babylonchain/staking-queue-client v0.2.1/go.mod h1:mEgA6N3SnwFwGEOsUYr/HdjpKa13Wck08MS7VY/Icvo=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
