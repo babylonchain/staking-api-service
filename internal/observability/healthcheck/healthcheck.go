@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/babylonchain/staking-api-service/internal/queue"
 	"github.com/robfig/cron/v3"
@@ -15,15 +16,17 @@ func SetLogger(customLogger zerolog.Logger) {
 	logger = customLogger
 }
 
-func StartHealthCheckCron(ctx context.Context, queues *queue.Queues, cronTime string) error {
+func StartHealthCheckCron(ctx context.Context, queues *queue.Queues, cronTime int) error {
 	c := cron.New()
 	logger.Info().Msg("Initiated Health Check Cron")
 
-	if cronTime == "" {
-		cronTime = "@every 1m"
+	if cronTime == 0 {
+    cronTime = 60
 	}
 
-	_, err := c.AddFunc(cronTime, func() {
+	cronSpec := fmt.Sprintf("@every %ds", cronTime)
+
+	_, err := c.AddFunc(cronSpec, func() {
 		queueHealthCheck(queues)
 	})
 

@@ -8,6 +8,7 @@ server:
   log-level: debug
   btc-net: "signet"
   max-content-length: 4096
+  health-check-interval: 60
 db:
   address: "mongodb://localhost:27017/?directConnection=true"
   db-name: staking-api-service

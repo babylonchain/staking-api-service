@@ -78,7 +78,7 @@ func main() {
 
 	queues.StartReceivingMessages()
 
-	healthcheck.StartHealthCheckCron(ctx, queues, "")
+	healthcheck.StartHealthCheckCron(ctx, queues, cfg.Server.HealthCheckInterval)
 
 	apiServer, err := api.New(ctx, cfg, services)
 	if err != nil {

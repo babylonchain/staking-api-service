@@ -147,7 +147,7 @@ func TestStartHealthCheckCron(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := healthcheck.StartHealthCheckCron(ctx, testServer.Queues, "@every 2s")
+	err := healthcheck.StartHealthCheckCron(ctx, testServer.Queues, testServer.Config.Server.HealthCheckInterval)
 	assert.NoError(t, err)
 
 	time.Sleep(5 * time.Second)
