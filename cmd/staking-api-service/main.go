@@ -9,6 +9,7 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
+	"github.com/babylonchain/staking-api-service/internal/observability/healthcheck"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
 	"github.com/babylonchain/staking-api-service/internal/queue"
 	"github.com/babylonchain/staking-api-service/internal/services"
@@ -76,6 +77,8 @@ func main() {
 	}
 
 	queues.StartReceivingMessages()
+
+	healthcheck.StartHealthCheckCron(ctx, queues, "")
 
 	apiServer, err := api.New(ctx, cfg, services)
 	if err != nil {

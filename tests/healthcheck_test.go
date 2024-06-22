@@ -1,12 +1,17 @@
 package tests
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/babylonchain/staking-api-service/internal/observability/healthcheck"
 	testmock "github.com/babylonchain/staking-api-service/tests/mocks"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -124,4 +129,43 @@ func TestSecurityHeaders(t *testing.T) {
 	assert.Equal(t, "DENY", resp.Header.Get("X-Frame-Options"), "expected X-Frame-Options to be DENY")
 	assert.Equal(t, "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrap.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://stackpath.bootstrap.com; img-src 'self' data: https://cdnjs.cloudflare.com https://stackpath.bootstrap.com; font-src 'self' https://cdnjs.cloudflare.com https://stackpath.bootstrap.com; object-src 'none'; frame-ancestors 'self'; form-action 'self'; block-all-mixed-content; base-uri 'self';", resp.Header.Get("Content-Security-Policy"), "expected Swagger Content-Security-Policy")
 	assert.Equal(t, "strict-origin-when-cross-origin", resp.Header.Get("Referrer-Policy"), "expected Referrer-Policy to be strict-origin-when-cross-origin")
+}
+
+func TestStartHealthCheckCron(t *testing.T) {
+	testServer := setupTestServer(t, nil)
+	defer testServer.Close()
+
+	var logBuffer = &strings.Builder{}
+	testLogger := zerolog.New(logBuffer).With().Timestamp().Logger()
+	testLogger.Output(logBuffer)
+	
+	// Temporary set the log level to debug
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
+	healthcheck.SetLogger(testLogger)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := healthcheck.StartHealthCheckCron(ctx, testServer.Queues, "@every 2s")
+	assert.NoError(t, err)
+
+	time.Sleep(5 * time.Second)
+
+	logOutput := logBuffer.String()
+	
+	// Verify the logs are as expected
+	assert.Contains(t, logOutput, "Initiated Health Check Cron")
+	assert.NotContains(t, logOutput, "One or more queue connections are not healthy.")
+	
+	// Stop receiving message in activeStakingQueueClient
+	testServer.Queues.ActiveStakingQueueClient.Stop()
+	
+	time.Sleep(5 * time.Second)
+	
+	logOutput = logBuffer.String()
+
+	assert.Contains(t, logOutput, "One or more queue connections are not healthy.")
+	
+	cancel()
 }

@@ -31,6 +31,7 @@ var (
 	unprocessableEntityCounter       *prometheus.CounterVec
 	queueOperationFailureCounter     *prometheus.CounterVec
 	httpResponseWriteFailureCounter  *prometheus.CounterVec
+	serviceCrashCounter							 *prometheus.CounterVec
 )
 
 // Init initializes the metrics package.
@@ -103,12 +104,21 @@ func registerMetrics() {
 		[]string{"status"},
 	)
 
+	serviceCrashCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "service_crash_total",
+			Help: "",
+		},
+		[]string{"type"},
+	)	
+
 	prometheus.MustRegister(
 		httpRequestDurationHistogram,
 		eventProcessingDurationHistogram,
 		unprocessableEntityCounter,
 		queueOperationFailureCounter,
 		httpResponseWriteFailureCounter,
+		serviceCrashCounter,
 	)
 }
 
@@ -150,4 +160,9 @@ func RecordQueueOperationFailure(operation, queuename string) {
 // RecordHttpResponseWriteFailure increments the http response write failure counter.
 func RecordHttpResponseWriteFailure(statusCode int) {
 	httpResponseWriteFailureCounter.WithLabelValues(fmt.Sprintf("%d", statusCode)).Inc()
+}
+
+// RecordServiceCrash increments the service crash counter.
+func RecordServiceCrash(operation string, queuename string) {
+	serviceCrashCounter.WithLabelValues(queuename).Inc()
 }

@@ -274,8 +274,8 @@ github.com/babylonchain/babylon v0.9.0-rc.1 h1:mZYKQVHVKFUA2xaEAzJloB1kyePHvZECJ
 github.com/babylonchain/babylon v0.9.0-rc.1/go.mod h1:YFALTW+Kp/b5jSDoA7Z70RggJjAedlmQTrpdeU8c3hY=
 github.com/babylonchain/networks/parameters v0.2.1 h1:OKHiCnwL/UdVN17cMwCrHz/bAjO/USauLiPyNlnVl6E=
 github.com/babylonchain/networks/parameters v0.2.1/go.mod h1:nejhvrL7Iwh5Vunvkg7pnomQZlHnyNzOY9lQaDp6tOA=
-github.com/babylonchain/staking-queue-client v0.2.1 h1:FKbxUUOoCydAsUoj9XQMIQT1S79ThX9p7vVc5yjWm8c=
-github.com/babylonchain/staking-queue-client v0.2.1/go.mod h1:mEgA6N3SnwFwGEOsUYr/HdjpKa13Wck08MS7VY/Icvo=
+github.com/babylonchain/staking-queue-client v0.3.0 h1:rOfs433EeveESdZw4OJjVb5nuaH1QEj5SVpMO+Auvh0=
+github.com/babylonchain/staking-queue-client v0.3.0/go.mod h1:mEgA6N3SnwFwGEOsUYr/HdjpKa13Wck08MS7VY/Icvo=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
@@ -1000,6 +1000,8 @@ github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5X
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1 h1:OHEc+q5iIAXpqiqFKeLpu5NwTIkVXUs48vFMwzqpqY4=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1/go.mod h1:2DjTFR1HhMQhiWC5sZ4OhQ3+NtdbZ6oBDKQwq5Ou+FI=
+github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
+github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
