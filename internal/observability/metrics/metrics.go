@@ -163,6 +163,6 @@ func RecordHttpResponseWriteFailure(statusCode int) {
 }
 
 // RecordServiceCrash increments the service crash counter.
-func RecordServiceCrash(operation string, queuename string) {
-	serviceCrashCounter.WithLabelValues(queuename).Inc()
+func RecordServiceCrash(service string) {
+	serviceCrashCounter.WithLabelValues(service).Inc()
 }

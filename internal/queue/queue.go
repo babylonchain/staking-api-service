@@ -266,9 +266,6 @@ func (q *Queues) IsConnectionHealthy() error {
 	checkQueue := func(name string, client client.QueueClient) {
 		if err := client.Ping(); err != nil {
 			errorMessages = append(errorMessages, fmt.Sprintf("%s is not healthy: %v", name, err))
-
-			// Record service unavailable in metrics
-			metrics.RecordServiceCrash("ping" ,client.GetQueueName())
 		}
 	}
 
