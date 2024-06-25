@@ -8,7 +8,7 @@ server:
   log-level: debug
   btc-net: "mainnet"
   max-content-length: 4096
-  health-check-interval: 60
+  health-check-interval: 300 # 5 minutes interval
 db:
   address: "mongodb://mongodb:27017"
   db-name: staking-api-service
