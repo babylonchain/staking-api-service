@@ -7,12 +7,13 @@ toolchain go1.22.4
 require (
 	github.com/babylonchain/babylon v0.9.0-rc.1
 	github.com/babylonchain/networks/parameters v0.2.1
-	github.com/babylonchain/staking-queue-client v0.2.1
+	github.com/babylonchain/staking-queue-client v0.3.1
 	github.com/btcsuite/btcd v0.24.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcd/btcutil v1.1.5
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
 	github.com/rabbitmq/amqp091-go v1.9.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.18.2
 	github.com/swaggo/swag v1.16.3
 	github.com/unrolled/secure v1.14.0
