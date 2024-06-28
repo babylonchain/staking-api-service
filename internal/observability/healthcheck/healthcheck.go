@@ -3,7 +3,6 @@ package healthcheck
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
 	"github.com/babylonchain/staking-api-service/internal/queue"
@@ -58,5 +57,4 @@ func queueHealthCheck(queues *queue.Queues) {
 
 func terminateService() {
 	logger.Fatal().Msg("Terminating service due to health check failure.")
-	os.Exit(1)
 }

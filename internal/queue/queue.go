@@ -263,8 +263,11 @@ func recordErrorLog(err *types.Error) {
 func (q *Queues) IsConnectionHealthy() error {
 	var errorMessages []string
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	defer cancel()
+
 	checkQueue := func(name string, client client.QueueClient) {
-		if err := client.Ping(); err != nil {
+		if err := client.Ping(ctx); err != nil {
 			errorMessages = append(errorMessages, fmt.Sprintf("%s is not healthy: %v", name, err))
 		}
 	}
