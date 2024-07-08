@@ -348,8 +348,8 @@ func FuzzStatsEndpointReturnHighestUnconfirmedTvlFromEvents(f *testing.F) {
 
 		overallStats = fetchOverallStatsEndpoint(t, testServer)
 		assert.Equal(t, &highestHeightEvent.UnconfirmedTvl, &overallStats.UnconfirmedTvl)
-		pendingTvl := int64(highestHeightEvent.UnconfirmedTvl) - int64(highestHeightEvent.ConfirmedTvl)
-		assert.Equal(t, pendingTvl, overallStats.PendingTvl) 
+		pendingTvl := highestHeightEvent.UnconfirmedTvl - highestHeightEvent.ConfirmedTvl
+		assert.Equal(t, pendingTvl, overallStats.PendingTvl)
 	})
 }
 
