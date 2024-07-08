@@ -33,7 +33,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 
 		requestDuration := time.Since(startTime).Milliseconds()
-		logEvent := logger.Info()
+		logEvent := logger.Debug()
 
 		tracingInfo := r.Context().Value(tracing.TracingInfoKey)
 		if tracingInfo != nil {
