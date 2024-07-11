@@ -46,7 +46,11 @@ var collections = map[string][]index{
 }
 
 func Setup(ctx context.Context, cfg *config.Config) error {
-	clientOps := options.Client().ApplyURI(cfg.Db.Address)
+	credential := options.Credential{
+		Username: cfg.Db.Username,
+		Password: cfg.Db.Password,
+	}
+	clientOps := options.Client().ApplyURI(cfg.Db.Address).SetAuth(credential)
 	client, err := mongo.Connect(ctx, clientOps)
 	if err != nil {
 		return err
