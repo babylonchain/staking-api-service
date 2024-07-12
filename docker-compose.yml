@@ -17,6 +17,9 @@ services:
     hostname: mongodb
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
     volumes:
       - ./bin/init-mongo.sh:/init-mongo.sh
     entrypoint: [ "/init-mongo.sh" ]

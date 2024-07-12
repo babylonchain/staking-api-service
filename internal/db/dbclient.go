@@ -21,7 +21,11 @@ type DbResultMap[T any] struct {
 }
 
 func New(ctx context.Context, cfg config.DbConfig) (*Database, error) {
-	clientOps := options.Client().ApplyURI(cfg.Address)
+	credential := options.Credential{
+		Username: cfg.Username,
+		Password: cfg.Password,
+	}
+	clientOps := options.Client().ApplyURI(cfg.Address).SetAuth(credential)
 	client, err := mongo.Connect(ctx, clientOps)
 	if err != nil {
 		return nil, err

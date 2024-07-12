@@ -9,6 +9,8 @@ server:
   btc-net: "signet"
   max-content-length: 4096
 db:
+  username: root
+  password: example
   address: "mongodb://localhost:27017"
   db-name: staking-api-service
   max-pagination-limit: 10
