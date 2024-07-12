@@ -17,4 +17,5 @@ jobs:
     uses: babylonchain/.github/.github/workflows/reusable_docker_pipeline.yml@hiep/add-reusable-workflows
     secrets: inherit
     with:
-     publish: false
+      publish: false
+      dockerfile: ./contrib/images/staking-api-service/Dockerfile
