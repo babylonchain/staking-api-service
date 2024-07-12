@@ -7,7 +7,7 @@ if [ $(docker ps -q -f name=^/${MONGO_CONTAINER_NAME}$) ]; then
 else
     echo "Starting MongoDB"
     # Start MongoDB
-    docker-compose up mongodb -d
+    docker-compose up -d mongodb
 fi
 
 # Check if the RabbitMQ container is already running
@@ -17,5 +17,5 @@ if [ $(docker ps -q -f name=^/${RABBITMQ_CONTAINER_NAME}$) ]; then
 else
     echo "Starting RabbitMQ"
     # Start RabbitMQ
-    docker-compose up rabbitmq -d
+    docker-compose up -d rabbitmq
 fi

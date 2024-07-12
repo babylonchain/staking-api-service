@@ -59,7 +59,7 @@ run-unprocessed-events-replay-local:
 generate-mock-interface:
 	cd internal/db && mockery --name=DBClient --output=../../tests/mocks --outpkg=dbmock --filename=mock_db_client.go
 
-tests:
+test:
 	./bin/local-startup.sh;
 	go test -v -cover -p 1 ./... -count=1
 
