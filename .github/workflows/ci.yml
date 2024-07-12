@@ -1,0 +1,20 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+    - '**'
+
+jobs:
+  lint_test:
+    uses: babylonchain/.github/.github/workflows/reusable_go_lint_test.yml@hiep/add-reusable-workflows
+    with:
+     run-unit-tests: true
+     run-integration-tests: false
+     run-lint: false
+     
+  docker_pipeline:
+    uses: babylonchain/.github/.github/workflows/reusable_docker_pipeline.yml@hiep/add-reusable-workflows
+    secrets: inherit
+    with:
+     publish: false
