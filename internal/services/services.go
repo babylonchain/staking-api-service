@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/babylonchain/staking-api-service/internal/clients"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/types"
@@ -15,6 +16,7 @@ import (
 // the database and other external clients (if any).
 type Services struct {
 	DbClient          db.DBClient
+	Clients           *clients.Clients
 	cfg               *config.Config
 	params            *types.GlobalParams
 	finalityProviders []types.FinalityProviderDetails
@@ -25,6 +27,7 @@ func New(
 	cfg *config.Config,
 	globalParams *types.GlobalParams,
 	finalityProviders []types.FinalityProviderDetails,
+	clients *clients.Clients,
 ) (*Services, error) {
 	dbClient, err := db.New(ctx, cfg.Db)
 	if err != nil {
@@ -33,6 +36,7 @@ func New(
 	}
 	return &Services{
 		DbClient:          dbClient,
+		Clients:           clients,
 		cfg:               cfg,
 		params:            globalParams,
 		finalityProviders: finalityProviders,
