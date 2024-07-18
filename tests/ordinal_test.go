@@ -55,7 +55,7 @@ func TestVerifyUTXOs(t *testing.T) {
 		// Check that the response data is as expected
 		assert.NotEmpty(t, response.Data, "expected response data to be non-empty")
 		assert.Equal(t, utxos[0].Txid, response.Data[0].TxId, "expected TxId to match")
-		assert.Equal(t, false, response.Data[0].Brc20, "expected Brc20 to be false")
+		assert.Equal(t, false, response.Data[0].Inscription, "expected Inscription to be false")
 		assert.Empty(t, response.Error, "expected no errors in the response")
 	})
 
@@ -177,13 +177,13 @@ func TestVerifyUTXOs(t *testing.T) {
 
 		// Check that the response data is as expected
 		assert.Equal(t, 1, len(response.Data), "expected response data to contain 1 items")
-		
+
 		// Check that the error is as expected
 		assert.Equal(t, 2, len(response.Error), "expected error to contain 2 items")
 
 		// Validate the first UTXO (should be valid)
 		assert.Equal(t, utxos[0].Txid, response.Data[0].TxId, "expected TxId to match")
-		assert.Equal(t, false, response.Data[0].Brc20, "expected Brc20 to be false")
+		assert.Equal(t, false, response.Data[0].Inscription, "expected Inscription to be false")
 
 		// Validate the second UTXO (should be invalid)
 		assert.Equal(t, utxos[1].Txid, response.Error[0].TxId, "expected TxId to match")

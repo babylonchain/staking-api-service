@@ -2,19 +2,22 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
-
 	"github.com/babylonchain/staking-api-service/internal/types"
+	"net/http"
 )
 
-func parseUTXORequestPayload(request *http.Request) ([]types.UTXORequest, *types.Error) {
+func parseUTXORequestPayload(request *http.Request, maxUTXOs int) ([]types.UTXORequest, *types.Error) {
 	var utxos []types.UTXORequest
 	if err := json.NewDecoder(request.Body).Decode(&utxos); err != nil {
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid input format")
 	}
-	
+
 	if len(utxos) == 0 {
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "empty UTXO array")
+	}
+
+	if len(utxos) > maxUTXOs {
+		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "too many UTXOs in the request")
 	}
 
 	for _, utxo := range utxos {
@@ -25,17 +28,8 @@ func parseUTXORequestPayload(request *http.Request) ([]types.UTXORequest, *types
 	return utxos, nil
 }
 
-// VerifyUTXOs @Summary Verify UTXOs
-// @Description Verifies if given UTXOs contain BRC-20 tokens
-// @Accept json
-// @Produce json
-// @Param UTXO body []types.UTXORequest true "Array of UTXOs"
-// @Success 200 {object} types.SafeUTXOResponse "Verification Results"
-// @Failure 400 {object} types.Error "Error: Bad Request"
-// @Failure 500 {object} types.Error "Error: Internal Server Error"
-// @Router /v1/ordinals/verify-utxos [post]
 func (h *Handler) VerifyUTXOs(request *http.Request) (*Result, *types.Error) {
-	utxos, err := parseUTXORequestPayload(request)
+	utxos, err := parseUTXORequestPayload(request, h.config.Ordinals.MaxUTXOs)
 	if err != nil {
 		errDetails := []types.ErrorDetail{
 			{

@@ -15,7 +15,7 @@ func (s *Services) VerifyUTXOs(ctx context.Context, utxos []types.UTXORequest) (
 	var errDetails []types.ErrorDetail
 
 	for _, utxo := range utxos {
-		url := fmt.Sprintf("%s/output/%s:%d", s.cfg.External.OrdinalAPIURL, utxo.Txid, utxo.Vout)
+		url := fmt.Sprintf("%s:%s/output/%s:%d", s.cfg.Ordinals.OrdinalsAPIHost, s.cfg.Ordinals.OrdinalsAPIPort, utxo.Txid, utxo.Vout)
 
 		// Create a new HTTP request
 		req, err := http.NewRequest("GET", url, nil)
@@ -86,8 +86,8 @@ func (s *Services) VerifyUTXOs(ctx context.Context, utxos []types.UTXORequest) (
 
 		safe := len(output.Inscriptions) == 0 && len(runes) == 0
 		results = append(results, types.SafeUTXO{
-			TxId: utxo.Txid,
-			Brc20: !safe,
+			TxId:        utxo.Txid,
+			Inscription: !safe,
 		})
 	}
 
