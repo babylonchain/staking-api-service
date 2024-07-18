@@ -14,6 +14,7 @@ type Config struct {
 	Db      DbConfig          `mapstructure:"db"`
 	Queue   queue.QueueConfig `mapstructure:"queue"`
 	Metrics MetricsConfig     `mapstructure:"metrics"`
+	External ExternalConfig    `mapstructure:"external"`
 }
 
 func (cfg *Config) Validate() error {

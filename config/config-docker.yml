@@ -27,3 +27,5 @@ queue:
 metrics:
   host: 0.0.0.0
   port: 2112
+external:
+  ordinal_api_url: "http://ord-poc.devnet.babylonchain.io:8888"
