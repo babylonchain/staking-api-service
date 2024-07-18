@@ -3,9 +3,10 @@ name: docker_publish
 on:
   push:
     branches:
-    - 'hiep/add-github-actions'
+    - 'main'
+    - 'dev'
     tags:
-    - 'hiep/add-github-actions'
+    - '*'
 
 jobs:
   lint_test:
