@@ -12,7 +12,7 @@ func (s *Services) VerifyUTXOs(ctx context.Context, utxos []types.UTXORequest) (
 	var errDetails []types.ErrorDetail
 
 	for _, utxo := range utxos {
-		output, err := s.Clients.Ordinals.FetchUTXOInfo(utxo.Txid, utxo.Vout)
+		output, err := s.Clients.Ordinals.FetchUTXOInfo(ctx, utxo.Txid, utxo.Vout)
 		if err != nil {
 			errDetails = append(errDetails, types.ErrorDetail{
 				TxId:      utxo.Txid,

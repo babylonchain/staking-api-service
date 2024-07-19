@@ -30,5 +30,5 @@ metrics:
 ordinals:
   host: "http://ord-poc.devnet.babylonchain.io"
   port: 8888
-  timeout: 200
+  timeout: 5000
   max_utxos: 20
