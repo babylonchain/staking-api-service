@@ -51,8 +51,10 @@ func (c *OrdinalsClient) FetchUTXOInfos(ctx context.Context, utxos []types.UTXOR
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := c.httpClient.Do(req)
-
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return nil, types.NewErrorWithMsg(http.StatusRequestTimeout, types.RequestTimeout, "request timeout")
+		}
 		return nil, types.NewErrorWithMsg(http.StatusInternalServerError, types.InternalServiceError, fmt.Sprintf("failed to perform HTTP request: %v", err))
 	}
 	defer resp.Body.Close()

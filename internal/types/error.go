@@ -19,6 +19,7 @@ const (
 	BadRequest           ErrorCode = "BAD_REQUEST"
 	Forbidden            ErrorCode = "FORBIDDEN"
 	UnprocessableEntity  ErrorCode = "UNPROCESSABLE_ENTITY"
+	RequestTimeout       ErrorCode = "REQUEST_TIMEOUT"
 )
 
 // Error represents an error with an HTTP status code and an application-specific error code.
