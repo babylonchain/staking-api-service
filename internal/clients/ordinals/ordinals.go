@@ -1,6 +1,7 @@
 package ordinals
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,19 +17,20 @@ type OrdinalsClient struct {
 }
 
 func NewOrdinalsClient(config *config.OrdinalsConfig) *OrdinalsClient {
-	httpClient := &http.Client{
-		Timeout: time.Duration(config.Timeout),
-	}
+	httpClient := &http.Client{}
 	return &OrdinalsClient{
 		config,
 		httpClient,
 	}
 }
 
-func (c *OrdinalsClient) FetchUTXOInfo(txid string, vout int) (*types.OrdinalsOutputResponse, error) {
+func (c *OrdinalsClient) FetchUTXOInfo(ctx context.Context, txid string, vout int) (*types.OrdinalsOutputResponse, error) {
 	url := fmt.Sprintf("%s:%s/output/%s:%d", c.config.Host, c.config.Port, txid, vout)
 
-	req, err := http.NewRequest("GET", url, nil)
+	// Set a timeout for the request
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.Timeout)*time.Millisecond)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
