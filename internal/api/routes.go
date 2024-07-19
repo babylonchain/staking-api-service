@@ -19,7 +19,10 @@ func (a *Server) SetupRoutes(r *chi.Mux) {
 	r.Get("/v1/stats/staker", registerHandler(handlers.GetTopStakerStats))
 	r.Get("/v1/staker/delegation/check", registerHandler(handlers.CheckStakerDelegationExist))
 	r.Get("/v1/delegation", registerHandler(handlers.GetDelegationByTxHash))
-	r.Post("/v1/ordinals/verify-utxos", registerHandler(handlers.VerifyUTXOs))
+
+	if err := a.cfg.Ordinals.Validate(); err == nil {
+		r.Post("/v1/ordinals/verify-utxos", registerHandler(handlers.VerifyUTXOs))
+	}
 
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 }

@@ -14,7 +14,6 @@ type Config struct {
 	Db       DbConfig          `mapstructure:"db"`
 	Queue    queue.QueueConfig `mapstructure:"queue"`
 	Metrics  MetricsConfig     `mapstructure:"metrics"`
-	Clients  ClientsConfig     `mapstructure:"clients"`
 	Ordinals OrdinalsConfig    `mapstructure:"ordinals"`
 }
 
@@ -32,14 +31,6 @@ func (cfg *Config) Validate() error {
 	}
 
 	if err := cfg.Queue.Validate(); err != nil {
-		return err
-	}
-
-	if err := cfg.Clients.Validate(); err != nil {
-		return err
-	}
-
-	if err := cfg.Ordinals.Validate(); err != nil {
 		return err
 	}
 

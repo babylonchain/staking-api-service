@@ -18,7 +18,7 @@ import (
 type Server struct {
 	httpServer *http.Server
 	handlers   *handlers.Handler
-	clients    *clients.Clients
+	cfg        *config.Config
 }
 
 func New(
@@ -54,7 +54,7 @@ func New(
 	server := &Server{
 		httpServer: srv,
 		handlers:   handlers,
-		clients:    clients,
+		cfg:        cfg,
 	}
 	server.SetupRoutes(r)
 	return server, nil

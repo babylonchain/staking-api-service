@@ -48,7 +48,7 @@ func (h *Handler) VerifyUTXOs(request *http.Request) (*Result, *types.Error) {
 		}, nil
 	}
 
-	results, errDetails := h.clients.Ordinals.VerifyUTXOs(request.Context(), utxos)
+	results, errDetails := h.services.VerifyUTXOs(request.Context(), utxos)
 	response := types.SafeUTXOResponse{
 		Data:  results,
 		Error: errDetails,

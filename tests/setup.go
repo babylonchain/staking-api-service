@@ -97,7 +97,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 		c = clients.New(cfg)
 	}
 
-	services, err := services.New(context.Background(), cfg, params, fps)
+	services, err := services.New(context.Background(), cfg, params, fps, c)
 	if err != nil {
 		t.Fatalf("Failed to initialize services: %v", err)
 	}
