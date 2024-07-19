@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/babylonchain/staking-api-service/internal/types"
 	"net/http"
+
+	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 func parseUTXORequestPayload(request *http.Request, maxUTXOs int) ([]types.UTXORequest, *types.Error) {
@@ -47,7 +48,7 @@ func (h *Handler) VerifyUTXOs(request *http.Request) (*Result, *types.Error) {
 		}, nil
 	}
 
-	results, errDetails := h.services.VerifyUTXOs(request.Context(), utxos)
+	results, errDetails := h.clients.Ordinals.VerifyUTXOs(request.Context(), utxos)
 	response := types.SafeUTXOResponse{
 		Data:  results,
 		Error: errDetails,

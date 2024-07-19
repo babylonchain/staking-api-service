@@ -25,6 +25,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/middlewares"
+	"github.com/babylonchain/staking-api-service/internal/clients"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
@@ -39,6 +40,7 @@ type TestServerDependency struct {
 	PreInjectEventsHandler  func(queueClient client.QueueClient) error
 	MockedFinalityProviders []types.FinalityProviderDetails
 	MockedGlobalParams      *types.GlobalParams
+	MockClients             *clients.Clients
 }
 
 type TestServer struct {
@@ -88,6 +90,13 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 		applyConfigOverrides(cfg, dep.ConfigOverrides)
 	}
 
+	var c *clients.Clients
+	if dep != nil && dep.MockClients != nil {
+		c = dep.MockClients
+	} else {
+		c = clients.New(cfg)
+	}
+
 	services, err := services.New(context.Background(), cfg, params, fps)
 	if err != nil {
 		t.Fatalf("Failed to initialize services: %v", err)
@@ -100,7 +109,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 		setupTestDB(*cfg)
 	}
 
-	apiServer, err := api.New(context.Background(), cfg, services)
+	apiServer, err := api.New(context.Background(), cfg, services, c)
 	if err != nil {
 		t.Fatalf("Failed to initialize API server: %v", err)
 	}
@@ -266,7 +275,7 @@ func sendTestMessage[T any](client client.QueueClient, data []T) error {
 	return nil
 }
 
-func directDbConnection(t *testing.T) (*db.Database) {
+func directDbConnection(t *testing.T) *db.Database {
 	cfg, err := config.New("./config/config-test.yml")
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
@@ -294,7 +303,7 @@ func injectDbDocuments[T any](t *testing.T, collectionName string, doc T) {
 
 // Inspect the items in the real database
 func inspectDbDocuments[T any](t *testing.T, collectionName string) ([]T, error) {
-		connection := directDbConnection(t)
+	connection := directDbConnection(t)
 	collection := connection.Client.Database(connection.DbName).Collection(collectionName)
 
 	cursor, err := collection.Find(context.Background(), bson.D{})

@@ -27,8 +27,9 @@ queue:
 metrics:
   host: 0.0.0.0
   port: 2112
-ordinals:
-  host: "http://ord-poc.devnet.babylonchain.io:8888"
-  port: 8888
+clients:
   timeout: 3000
-  max_utxos: 100
+ordinals:
+  host: "http://ord-poc.devnet.babylonchain.io"
+  port: 8888
+  max_utxos: 20

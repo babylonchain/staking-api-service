@@ -7,6 +7,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/api/handlers"
 	"github.com/babylonchain/staking-api-service/internal/api/middlewares"
+	"github.com/babylonchain/staking-api-service/internal/clients"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/go-chi/chi"
@@ -17,10 +18,11 @@ import (
 type Server struct {
 	httpServer *http.Server
 	handlers   *handlers.Handler
+	clients    *clients.Clients
 }
 
 func New(
-	ctx context.Context, cfg *config.Config, services *services.Services,
+	ctx context.Context, cfg *config.Config, services *services.Services, clients *clients.Clients,
 ) (*Server, error) {
 	r := chi.NewRouter()
 
@@ -44,7 +46,7 @@ func New(
 		Handler:      r,
 	}
 
-	handlers, err := handlers.New(ctx, cfg, services)
+	handlers, err := handlers.New(ctx, cfg, services, clients)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up handlers")
 	}
@@ -52,6 +54,7 @@ func New(
 	server := &Server{
 		httpServer: srv,
 		handlers:   handlers,
+		clients:    clients,
 	}
 	server.SetupRoutes(r)
 	return server, nil

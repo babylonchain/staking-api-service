@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/babylonchain/staking-api-service/internal/clients"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/services"
 	"github.com/babylonchain/staking-api-service/internal/types"
@@ -14,6 +15,7 @@ import (
 type Handler struct {
 	config   *config.Config
 	services *services.Services
+	clients  *clients.Clients
 }
 
 type paginationResponse struct {
@@ -42,11 +44,12 @@ func NewResult[T any](data T) *Result {
 }
 
 func New(
-	ctx context.Context, cfg *config.Config, services *services.Services,
+	ctx context.Context, cfg *config.Config, services *services.Services, clients *clients.Clients,
 ) (*Handler, error) {
 	return &Handler{
 		config:   cfg,
 		services: services,
+		clients:  clients,
 	}, nil
 }
 

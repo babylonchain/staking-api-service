@@ -7,6 +7,7 @@ import (
 	"github.com/babylonchain/staking-api-service/cmd/staking-api-service/cli"
 	"github.com/babylonchain/staking-api-service/cmd/staking-api-service/scripts"
 	"github.com/babylonchain/staking-api-service/internal/api"
+	"github.com/babylonchain/staking-api-service/internal/clients"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
@@ -58,6 +59,9 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up staking db model")
 	}
+
+	c := clients.New(cfg)
+
 	services, err := services.New(ctx, cfg, params, finalityProviders)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up staking services layer")
@@ -77,7 +81,7 @@ func main() {
 
 	queues.StartReceivingMessages()
 
-	apiServer, err := api.New(ctx, cfg, services)
+	apiServer, err := api.New(ctx, cfg, services, c)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up staking api service")
 	}
