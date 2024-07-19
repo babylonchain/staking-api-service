@@ -3,7 +3,6 @@ package ordinals
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -38,8 +37,6 @@ func (c *OrdinalsClient) FetchUTXOInfo(txid string, vout int) (*types.OrdinalOut
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := c.httpClient.Do(req)
-	log.Println(resp)
-	log.Println(err)
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform HTTP request: %w", err)
 	}
