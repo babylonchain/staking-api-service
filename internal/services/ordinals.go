@@ -18,7 +18,7 @@ func (s *Services) VerifyUTXOs(ctx context.Context, utxos []types.UTXORequest) (
 				TxId:      utxo.Txid,
 				Message:   err.Error(),
 				Status:    http.StatusNotFound,
-				ErrorCode: "UTXO_NOT_FOUND",
+				ErrorCode: types.NotFound,
 			})
 			continue
 		}

@@ -36,7 +36,7 @@ func (h *Handler) VerifyUTXOs(request *http.Request) (*Result, *types.Error) {
 			{
 				Message:   err.Err.Error(),
 				Status:    err.StatusCode,
-				ErrorCode: string(err.ErrorCode),
+				ErrorCode: err.ErrorCode,
 			},
 		}
 		response := types.SafeUTXOResponse{

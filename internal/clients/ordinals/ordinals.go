@@ -25,7 +25,7 @@ func NewOrdinalsClient(config *config.OrdinalsConfig) *OrdinalsClient {
 	}
 }
 
-func (c *OrdinalsClient) FetchUTXOInfo(txid string, vout int) (*types.OrdinalOutputResponse, error) {
+func (c *OrdinalsClient) FetchUTXOInfo(txid string, vout int) (*types.OrdinalsOutputResponse, error) {
 	url := fmt.Sprintf("%s:%s/output/%s:%d", c.config.Host, c.config.Port, txid, vout)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -46,7 +46,7 @@ func (c *OrdinalsClient) FetchUTXOInfo(txid string, vout int) (*types.OrdinalOut
 		return nil, fmt.Errorf("UTXO not found.")
 	}
 
-	var output types.OrdinalOutputResponse
+	var output types.OrdinalsOutputResponse
 	if err := json.NewDecoder(resp.Body).Decode(&output); err != nil {
 		return nil, fmt.Errorf("failed to decode Ordinal API response: %w", err)
 	}

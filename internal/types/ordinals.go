@@ -18,13 +18,13 @@ type SafeUTXOResponse struct {
 }
 
 type ErrorDetail struct {
-	TxId      string `json:"txid,omitempty"`
-	Message   string `json:"message"`
-	Status    int    `json:"status"`
-	ErrorCode string `json:"error_code"`
+	TxId      string    `json:"txid,omitempty"`
+	Message   string    `json:"message"`
+	Status    int       `json:"status"`
+	ErrorCode ErrorCode `json:"error_code"`
 }
 
-type OrdinalOutputResponse struct {
+type OrdinalsOutputResponse struct {
 	Value        int             `json:"value"`
 	ScriptPubKey string          `json:"script_pubkey"`
 	Address      string          `json:"address"`
