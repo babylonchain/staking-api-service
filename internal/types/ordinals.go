@@ -12,24 +12,8 @@ type SafeUTXO struct {
 	Inscription bool   `json:"inscription"`
 }
 
-type SafeUTXOResponse struct {
-	Data  []SafeUTXO    `json:"data"`
-	Error []ErrorDetail `json:"error"`
-}
-
-type ErrorDetail struct {
-	TxId      string    `json:"txid,omitempty"`
-	Message   string    `json:"message"`
-	Status    int       `json:"status"`
-	ErrorCode ErrorCode `json:"error_code"`
-}
-
 type OrdinalsOutputResponse struct {
-	Value        int             `json:"value"`
-	ScriptPubKey string          `json:"script_pubkey"`
-	Address      string          `json:"address"`
 	Transaction  string          `json:"transaction"`
-	SatRanges    interface{}     `json:"sat_ranges"`
 	Inscriptions []string        `json:"inscriptions"`
 	Runes        json.RawMessage `json:"runes"`
 }

@@ -32,30 +32,10 @@ func parseUTXORequestPayload(request *http.Request, maxUTXOs int) ([]types.UTXOR
 func (h *Handler) VerifyUTXOs(request *http.Request) (*Result, *types.Error) {
 	utxos, err := parseUTXORequestPayload(request, h.config.Ordinals.MaxUTXOs)
 	if err != nil {
-		errDetails := []types.ErrorDetail{
-			{
-				Message:   err.Err.Error(),
-				Status:    err.StatusCode,
-				ErrorCode: err.ErrorCode,
-			},
-		}
-		response := types.SafeUTXOResponse{
-			Error: errDetails,
-		}
-		return &Result{
-			Status: http.StatusBadRequest,
-			Data:   response,
-		}, nil
+		return nil, err
 	}
 
-	results, errDetails := h.services.VerifyUTXOs(request.Context(), utxos)
-	response := types.SafeUTXOResponse{
-		Data:  results,
-		Error: errDetails,
-	}
+	results, err := h.services.VerifyUTXOs(request.Context(), utxos)
 
-	return &Result{
-		Status: http.StatusOK,
-		Data:   response,
-	}, nil
+	return NewResult(results), nil
 }

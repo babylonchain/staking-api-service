@@ -2,33 +2,35 @@ package services
 
 import (
 	"context"
-	"net/http"
+	"encoding/json"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
-func (s *Services) VerifyUTXOs(ctx context.Context, utxos []types.UTXORequest) ([]types.SafeUTXO, []types.ErrorDetail) {
+func (s *Services) VerifyUTXOs(ctx context.Context, utxos []types.UTXORequest) ([]types.SafeUTXO, *types.Error) {
 	var results []types.SafeUTXO
-	var errDetails []types.ErrorDetail
 
-	for _, utxo := range utxos {
-		output, err := s.Clients.Ordinals.FetchUTXOInfo(ctx, utxo.Txid, utxo.Vout)
-		if err != nil {
-			errDetails = append(errDetails, types.ErrorDetail{
-				TxId:      utxo.Txid,
-				Message:   err.Error(),
-				Status:    http.StatusNotFound,
-				ErrorCode: types.NotFound,
-			})
-			continue
+	outputs, err := s.Clients.Ordinals.FetchUTXOInfos(ctx, utxos)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, output := range outputs {
+		var runes []string
+
+		// Check if Runes is not an empty JSON object
+		if len(output.Runes) > 0 && string(output.Runes) != "{}" {
+			if err := json.Unmarshal(output.Runes, &runes); err != nil {
+				continue
+			}
 		}
 
-		safe := len(output.Inscriptions) == 0 && len(output.Runes) == 0
+		safe := len(output.Inscriptions) == 0 && len(runes) == 0
 		results = append(results, types.SafeUTXO{
-			TxId:        utxo.Txid,
+			TxId:        output.Transaction,
 			Inscription: !safe,
 		})
 	}
 
-	return results, errDetails
+	return results, nil
 }
