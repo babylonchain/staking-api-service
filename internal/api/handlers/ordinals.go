@@ -36,6 +36,10 @@ func (h *Handler) VerifyUTXOs(request *http.Request) (*Result, *types.Error) {
 	}
 
 	results, err := h.services.VerifyUTXOs(request.Context(), utxos)
+	
+	if err != nil {
+		return nil, err
+	}
 
 	return NewResult(results), nil
 }
