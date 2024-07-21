@@ -12,6 +12,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var ALLOWED_METHODS = []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"}
+
 type BaseClient interface {
 	GetBaseURL() string
 	GetDefaultRequestTimeout() int
@@ -24,10 +26,21 @@ type BaseClientOptions struct {
 	Headers map[string]string
 }
 
-// Add metrics and logs
-func PostRequest[I any, R any](
-	ctx context.Context, client BaseClient, opts *BaseClientOptions, input I,
+func isAllowedMethods(method string) bool {
+	for _, allowedMethod := range ALLOWED_METHODS {
+		if method == allowedMethod {
+			return true
+		}
+	}
+	return false
+}
+
+func SendRequest[I any, R any](
+	ctx context.Context, client BaseClient, method string, opts *BaseClientOptions, input *I,
 ) (*R, *types.Error) {
+	if !isAllowedMethods(method) {
+		return nil, types.NewInternalServiceError(fmt.Errorf("method %s is not allowed", method))
+	}
 	url := fmt.Sprintf("%s%s", client.GetBaseURL(), opts.Path)
 	timeout := client.GetDefaultRequestTimeout()
 	// If timeout is set, use it instead of the default
@@ -38,18 +51,24 @@ func PostRequest[I any, R any](
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Millisecond)
 	defer cancel()
 
-	body, err := json.Marshal(input)
-	if err != nil {
-		return nil, types.NewErrorWithMsg(
-			http.StatusInternalServerError,
-			types.InternalServiceError,
-			"failed to marshal request body",
-		)
+	var req *http.Request
+	var requestError error
+	if input != nil && (method == http.MethodPost || method == http.MethodPut) {
+		body, err := json.Marshal(input)
+		if err != nil {
+			return nil, types.NewErrorWithMsg(
+				http.StatusInternalServerError,
+				types.InternalServiceError,
+				"failed to marshal request body",
+			)
+		}
+		req, requestError = http.NewRequestWithContext(ctxWithTimeout, method, url, bytes.NewBuffer(body))
+	} else {
+		req, requestError = http.NewRequestWithContext(ctxWithTimeout, method, url, nil)
 	}
-	req, err := http.NewRequestWithContext(ctxWithTimeout, "POST", url, bytes.NewBuffer(body))
-	if err != nil {
+	if requestError != nil {
 		return nil, types.NewErrorWithMsg(
-			http.StatusInternalServerError, types.InternalServiceError, err.Error(),
+			http.StatusInternalServerError, types.InternalServiceError, requestError.Error(),
 		)
 	}
 	// Set headers
@@ -59,6 +78,7 @@ func PostRequest[I any, R any](
 
 	resp, err := client.GetHttpClient().Do(req)
 	if err != nil {
+		// TODO: Add metrics
 		if ctx.Err() == context.DeadlineExceeded || err.Error() == "context canceled" {
 			return nil, types.NewErrorWithMsg(
 				http.StatusRequestTimeout,

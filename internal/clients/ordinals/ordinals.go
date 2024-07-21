@@ -11,14 +11,24 @@ import (
 )
 
 type OrdinalsClient struct {
-	config     *config.OrdinalsConfig
-	httpClient *http.Client
+	config         *config.OrdinalsConfig
+	defaultHeaders map[string]string
+	httpClient     *http.Client
 }
 
 func NewOrdinalsClient(config *config.OrdinalsConfig) *OrdinalsClient {
+	// Client is disabled if config is nil
+	if config == nil {
+		return nil
+	}
 	httpClient := &http.Client{}
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"Accept":       "application/json",
+	}
 	return &OrdinalsClient{
 		config,
+		headers,
 		httpClient,
 	}
 }
@@ -40,13 +50,10 @@ func (c *OrdinalsClient) FetchUTXOInfos(
 	ctx context.Context, utxos []types.UTXORequest,
 ) ([]*types.OrdinalsOutputResponse, *types.Error) {
 	path := "/outputs"
-	headers := map[string]string{
-		"Content-Type": "application/json",
-		"Accept":       "application/json",
-	}
+
 	opts := &baseclient.BaseClientOptions{
 		Path:    path,
-		Headers: headers,
+		Headers: c.defaultHeaders,
 	}
 
 	var txHashVouts []string
@@ -54,8 +61,8 @@ func (c *OrdinalsClient) FetchUTXOInfos(
 		txHashVouts = append(txHashVouts, fmt.Sprintf("%s:%d", utxo.Txid, utxo.Vout))
 	}
 
-	outputsResponse, err := baseclient.PostRequest[[]string, []types.OrdinalsOutputResponse](
-		ctx, c, opts, txHashVouts,
+	outputsResponse, err := baseclient.SendRequest[[]string, []types.OrdinalsOutputResponse](
+		ctx, c, http.MethodPost, opts, &txHashVouts,
 	)
 	if err != nil {
 		return nil, err
