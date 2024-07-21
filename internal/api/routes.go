@@ -20,7 +20,7 @@ func (a *Server) SetupRoutes(r *chi.Mux) {
 	r.Get("/v1/staker/delegation/check", registerHandler(handlers.CheckStakerDelegationExist))
 	r.Get("/v1/delegation", registerHandler(handlers.GetDelegationByTxHash))
 
-	if err := a.cfg.Ordinals.Validate(); err == nil {
+	if a.cfg.Ordinals != nil {
 		r.Post("/v1/ordinals/verify-utxos", registerHandler(handlers.VerifyUTXOs))
 	}
 

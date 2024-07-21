@@ -7,13 +7,8 @@ type UTXORequest struct {
 	Vout int    `json:"vout"`
 }
 
-type SafeUTXO struct {
-	TxId        string `json:"txid"`
-	Inscription bool   `json:"inscription"`
-}
-
 type OrdinalsOutputResponse struct {
-	Transaction  string          `json:"transaction"`
+	Transaction  string          `json:"transaction"` // same as Txid
 	Inscriptions []string        `json:"inscriptions"`
 	Runes        json.RawMessage `json:"runes"`
 }

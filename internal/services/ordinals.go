@@ -2,13 +2,31 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/rs/zerolog/log"
 )
 
-func (s *Services) VerifyUTXOs(ctx context.Context, utxos []types.UTXORequest) ([]types.SafeUTXO, *types.Error) {
-	var results []types.SafeUTXO
+type SafeUTXOPublic struct {
+	TxId        string `json:"txid"`
+	Inscription bool   `json:"inscription"`
+}
+
+func (s *Services) VerifyUTXOs(ctx context.Context, utxos []types.UTXORequest) ([]*SafeUTXOPublic, *types.Error) {
+	result, err := s.verifyViaOrdinalService(ctx, utxos)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to verify ordinals via ordinals service")
+		// TODO: Add metrics
+
+		// TODO: Add fallback to unisat
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Services) verifyViaOrdinalService(ctx context.Context, utxos []types.UTXORequest) ([]*SafeUTXOPublic, *types.Error) {
+	var results []*SafeUTXOPublic
 
 	outputs, err := s.Clients.Ordinals.FetchUTXOInfos(ctx, utxos)
 	if err != nil {
@@ -16,19 +34,17 @@ func (s *Services) VerifyUTXOs(ctx context.Context, utxos []types.UTXORequest) (
 	}
 
 	for _, output := range outputs {
-		var runes []string
+		hasInscription := false
 
 		// Check if Runes is not an empty JSON object
 		if len(output.Runes) > 0 && string(output.Runes) != "{}" {
-			if err := json.Unmarshal(output.Runes, &runes); err != nil {
-				continue
-			}
+			hasInscription = true
+		} else if len(output.Inscriptions) > 0 { // Check if Inscriptions is not empty
+			hasInscription = true
 		}
-
-		safe := len(output.Inscriptions) == 0 && len(runes) == 0
-		results = append(results, types.SafeUTXO{
+		results = append(results, &SafeUTXOPublic{
 			TxId:        output.Transaction,
-			Inscription: !safe,
+			Inscription: hasInscription,
 		})
 	}
 

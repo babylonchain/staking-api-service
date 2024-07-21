@@ -8,7 +8,7 @@ import (
 type OrdinalsConfig struct {
 	Host     string `mapstructure:"host"`
 	Port     string `mapstructure:"port"`
-	Timeout  int 	`mapstructure:"timeout"`
+	Timeout  int    `mapstructure:"timeout"`
 	MaxUTXOs int    `mapstructure:"max_utxos"`
 }
 
@@ -31,7 +31,7 @@ func (cfg *OrdinalsConfig) Validate() error {
 
 	parsedURL, err := url.ParseRequestURI(cfg.Host)
 	if err != nil {
-		return errors.New("invalid host")
+		return errors.New("invalid ordinal service host")
 	}
 
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {

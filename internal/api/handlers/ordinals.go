@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/babylonchain/staking-api-service/internal/utils"
 )
 
 func parseUTXORequestPayload(request *http.Request, maxUTXOs int) ([]types.UTXORequest, *types.Error) {
@@ -22,8 +23,10 @@ func parseUTXORequestPayload(request *http.Request, maxUTXOs int) ([]types.UTXOR
 	}
 
 	for _, utxo := range utxos {
-		if utxo.Txid == "" || utxo.Vout < 0 {
-			return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid UTXO entry")
+		if !utils.IsValidTxHash(utxo.Txid) {
+			return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid UTXO txid")
+		} else if utxo.Vout < 0 {
+			return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid UTXO vout")
 		}
 	}
 	return utxos, nil
@@ -34,9 +37,7 @@ func (h *Handler) VerifyUTXOs(request *http.Request) (*Result, *types.Error) {
 	if err != nil {
 		return nil, err
 	}
-
 	results, err := h.services.VerifyUTXOs(request.Context(), utxos)
-	
 	if err != nil {
 		return nil, err
 	}
