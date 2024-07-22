@@ -84,8 +84,9 @@ func (c *UnisatClient) FetchInscriptionsUtxosByAddress(
 		address, cursor, c.config.Limit,
 	)
 	opts := &baseclient.BaseClientOptions{
-		Path:    path,
-		Headers: c.defaultHeader,
+		Path:         path,
+		TemplatePath: "/v1/indexer/address/{address}/inscription-utxo-data",
+		Headers:      c.defaultHeader,
 	}
 
 	resp, err := baseclient.SendRequest[any, UnisatResponse](

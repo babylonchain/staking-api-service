@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/rs/zerolog/log"
 )
@@ -21,9 +22,10 @@ type BaseClient interface {
 }
 
 type BaseClientOptions struct {
-	Timeout int
-	Path    string
-	Headers map[string]string
+	Timeout      int
+	Path         string
+	TemplatePath string // Metrics purpose
+	Headers      map[string]string
 }
 
 func isAllowedMethods(method string) bool {
@@ -35,7 +37,7 @@ func isAllowedMethods(method string) bool {
 	return false
 }
 
-func SendRequest[I any, R any](
+func sendRequest[I any, R any](
 	ctx context.Context, client BaseClient, method string, opts *BaseClientOptions, input *I,
 ) (*R, *types.Error) {
 	if !isAllowedMethods(method) {
@@ -78,7 +80,6 @@ func SendRequest[I any, R any](
 
 	resp, err := client.GetHttpClient().Do(req)
 	if err != nil {
-		// TODO: Add metrics
 		if ctx.Err() == context.DeadlineExceeded || err.Error() == "context canceled" {
 			return nil, types.NewErrorWithMsg(
 				http.StatusRequestTimeout,
@@ -121,4 +122,20 @@ func SendRequest[I any, R any](
 	}
 
 	return &output, nil
+}
+
+func SendRequest[I any, R any](
+	ctx context.Context, client BaseClient, method string, opts *BaseClientOptions, input *I,
+) (*R, *types.Error) {
+	timer := metrics.StartClientRequestDurationTimer(
+		client.GetBaseURL(), method, opts.TemplatePath,
+	)
+	result, err := sendRequest[I, R](ctx, client, method, opts, input)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msgf("failed to send request")
+		timer(err.StatusCode)
+		return nil, err
+	}
+	timer(http.StatusOK)
+	return result, err
 }

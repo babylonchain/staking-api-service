@@ -52,8 +52,9 @@ func (c *OrdinalsClient) FetchUTXOInfos(
 	path := "/outputs"
 
 	opts := &baseclient.BaseClientOptions{
-		Path:    path,
-		Headers: c.defaultHeaders,
+		Path:         path,
+		TemplatePath: path,
+		Headers:      c.defaultHeaders,
 	}
 
 	var txHashVouts []string
