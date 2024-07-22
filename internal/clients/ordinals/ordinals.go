@@ -1,77 +1,92 @@
 package ordinals
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
+	baseclient "github.com/babylonchain/staking-api-service/internal/clients/base"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
 type OrdinalsClient struct {
-	config     *config.OrdinalsConfig
-	httpClient *http.Client
+	config         *config.OrdinalsConfig
+	defaultHeaders map[string]string
+	httpClient     *http.Client
 }
 
 func NewOrdinalsClient(config *config.OrdinalsConfig) *OrdinalsClient {
+	// Client is disabled if config is nil
+	if config == nil {
+		return nil
+	}
 	httpClient := &http.Client{}
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"Accept":       "application/json",
+	}
 	return &OrdinalsClient{
 		config,
+		headers,
 		httpClient,
 	}
 }
 
-func (c *OrdinalsClient) FetchUTXOInfos(ctx context.Context, utxos []types.UTXORequest) ([]types.OrdinalsOutputResponse, *types.Error) {
-	url := fmt.Sprintf("%s:%s/outputs", c.config.Host, c.config.Port)
+// Necessary for the BaseClient interface
+func (c *OrdinalsClient) GetBaseURL() string {
+	return fmt.Sprintf("%s:%s", c.config.Host, c.config.Port)
+}
 
-	// Set a timeout for the request
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.Timeout)*time.Millisecond)
-	defer cancel()
+func (c *OrdinalsClient) GetDefaultRequestTimeout() int {
+	return c.config.Timeout
+}
+
+func (c *OrdinalsClient) GetHttpClient() *http.Client {
+	return c.httpClient
+}
+
+func (c *OrdinalsClient) FetchUTXOInfos(
+	ctx context.Context, utxos []types.UTXORequest,
+) ([]*types.OrdinalsOutputResponse, *types.Error) {
+	path := "/outputs"
+
+	opts := &baseclient.BaseClientOptions{
+		Path:         path,
+		TemplatePath: path,
+		Headers:      c.defaultHeaders,
+	}
 
 	var txHashVouts []string
 	for _, utxo := range utxos {
 		txHashVouts = append(txHashVouts, fmt.Sprintf("%s:%d", utxo.Txid, utxo.Vout))
 	}
 
-	body, err := json.Marshal(txHashVouts)
+	outputsResponse, err := baseclient.SendRequest[[]string, []types.OrdinalsOutputResponse](
+		ctx, c, http.MethodPost, opts, &txHashVouts,
+	)
 	if err != nil {
-		return nil, types.NewErrorWithMsg(http.StatusInternalServerError, types.InternalServiceError, "failed to marshal request body")
+		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(body))
-	if err != nil {
-		return nil, types.NewErrorWithMsg(http.StatusInternalServerError, types.InternalServiceError, fmt.Sprintf("failed to create HTTP request: %v", err))
+	// convert the response to a map for easier lookup
+	outputsMap := make(map[string]types.OrdinalsOutputResponse)
+	for _, output := range *outputsResponse {
+		outputsMap[output.Transaction] = output
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return nil, types.NewErrorWithMsg(http.StatusRequestTimeout, types.RequestTimeout, "request timeout")
+	// re-order the response based on the request order
+	var outputs = make([]*types.OrdinalsOutputResponse, len(utxos))
+	for i, utxo := range utxos {
+		output, ok := outputsMap[utxo.Txid]
+		if !ok {
+			return nil, types.NewErrorWithMsg(
+				http.StatusInternalServerError,
+				types.InternalServiceError,
+				"response does not contain all requested UTXOs",
+			)
 		}
-		return nil, types.NewErrorWithMsg(http.StatusInternalServerError, types.InternalServiceError, fmt.Sprintf("failed to perform HTTP request: %v", err))
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusUnprocessableEntity {
-		return nil, types.NewErrorWithMsg(http.StatusUnprocessableEntity, types.UnprocessableEntity, "unprocessable entity")
-	} else if resp.StatusCode == http.StatusNotFound {
-		return nil, types.NewErrorWithMsg(http.StatusNotFound, types.NotFound, "UTXOs not found")
-	} else if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-		return nil, types.NewErrorWithMsg(resp.StatusCode, types.BadRequest, "client error")
-	} else if resp.StatusCode >= 500 {
-		return nil, types.NewErrorWithMsg(resp.StatusCode, types.InternalServiceError, "server error")
-	}
-
-	var outputs []types.OrdinalsOutputResponse
-	if err := json.NewDecoder(resp.Body).Decode(&outputs); err != nil {
-		return nil, types.NewErrorWithMsg(http.StatusInternalServerError, types.InternalServiceError, fmt.Sprintf("failed to decode Ordinal API response: %v", err))
+		outputs[i] = &output
 	}
 
 	return outputs, nil

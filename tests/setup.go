@@ -122,7 +122,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 	r.Use(middlewares.ContentLengthMiddleware(cfg))
 	apiServer.SetupRoutes(r)
 
-	queues, conn, ch, err := setUpTestQueue(&cfg.Queue, services)
+	queues, conn, ch, err := setUpTestQueue(cfg.Queue, services)
 	if err != nil {
 		t.Fatalf("Failed to setup test queue: %v", err)
 	}

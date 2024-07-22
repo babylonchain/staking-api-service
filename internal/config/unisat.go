@@ -5,33 +5,33 @@ import (
 	"net/url"
 )
 
-type OrdinalsConfig struct {
+type UnisatConfig struct {
 	Host     string `mapstructure:"host"`
-	Port     string `mapstructure:"port"`
 	Timeout  int    `mapstructure:"timeout"`
-	MaxUTXOs int    `mapstructure:"max_utxos"`
+	Limit    int    `mapstructure:"limit"`
+	ApiToken string `mapstructure:"token"`
 }
 
-func (cfg *OrdinalsConfig) Validate() error {
+func (cfg *UnisatConfig) Validate() error {
 	if cfg.Host == "" {
 		return errors.New("host cannot be empty")
-	}
-
-	if cfg.Port == "" {
-		return errors.New("port cannot be empty")
 	}
 
 	if cfg.Timeout <= 0 {
 		return errors.New("timeout cannot be smaller or equal to 0")
 	}
 
-	if cfg.MaxUTXOs <= 0 {
-		return errors.New("max_utxos cannot be smaller or equal to 0")
+	if cfg.Limit <= 0 {
+		return errors.New("limit cannot be smaller or equal to 0")
+	}
+
+	if cfg.ApiToken == "" {
+		return errors.New("api token cannot be empty")
 	}
 
 	parsedURL, err := url.ParseRequestURI(cfg.Host)
 	if err != nil {
-		return errors.New("invalid ordinal service host")
+		return errors.New("invalid unisat service host")
 	}
 
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {

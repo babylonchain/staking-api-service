@@ -32,3 +32,8 @@ ordinals:
   port: 8888
   timeout: 5000
   max_utxos: 100
+unisat:
+  host: "https://open-api-testnet.unisat.io"
+  limit: 100
+  timeout: 5000
+  token: "add your token as UNISAT_TOKEN in .env"
