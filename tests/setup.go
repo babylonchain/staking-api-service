@@ -1,11 +1,14 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"reflect"
@@ -24,6 +27,7 @@ import (
 	queueConfig "github.com/babylonchain/staking-queue-client/config"
 
 	"github.com/babylonchain/staking-api-service/internal/api"
+	"github.com/babylonchain/staking-api-service/internal/api/handlers"
 	"github.com/babylonchain/staking-api-service/internal/api/middlewares"
 	"github.com/babylonchain/staking-api-service/internal/clients"
 	"github.com/babylonchain/staking-api-service/internal/config"
@@ -369,4 +373,81 @@ func createJsonFile(t *testing.T, jsonData []byte) string {
 	}
 
 	return tempFile.Name()
+}
+
+func mockUnisatService(inputPayload handlers.VerifyUTXOsRequestPayload, rng *rand.Rand, statusCode int) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if statusCode != 0 {
+			handleServiceError(w, statusCode)
+			return
+		}
+
+		var payload handlers.VerifyUTXOsRequestPayload
+		err := json.NewDecoder(r.Body).Decode(&payload)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		var response []services.SafeUTXOPublic
+		for _, utxo := range payload.Utxos {
+			response = append(response, services.SafeUTXOPublic{
+				TxId:        utxo.Txid,
+				Inscription: rng.Intn(2) == 0,
+			})
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}))
+}
+
+func mockOrdinalService(verifyUTXOsPath string, inputPayload handlers.VerifyUTXOsRequestPayload, rng *rand.Rand, ordinalStatusCode, unisatStatusCode int) *httptest.Server {
+	mockUnisatService := mockUnisatService(inputPayload, rng, unisatStatusCode)
+
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if ordinalStatusCode != 0 {
+			unisatURL := mockUnisatService.URL + verifyUTXOsPath
+			requestBody, err := json.Marshal(inputPayload)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+
+			resp, err := http.Post(unisatURL, "application/json", bytes.NewReader(requestBody))
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK {
+				w.WriteHeader(resp.StatusCode)
+				io.Copy(w, resp.Body)
+				return
+			}
+		}
+
+		var payload handlers.VerifyUTXOsRequestPayload
+		err := json.NewDecoder(r.Body).Decode(&payload)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		var response []services.SafeUTXOPublic
+		for _, utxo := range payload.Utxos {
+			response = append(response, services.SafeUTXOPublic{
+				TxId:        utxo.Txid,
+				Inscription: rng.Intn(2) == 0,
+			})
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}))
+}
+
+func handleServiceError(w http.ResponseWriter, statusCode int) {
+	http.Error(w, http.StatusText(statusCode), statusCode)
 }
