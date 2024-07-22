@@ -87,9 +87,6 @@ func sendRequest[I any, R any](
 				fmt.Sprintf("request timeout after %d ms at %s", timeout, url),
 			)
 		}
-		log.Ctx(ctx).Error().Err(err).Msgf(
-			"failed to send request to %s", url,
-		)
 		return nil, types.NewErrorWithMsg(
 			http.StatusInternalServerError,
 			types.InternalServiceError,

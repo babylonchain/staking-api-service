@@ -27,13 +27,14 @@ queue:
 metrics:
   host: 0.0.0.0
   port: 2112
-ordinals:
-  host: "http://ord-poc.devnet.babylonchain.io"
-  port: 8888
-  timeout: 5000
+assets:
   max_utxos: 100
-unisat:
-  host: "https://open-api-testnet.unisat.io"
-  limit: 100
-  timeout: 5000
-  token: "add your token as UNISAT_TOKEN in .env"
+  ordinals:
+    host: "http://ord-poc.devnet.babylonchain.io"
+    port: 8888
+    timeout: 5000
+  unisat:
+    host: "https://open-api-testnet.unisat.io"
+    limit: 100
+    timeout: 5000
+    token: "add your token as ASSETS_UNISAT_TOKEN in .env"

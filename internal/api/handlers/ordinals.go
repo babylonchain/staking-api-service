@@ -43,7 +43,7 @@ func parseRequestPayload(request *http.Request, maxUTXOs uint32, netParam *chain
 }
 
 func (h *Handler) VerifyUTXOs(request *http.Request) (*Result, *types.Error) {
-	inputs, err := parseRequestPayload(request, h.config.Ordinals.MaxUTXOs, h.config.Server.BTCNetParam)
+	inputs, err := parseRequestPayload(request, h.config.Assets.MaxUTXOs, h.config.Server.BTCNetParam)
 	if err != nil {
 		return nil, err
 	}

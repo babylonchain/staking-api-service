@@ -21,16 +21,12 @@ func (s *Services) VerifyUTXOs(
 	result, err := s.verifyViaOrdinalService(ctx, utxos)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to verify ordinals via ordinals service")
-		// If Unisat service is enabled, try to verify via Unisat service
-		if s.cfg.Unisat != nil {
-			unisatResult, err := s.verifyViaUnisatService(ctx, address, utxos)
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("failed to verify ordinals via unisat service")
-				return nil, err
-			}
-			return unisatResult, nil
+		unisatResult, err := s.verifyViaUnisatService(ctx, address, utxos)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to verify ordinals via unisat service")
+			return nil, err
 		}
-		return nil, err
+		return unisatResult, nil
 	}
 	return result, nil
 }
@@ -65,6 +61,7 @@ func (s *Services) verifyViaOrdinalService(ctx context.Context, utxos []types.UT
 func (s *Services) verifyViaUnisatService(ctx context.Context, address string, utxos []types.UTXOIdentifier) ([]*SafeUTXOPublic, *types.Error) {
 	cursor := uint32(0)
 	var inscriptionsUtxos []*unisat.UnisatUtxos
+	limit := s.cfg.Assets.Unisat.Limit
 
 	for {
 		inscriptions, err := s.Clients.Unisat.FetchInscriptionsUtxosByAddress(ctx, address, cursor)
@@ -74,11 +71,12 @@ func (s *Services) verifyViaUnisatService(ctx context.Context, address string, u
 		// Append the fetched utxos to the list
 		inscriptionsUtxos = append(inscriptionsUtxos, inscriptions...)
 		// Stop fetching if the total number of utxos is less than the limit
-		if uint32(len(inscriptions)) < s.cfg.Unisat.Limit {
+
+		if uint32(len(inscriptions)) < limit {
 			break
 		}
 		// update the cursor for the next fetch
-		cursor += s.cfg.Unisat.Limit
+		cursor += limit
 	}
 
 	// turn inscriptionsUtxos into a map for easier lookup
