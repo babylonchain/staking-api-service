@@ -10,11 +10,11 @@ import (
 )
 
 type VerifyUTXOsRequestPayload struct {
-	Address string              `json:"address"`
-	Utxos   []types.UTXORequest `json:"utxos"`
+	Address string                 `json:"address"`
+	Utxos   []types.UTXOIdentifier `json:"utxos"`
 }
 
-func parseRequestPayload(request *http.Request, maxUTXOs int, netParam *chaincfg.Params) (*VerifyUTXOsRequestPayload, *types.Error) {
+func parseRequestPayload(request *http.Request, maxUTXOs uint32, netParam *chaincfg.Params) (*VerifyUTXOsRequestPayload, *types.Error) {
 	var payload VerifyUTXOsRequestPayload
 	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid input format")
@@ -24,7 +24,7 @@ func parseRequestPayload(request *http.Request, maxUTXOs int, netParam *chaincfg
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "empty UTXO array")
 	}
 
-	if len(utxos) > maxUTXOs {
+	if uint32(len(utxos)) > maxUTXOs {
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "too many UTXOs in the request")
 	}
 
@@ -36,8 +36,7 @@ func parseRequestPayload(request *http.Request, maxUTXOs int, netParam *chaincfg
 		}
 	}
 
-	err := utils.IsValidBtcAddress(payload.Address, netParam)
-	if err != nil {
+	if err := utils.IsValidBtcAddress(payload.Address, netParam); err != nil {
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, err.Error())
 	}
 	return &payload, nil

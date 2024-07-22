@@ -11,11 +11,12 @@ import (
 
 type SafeUTXOPublic struct {
 	TxId        string `json:"txid"`
+	Vout        uint32 `json:"vout"`
 	Inscription bool   `json:"inscription"`
 }
 
 func (s *Services) VerifyUTXOs(
-	ctx context.Context, utxos []types.UTXORequest, address string,
+	ctx context.Context, utxos []types.UTXOIdentifier, address string,
 ) ([]*SafeUTXOPublic, *types.Error) {
 	result, err := s.verifyViaOrdinalService(ctx, utxos)
 	if err != nil {
@@ -34,7 +35,7 @@ func (s *Services) VerifyUTXOs(
 	return result, nil
 }
 
-func (s *Services) verifyViaOrdinalService(ctx context.Context, utxos []types.UTXORequest) ([]*SafeUTXOPublic, *types.Error) {
+func (s *Services) verifyViaOrdinalService(ctx context.Context, utxos []types.UTXOIdentifier) ([]*SafeUTXOPublic, *types.Error) {
 	var results []*SafeUTXOPublic
 
 	outputs, err := s.Clients.Ordinals.FetchUTXOInfos(ctx, utxos)
@@ -42,7 +43,7 @@ func (s *Services) verifyViaOrdinalService(ctx context.Context, utxos []types.UT
 		return nil, err
 	}
 
-	for _, output := range outputs {
+	for index, output := range outputs {
 		hasInscription := false
 
 		// Check if Runes is not an empty JSON object
@@ -53,6 +54,7 @@ func (s *Services) verifyViaOrdinalService(ctx context.Context, utxos []types.UT
 		}
 		results = append(results, &SafeUTXOPublic{
 			TxId:        output.Transaction,
+			Vout:        utxos[index].Vout,
 			Inscription: hasInscription,
 		})
 	}
@@ -60,8 +62,8 @@ func (s *Services) verifyViaOrdinalService(ctx context.Context, utxos []types.UT
 	return results, nil
 }
 
-func (s *Services) verifyViaUnisatService(ctx context.Context, address string, utxos []types.UTXORequest) ([]*SafeUTXOPublic, *types.Error) {
-	cursor := 0
+func (s *Services) verifyViaUnisatService(ctx context.Context, address string, utxos []types.UTXOIdentifier) ([]*SafeUTXOPublic, *types.Error) {
+	cursor := uint32(0)
 	var inscriptionsUtxos []*unisat.UnisatUtxos
 
 	for {
@@ -72,7 +74,7 @@ func (s *Services) verifyViaUnisatService(ctx context.Context, address string, u
 		// Append the fetched utxos to the list
 		inscriptionsUtxos = append(inscriptionsUtxos, inscriptions...)
 		// Stop fetching if the total number of utxos is less than the limit
-		if len(inscriptions) < s.cfg.Unisat.Limit {
+		if uint32(len(inscriptions)) < s.cfg.Unisat.Limit {
 			break
 		}
 		// update the cursor for the next fetch
@@ -92,6 +94,7 @@ func (s *Services) verifyViaUnisatService(ctx context.Context, address string, u
 		_, ok := inscriptionsUtxosMap[key]
 		results = append(results, &SafeUTXOPublic{
 			TxId:        utxo.Txid,
+			Vout:        utxo.Vout,
 			Inscription: ok,
 		})
 	}

@@ -9,7 +9,7 @@ type OrdinalsConfig struct {
 	Host     string `mapstructure:"host"`
 	Port     string `mapstructure:"port"`
 	Timeout  int    `mapstructure:"timeout"`
-	MaxUTXOs int    `mapstructure:"max_utxos"`
+	MaxUTXOs uint32 `mapstructure:"max_utxos"`
 }
 
 func (cfg *OrdinalsConfig) Validate() error {

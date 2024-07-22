@@ -8,7 +8,7 @@ import (
 type UnisatConfig struct {
 	Host     string `mapstructure:"host"`
 	Timeout  int    `mapstructure:"timeout"`
-	Limit    int    `mapstructure:"limit"`
+	Limit    uint32 `mapstructure:"limit"`
 	ApiToken string `mapstructure:"token"`
 }
 
