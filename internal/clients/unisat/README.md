@@ -1,9 +1,15 @@
 # Unisat Client
 
-In Babylon, we use the Ordinal Service (https://github.com/ordinals/ord) to check 
-if UTXOs contain any BRC-20/Runes/Ordinals. In addition to the Ordinal Service, 
-we also use the paid service from Unisat to double-check the UTXOs in case of 
-Ordinal Service downtime.
+The Babylon Staking API allows for the option to deploy additional endpoints  
+that check whether a UTXO contains an inscription or not, with the aim to help  
+staking applications identify whether they should avoid spending a particular UTXO.  
+This is accomplished through a connection to the  
+[Ordinal Service](https://github.com/ordinals/ord) and  
+a connection to the Unisat API.  
+Due to Unisat being a payed service and applying rate limits,  
+the API initially tries to get the status of a UTXO through the Ordinals Service,  
+and if that fails, then contacts the Unisat API,  
+effectively using it as a back-up mechanism to handle downtime from the Ordinals Service.  
 
 You can find more information about Unisat's Ordinal/BRC-20/Runes related endpoints at:
 https://docs.unisat.io/
@@ -19,8 +25,7 @@ In our service, we only utilize the following endpoint:
 4. Configure the values for `unisat.host`, `limit`, `timeout`, etc. Refer to `config-docker.yml`.
 5. Ensure you also set up the `ordinals` configuration, as this is a dependency.
 6. Call the POST endpoint `/v1/ordinals/verify-utxos` as shown in the example below:
-7. The calls to unisat will only be triggered if ordinal service is not responding or returning errors
-
+7. The calls to unisat will only be triggered if the ordinal service is not responding or returning errors
 ```POST
 {
     "utxos": [

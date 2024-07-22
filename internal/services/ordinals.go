@@ -60,7 +60,7 @@ func (s *Services) verifyViaOrdinalService(ctx context.Context, utxos []types.UT
 
 func (s *Services) verifyViaUnisatService(ctx context.Context, address string, utxos []types.UTXOIdentifier) ([]*SafeUTXOPublic, *types.Error) {
 	cursor := uint32(0)
-	var inscriptionsUtxos []*unisat.UnisatUtxos
+	var inscriptionsUtxos []*unisat.UnisatUTXO
 	limit := s.cfg.Assets.Unisat.Limit
 
 	for {

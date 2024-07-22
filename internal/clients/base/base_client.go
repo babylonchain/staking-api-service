@@ -28,7 +28,7 @@ type BaseClientOptions struct {
 	Headers      map[string]string
 }
 
-func isAllowedMethods(method string) bool {
+func isAllowedMethod(method string) bool {
 	for _, allowedMethod := range ALLOWED_METHODS {
 		if method == allowedMethod {
 			return true
@@ -40,7 +40,7 @@ func isAllowedMethods(method string) bool {
 func sendRequest[I any, R any](
 	ctx context.Context, client BaseClient, method string, opts *BaseClientOptions, input *I,
 ) (*R, *types.Error) {
-	if !isAllowedMethods(method) {
+	if !isAllowedMethod(method) {
 		return nil, types.NewInternalServiceError(fmt.Errorf("method %s is not allowed", method))
 	}
 	url := fmt.Sprintf("%s%s", client.GetBaseURL(), opts.Path)

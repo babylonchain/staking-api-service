@@ -10,6 +10,8 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
 
+// Note: The JSON tags use camel case because this struct is used to
+// represent the response from the Unisat endpoint, which uses camel case.
 type UnisatInscriptions struct {
 	InscriptionId     string `json:"inscriptionId"`
 	InscriptionNumber uint32 `json:"inscriptionNumber"`
@@ -18,7 +20,7 @@ type UnisatInscriptions struct {
 	Offset            uint32 `json:"offset"`
 }
 
-type UnisatUtxos struct {
+type UnisatUTXO struct {
 	TxId         string                `json:"txid"`
 	Vout         uint32                `json:"vout"`
 	Inscriptions []*UnisatInscriptions `json:"inscriptions"`
@@ -27,7 +29,7 @@ type UnisatUtxos struct {
 type UnisatResponseData struct {
 	Cursor uint32         `json:"cursor"`
 	Total  uint32         `json:"total"`
-	Utxo   []*UnisatUtxos `json:"utxo"`
+	Utxo   []*UnisatUTXO `json:"utxo"`
 }
 
 // Refer to https://open-api.unisat.io/swagger.html
@@ -78,7 +80,7 @@ func (c *UnisatClient) GetHttpClient() *http.Client {
 // cursor and limit are used for pagination
 func (c *UnisatClient) FetchInscriptionsUtxosByAddress(
 	ctx context.Context, address string, cursor uint32,
-) ([]*UnisatUtxos, *types.Error) {
+) ([]*UnisatUTXO, *types.Error) {
 	path := fmt.Sprintf(
 		"/v1/indexer/address/%s/inscription-utxo-data?cursor=%d&size=%d",
 		address, cursor, c.config.Limit,
