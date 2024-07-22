@@ -6,10 +6,9 @@ import (
 )
 
 type OrdinalsConfig struct {
-	Host     string `mapstructure:"host"`
-	Port     string `mapstructure:"port"`
-	Timeout  int    `mapstructure:"timeout"`
-	MaxUTXOs int    `mapstructure:"max_utxos"`
+	Host    string `mapstructure:"host"`
+	Port    string `mapstructure:"port"`
+	Timeout int    `mapstructure:"timeout"`
 }
 
 func (cfg *OrdinalsConfig) Validate() error {
@@ -23,10 +22,6 @@ func (cfg *OrdinalsConfig) Validate() error {
 
 	if cfg.Timeout <= 0 {
 		return errors.New("timeout cannot be smaller or equal to 0")
-	}
-
-	if cfg.MaxUTXOs <= 0 {
-		return errors.New("max_utxos cannot be smaller or equal to 0")
 	}
 
 	parsedURL, err := url.ParseRequestURI(cfg.Host)

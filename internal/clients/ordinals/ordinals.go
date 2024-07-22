@@ -2,6 +2,7 @@ package ordinals
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -9,6 +10,12 @@ import (
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/types"
 )
+
+type OrdinalsOutputResponse struct {
+	Transaction  string          `json:"transaction"` // same as Txid
+	Inscriptions []string        `json:"inscriptions"`
+	Runes        json.RawMessage `json:"runes"`
+}
 
 type OrdinalsClient struct {
 	config         *config.OrdinalsConfig
@@ -46,11 +53,12 @@ func (c *OrdinalsClient) GetHttpClient() *http.Client {
 	return c.httpClient
 }
 
+// FetchUTXOInfos fetches UTXO information from the ordinal service
+// The response from ordinal service shall contain all requested UTXOs and in the same order
 func (c *OrdinalsClient) FetchUTXOInfos(
-	ctx context.Context, utxos []types.UTXORequest,
-) ([]*types.OrdinalsOutputResponse, *types.Error) {
+	ctx context.Context, utxos []types.UTXOIdentifier,
+) ([]OrdinalsOutputResponse, *types.Error) {
 	path := "/outputs"
-
 	opts := &baseclient.BaseClientOptions{
 		Path:         path,
 		TemplatePath: path,
@@ -62,32 +70,21 @@ func (c *OrdinalsClient) FetchUTXOInfos(
 		txHashVouts = append(txHashVouts, fmt.Sprintf("%s:%d", utxo.Txid, utxo.Vout))
 	}
 
-	outputsResponse, err := baseclient.SendRequest[[]string, []types.OrdinalsOutputResponse](
+	outputsResponse, err := baseclient.SendRequest[[]string, []OrdinalsOutputResponse](
 		ctx, c, http.MethodPost, opts, &txHashVouts,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// convert the response to a map for easier lookup
-	outputsMap := make(map[string]types.OrdinalsOutputResponse)
-	for _, output := range *outputsResponse {
-		outputsMap[output.Transaction] = output
+	// The response from ordinal service shall contain all requested UTXOs and in the same order
+	if len(*outputsResponse) != len(utxos) {
+		return nil, types.NewErrorWithMsg(
+			http.StatusInternalServerError,
+			types.InternalServiceError,
+			"response does not contain all requested UTXOs",
+		)
 	}
 
-	// re-order the response based on the request order
-	var outputs = make([]*types.OrdinalsOutputResponse, len(utxos))
-	for i, utxo := range utxos {
-		output, ok := outputsMap[utxo.Txid]
-		if !ok {
-			return nil, types.NewErrorWithMsg(
-				http.StatusInternalServerError,
-				types.InternalServiceError,
-				"response does not contain all requested UTXOs",
-			)
-		}
-		outputs[i] = &output
-	}
-
-	return outputs, nil
+	return *outputsResponse, nil
 }

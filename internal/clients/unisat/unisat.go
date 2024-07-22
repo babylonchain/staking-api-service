@@ -12,21 +12,21 @@ import (
 
 type UnisatInscriptions struct {
 	InscriptionId     string `json:"inscriptionId"`
-	InscriptionNumber int    `json:"inscriptionNumber"`
+	InscriptionNumber uint32 `json:"inscriptionNumber"`
 	IsBRC20           bool   `json:"isBRC20"`
 	Moved             bool   `json:"moved"`
-	Offset            int    `json:"offset"`
+	Offset            uint32 `json:"offset"`
 }
 
 type UnisatUtxos struct {
 	TxId         string                `json:"txid"`
-	Vout         int                   `json:"vout"`
+	Vout         uint32                `json:"vout"`
 	Inscriptions []*UnisatInscriptions `json:"inscriptions"`
 }
 
 type UnisatResponseData struct {
-	Cursor int            `json:"cursor"`
-	Total  int            `json:"total"`
+	Cursor uint32         `json:"cursor"`
+	Total  uint32         `json:"total"`
 	Utxo   []*UnisatUtxos `json:"utxo"`
 }
 
@@ -77,7 +77,7 @@ func (c *UnisatClient) GetHttpClient() *http.Client {
 // Refer to https://open-api.unisat.io/swagger.html#/address
 // cursor and limit are used for pagination
 func (c *UnisatClient) FetchInscriptionsUtxosByAddress(
-	ctx context.Context, address string, cursor int,
+	ctx context.Context, address string, cursor uint32,
 ) ([]*UnisatUtxos, *types.Error) {
 	path := fmt.Sprintf(
 		"/v1/indexer/address/%s/inscription-utxo-data?cursor=%d&size=%d",

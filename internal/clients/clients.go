@@ -12,8 +12,8 @@ type Clients struct {
 }
 
 func New(cfg *config.Config) *Clients {
-	ordinalsClient := ordinals.NewOrdinalsClient(cfg.Ordinals)
-	unisatClient := unisat.NewUnisatClient(cfg.Unisat)
+	ordinalsClient := ordinals.NewOrdinalsClient(cfg.Assets.Ordinals)
+	unisatClient := unisat.NewUnisatClient(cfg.Assets.Unisat)
 
 	return &Clients{
 		Ordinals: ordinalsClient,
