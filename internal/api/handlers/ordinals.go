@@ -11,7 +11,7 @@ import (
 
 type VerifyUTXOsRequestPayload struct {
 	Address string                 `json:"address"`
-	Utxos   []types.UTXOIdentifier `json:"utxos"`
+	UTXOs   []types.UTXOIdentifier `json:"utxos"`
 }
 
 func parseRequestPayload(request *http.Request, maxUTXOs uint32, netParam *chaincfg.Params) (*VerifyUTXOsRequestPayload, *types.Error) {
@@ -19,7 +19,7 @@ func parseRequestPayload(request *http.Request, maxUTXOs uint32, netParam *chain
 	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "invalid input format")
 	}
-	utxos := payload.Utxos
+	utxos := payload.UTXOs
 	if len(utxos) == 0 {
 		return nil, types.NewErrorWithMsg(http.StatusBadRequest, types.BadRequest, "empty UTXO array")
 	}
@@ -48,7 +48,7 @@ func (h *Handler) VerifyUTXOs(request *http.Request) (*Result, *types.Error) {
 		return nil, err
 	}
 
-	results, err := h.services.VerifyUTXOs(request.Context(), inputs.Utxos, inputs.Address)
+	results, err := h.services.VerifyUTXOs(request.Context(), inputs.UTXOs, inputs.Address)
 	if err != nil {
 		return nil, err
 	}
