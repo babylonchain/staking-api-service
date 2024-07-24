@@ -61,7 +61,7 @@ generate-mock-interface:
 	cd internal/clients/ordinals && mockery --name=OrdinalsClientInterface --output=../../../tests/mocks --outpkg=mocks --filename=mock_ordinal_client.go
 	cd internal/clients/unisat && mockery --name=UnisatClientInterface --output=../../../tests/mocks --outpkg=mocks --filename=mock_unisat_client.go
 
-tests:
+test:
 	./bin/local-startup.sh;
 	go test -v -cover -p 1 ./... -count=1
 
