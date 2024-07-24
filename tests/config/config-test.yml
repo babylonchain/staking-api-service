@@ -7,7 +7,7 @@ server:
   allowed-origins: ["*"]
   log-level: error
   btc-net: "signet"
-  max-content-length: 40960
+  max-content-length: 4096
 db:
   username: root
   password: example
@@ -28,7 +28,7 @@ metrics:
   host: 0.0.0.0
   port: 2112
 assets:
-  max_utxos: 100
+  max_utxos: 5
   ordinals:
     host: "http://ord-poc.devnet.babylonchain.io"
     port: 8888

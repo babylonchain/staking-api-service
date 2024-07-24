@@ -7,18 +7,13 @@ import (
 )
 
 type Clients struct {
-	Ordinals ordinals.OrdinalsClientInterface
-	Unisat   unisat.UnisatClientInterface
+	Ordinals *ordinals.OrdinalsClient
+	Unisat   *unisat.UnisatClient
 }
 
 func New(cfg *config.Config) *Clients {
-	var ordinalsClient *ordinals.OrdinalsClient
-	var unisatClient *unisat.UnisatClient
-	// If the assets config is set, create the ordinal related clients
-	if cfg.Assets != nil {
-		ordinalsClient = ordinals.NewOrdinalsClient(cfg.Assets.Ordinals)
-		unisatClient = unisat.NewUnisatClient(cfg.Assets.Unisat)
-	}
+	ordinalsClient := ordinals.NewOrdinalsClient(cfg.Assets.Ordinals)
+	unisatClient := unisat.NewUnisatClient(cfg.Assets.Unisat)
 
 	return &Clients{
 		Ordinals: ordinalsClient,

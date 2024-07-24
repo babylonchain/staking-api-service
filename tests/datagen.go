@@ -15,7 +15,10 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 
+	"github.com/babylonchain/staking-api-service/internal/api/handlers"
+	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/types"
+	"github.com/babylonchain/staking-api-service/internal/utils"
 )
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -270,4 +273,28 @@ func generateRandomActiveStakingEvents(
 		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
 	}
 	return activeStakingEvents
+}
+
+
+func generateRandomVerifyUTXOsRequestPayload(cfg *config.Config, rng *rand.Rand, minUTXOs, maxUTXOs int) (handlers.VerifyUTXOsRequestPayload, error) {
+	numUTXOs := rng.Intn(maxUTXOs - minUTXOs + 1) + minUTXOs
+
+	var utxos []types.UTXOIdentifier
+	for i := 0; i < numUTXOs; i++ {
+		_, txHex, _ := generateRandomTx(rng)
+		utxos = append(utxos, types.UTXOIdentifier{
+			Txid: txHex,
+			Vout: randomVout(rng),
+		})
+	}
+
+	rpk, _ := randomPk()
+	randomTaprootAddress, _ := utils.GetTaprootAddressFromPk(
+		rpk, cfg.Server.BTCNetParam,
+	)
+
+	return handlers.VerifyUTXOsRequestPayload{
+		Address: randomTaprootAddress,
+		Utxos:   utxos,
+	}, nil
 }
