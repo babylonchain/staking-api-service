@@ -214,6 +214,8 @@ definitions:
     - NOT_FOUND
     - BAD_REQUEST
     - FORBIDDEN
+    - UNPROCESSABLE_ENTITY
+    - REQUEST_TIMEOUT
     type: string
     x-enum-varnames:
     - InternalServiceError
@@ -221,6 +223,8 @@ definitions:
     - NotFound
     - BadRequest
     - Forbidden
+    - UnprocessableEntity
+    - RequestTimeout
 info:
   contact: {}
 paths:

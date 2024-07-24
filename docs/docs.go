@@ -622,14 +622,18 @@ const docTemplate = `{
                 "VALIDATION_ERROR",
                 "NOT_FOUND",
                 "BAD_REQUEST",
-                "FORBIDDEN"
+                "FORBIDDEN",
+                "UNPROCESSABLE_ENTITY",
+                "REQUEST_TIMEOUT"
             ],
             "x-enum-varnames": [
                 "InternalServiceError",
                 "ValidationError",
                 "NotFound",
                 "BadRequest",
-                "Forbidden"
+                "Forbidden",
+                "UnprocessableEntity",
+                "RequestTimeout"
             ]
         }
     }

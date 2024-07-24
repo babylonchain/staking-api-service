@@ -20,5 +20,11 @@ func (a *Server) SetupRoutes(r *chi.Mux) {
 	r.Get("/v1/staker/delegation/check", registerHandler(handlers.CheckStakerDelegationExist))
 	r.Get("/v1/delegation", registerHandler(handlers.GetDelegationByTxHash))
 
+	// Only register these routes if the asset has been configured
+	// The endpoints are used to check ordinals within the UTXOs
+	if a.cfg.Assets != nil {
+		r.Post("/v1/ordinals/verify-utxos", registerHandler(handlers.VerifyUTXOs))
+	}
+
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 }

@@ -10,10 +10,11 @@ import (
 )
 
 type Config struct {
-	Server  ServerConfig      `mapstructure:"server"`
-	Db      DbConfig          `mapstructure:"db"`
-	Queue   queue.QueueConfig `mapstructure:"queue"`
-	Metrics MetricsConfig     `mapstructure:"metrics"`
+	Server  *ServerConfig      `mapstructure:"server"`
+	Db      *DbConfig          `mapstructure:"db"`
+	Queue   *queue.QueueConfig `mapstructure:"queue"`
+	Metrics *MetricsConfig     `mapstructure:"metrics"`
+	Assets  *AssetsConfig      `mapstructure:"assets"`
 }
 
 func (cfg *Config) Validate() error {
@@ -31,6 +32,13 @@ func (cfg *Config) Validate() error {
 
 	if err := cfg.Queue.Validate(); err != nil {
 		return err
+	}
+
+	// Assets is optional
+	if cfg.Assets != nil {
+		if err := cfg.Assets.Validate(); err != nil {
+			return err
+		}
 	}
 
 	return nil
