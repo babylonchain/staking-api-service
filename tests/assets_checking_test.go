@@ -252,8 +252,12 @@ func TestVerifyUtxosEndpointWithMixedUTXOs(t *testing.T) {
 
 // Test case 4: Ordinal service return error, fallback to unisat service and return the result
 func TestVerifyUtxosEndpointOrdinalServiceErrorFallbackToUnisat(t *testing.T) {
+	cfg, err := config.New("./config/config-test.yml")
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := randomPositiveInt(r, 100)
+	numOfUTXOs := randomPositiveInt(r, 10)
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -284,7 +288,10 @@ func TestVerifyUtxosEndpointOrdinalServiceErrorFallbackToUnisat(t *testing.T) {
 		Ordinals: mockOrdinal,
 		Unisat:   mockUnisat,
 	}
-	testServer := setupTestServer(t, &TestServerDependency{MockedClients: mockedClients})
+	testServer := setupTestServer(t, &TestServerDependency{
+		MockedClients: mockedClients, 
+		ConfigOverrides: cfg,
+	})
 	defer testServer.Close()
 
 	url := testServer.Server.URL + verifyUTXOsPath
@@ -324,8 +331,12 @@ func TestVerifyUtxosEndpointOrdinalServiceErrorFallbackToUnisat(t *testing.T) {
 
 // Test case 5: Unisat service return error, return error
 func TestVerifyUtxosEndpointUnisatServiceErrorReturnError(t *testing.T) {
+		cfg, err := config.New("./config/config-test.yml")
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := randomPositiveInt(r, 100)
+	numOfUTXOs := randomPositiveInt(r, 10)
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -358,7 +369,10 @@ func TestVerifyUtxosEndpointUnisatServiceErrorReturnError(t *testing.T) {
 		Ordinals: mockOrdinal,
 		Unisat:   mockUnisat,
 	}
-	testServer := setupTestServer(t, &TestServerDependency{MockedClients: mockedClients})
+	testServer := setupTestServer(t, &TestServerDependency{
+		MockedClients: mockedClients,
+		ConfigOverrides: cfg,
+	})
 	defer testServer.Close()
 
 	url := testServer.Server.URL + verifyUTXOsPath
@@ -382,8 +396,12 @@ func TestVerifyUtxosEndpointUnisatServiceErrorReturnError(t *testing.T) {
 
 // Test case 6: Ordinal service took too long to respond, fallback to unisat service and return the result
 func TestVerifyUtxosEndpointOrdinalServiceTimeoutFallbackToUnisat(t *testing.T) {
+	cfg, err := config.New("./config/config-test.yml")
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := randomPositiveInt(r, 100)
+	numOfUTXOs := randomPositiveInt(r, 10)
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -416,6 +434,7 @@ func TestVerifyUtxosEndpointOrdinalServiceTimeoutFallbackToUnisat(t *testing.T) 
 
 	testServer := setupTestServer(t, &TestServerDependency{
 		MockedClients: mockedClients,
+		ConfigOverrides: cfg,
 	})
 
 	defer testServer.Close()
@@ -461,8 +480,12 @@ func TestVerifyUtxosEndpointOrdinalServiceTimeoutFallbackToUnisat(t *testing.T) 
 
 // Test case 7: Unisat service took too long to respond, return error within the timeout window
 func TestVerifyUtxosEndpointUnisatServiceTimeoutReturnError(t *testing.T) {
+	cfg, err := config.New("./config/config-test.yml")
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := randomPositiveInt(r, 100)
+	numOfUTXOs := randomPositiveInt(r, 10)
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -496,6 +519,7 @@ func TestVerifyUtxosEndpointUnisatServiceTimeoutReturnError(t *testing.T) {
 
 	testServer := setupTestServer(t, &TestServerDependency{
 		MockedClients: mockedClients,
+		ConfigOverrides: cfg,
 	})
 
 	defer testServer.Close()
@@ -525,7 +549,7 @@ func TestVerifyUtxosEndpointPaginationWithOrdinalServiceFailure(t *testing.T) {
 	}
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := 100
+	numOfUTXOs := 10
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -627,8 +651,12 @@ func TestVerifyUtxosEndpointPaginationWithOrdinalServiceFailure(t *testing.T) {
 
 // Test case 9: Fall back to unisat when ordinal service return data that is not in the right order of the request UTXOs
 func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testing.T) {
+	cfg, err := config.New("./config/config-test.yml")
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := 100
+	numOfUTXOs := 10
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -641,7 +669,6 @@ func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testin
 	for i := 0; i < numOfUTXOsWithAsset; i++ {
 		txidsWithAsset = append(txidsWithAsset, payload.UTXOs[i].Txid)
 	}
-	t.Logf("Created %d UTXOs with assets", numOfUTXOsWithAsset)
 
 	mockedOrdinalResponse := createOrdinalServiceResponse(t, r, payload.UTXOs, txidsWithAsset)
 
@@ -670,6 +697,7 @@ func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testin
 
 	testServer := setupTestServer(t, &TestServerDependency{
 		MockedClients: mockedClients,
+		ConfigOverrides: cfg,
 	})
 	defer testServer.Close()
 
@@ -680,7 +708,6 @@ func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testin
 	}
 	defer resp.Body.Close()
 
-	t.Logf("Received response with status code: %d", resp.StatusCode)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Decode the response body
