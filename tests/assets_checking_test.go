@@ -289,7 +289,7 @@ func TestVerifyUtxosEndpointOrdinalServiceErrorFallbackToUnisat(t *testing.T) {
 		Unisat:   mockUnisat,
 	}
 	testServer := setupTestServer(t, &TestServerDependency{
-		MockedClients: mockedClients, 
+		MockedClients:   mockedClients,
 		ConfigOverrides: cfg,
 	})
 	defer testServer.Close()
@@ -331,7 +331,7 @@ func TestVerifyUtxosEndpointOrdinalServiceErrorFallbackToUnisat(t *testing.T) {
 
 // Test case 5: Unisat service return error, return error
 func TestVerifyUtxosEndpointUnisatServiceErrorReturnError(t *testing.T) {
-		cfg, err := config.New("./config/config-test.yml")
+	cfg, err := config.New("./config/config-test.yml")
 	if err != nil {
 		t.Fatalf("Failed to load config: %v", err)
 	}
@@ -370,7 +370,7 @@ func TestVerifyUtxosEndpointUnisatServiceErrorReturnError(t *testing.T) {
 		Unisat:   mockUnisat,
 	}
 	testServer := setupTestServer(t, &TestServerDependency{
-		MockedClients: mockedClients,
+		MockedClients:   mockedClients,
 		ConfigOverrides: cfg,
 	})
 	defer testServer.Close()
@@ -433,7 +433,7 @@ func TestVerifyUtxosEndpointOrdinalServiceTimeoutFallbackToUnisat(t *testing.T) 
 	}
 
 	testServer := setupTestServer(t, &TestServerDependency{
-		MockedClients: mockedClients,
+		MockedClients:   mockedClients,
 		ConfigOverrides: cfg,
 	})
 
@@ -518,7 +518,7 @@ func TestVerifyUtxosEndpointUnisatServiceTimeoutReturnError(t *testing.T) {
 	}
 
 	testServer := setupTestServer(t, &TestServerDependency{
-		MockedClients: mockedClients,
+		MockedClients:   mockedClients,
 		ConfigOverrides: cfg,
 	})
 
@@ -696,7 +696,7 @@ func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testin
 	}
 
 	testServer := setupTestServer(t, &TestServerDependency{
-		MockedClients: mockedClients,
+		MockedClients:   mockedClients,
 		ConfigOverrides: cfg,
 	})
 	defer testServer.Close()
