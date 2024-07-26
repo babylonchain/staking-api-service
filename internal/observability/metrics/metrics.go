@@ -2,10 +2,12 @@ package metrics
 
 import (
 	"fmt"
+
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/go-chi/chi"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -32,6 +34,8 @@ var (
 	queueOperationFailureCounter     *prometheus.CounterVec
 	httpResponseWriteFailureCounter  *prometheus.CounterVec
 	clientRequestDurationHistogram   *prometheus.HistogramVec
+	ordinalServiceErrorCounter       *prometheus.CounterVec
+	unisatServiceErrorCounter        *prometheus.CounterVec
 )
 
 // Init initializes the metrics package.
@@ -114,6 +118,22 @@ func registerMetrics() {
 		[]string{"baseurl", "method", "path", "status"},
 	)
 
+	ordinalServiceErrorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "ordinal_service_error_total",
+			Help: "Total number of errors encountered when using the ordinal service.",
+		},
+		[]string{"errorCode", "errorStatusCode"},
+	)
+
+	unisatServiceErrorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "unisat_service_error_total",
+			Help: "Total number of errors encountered when using the unisat service.",
+		},
+		[]string{"errorCode", "errorStatusCode"},
+	)
+
 	prometheus.MustRegister(
 		httpRequestDurationHistogram,
 		eventProcessingDurationHistogram,
@@ -121,6 +141,8 @@ func registerMetrics() {
 		queueOperationFailureCounter,
 		httpResponseWriteFailureCounter,
 		clientRequestDurationHistogram,
+		ordinalServiceErrorCounter,
+		unisatServiceErrorCounter,
 	)
 }
 
@@ -176,4 +198,36 @@ func StartClientRequestDurationTimer(baseUrl, method, path string) func(statusCo
 			fmt.Sprintf("%d", statusCode),
 		).Observe(duration)
 	}
+}
+
+// RecordOrdinalServiceError increments the ordinal service call failure counter.
+func RecordOrdinalServiceError(err *types.Error) {
+	if err == nil {
+		return
+	}
+	errorCode := string(err.ErrorCode)
+	if errorCode == "" {
+		errorCode = "UNKNOWN"
+	}
+	errorStatusCode := fmt.Sprintf("%d", err.StatusCode)
+	if errorStatusCode == "0" {
+		errorStatusCode = "UNKNOWN"
+	}
+	ordinalServiceErrorCounter.WithLabelValues(errorCode, errorStatusCode).Inc()
+}
+
+// RecordUnisatServiceError increments the unisat service call failure counter.
+func RecordUnisatServiceError(err *types.Error) {
+	if err == nil {
+		return
+	}
+	errorCode := string(err.ErrorCode)
+	if errorCode == "" {
+		errorCode = "UNKNOWN"
+	}
+	errorStatusCode := fmt.Sprintf("%d", err.StatusCode)
+	if errorStatusCode == "0" {
+		errorStatusCode = "UNKNOWN"
+	}
+	unisatServiceErrorCounter.WithLabelValues(errorCode, errorStatusCode).Inc()
 }

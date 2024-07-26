@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/babylonchain/staking-api-service/internal/clients/unisat"
+	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
 	"github.com/babylonchain/staking-api-service/internal/types"
 	"github.com/rs/zerolog/log"
 )
@@ -23,11 +24,13 @@ func (s *Services) VerifyUTXOs(
 		log.Ctx(ctx).Error().Err(err).Msg(
 			"failed to verify ordinals via ordinals service",
 		)
+		metrics.RecordOrdinalServiceError(err)
 		unisatResult, err := s.verifyViaUnisatService(ctx, address, utxos)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg(
 				"failed to verify ordinals via unisat service",
 			)
+			metrics.RecordUnisatServiceError(err)
 			return nil, err
 		}
 		return unisatResult, nil
