@@ -427,7 +427,7 @@ func TestVerifyUtxosEndpointOrdinalServiceTimeoutFallbackToUnisat(t *testing.T) 
 		"request timeout after"))
 
 	mockUnisat := new(mocks.UnisatClientInterface)
-	
+
 	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
 		Return(mockUnisatResponse, nil).Once()
 
@@ -693,8 +693,6 @@ func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testin
 	mockUnisatResponse := createUnisatServiceResponse(t, r, payload.UTXOs, txidsWithAsset)
 
 	mockUnisat := new(mocks.UnisatClientInterface)
-	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
-		Return(mockUnisatResponse, nil).Once()
 	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
 		Return(mockUnisatResponse, nil).Once()
 
