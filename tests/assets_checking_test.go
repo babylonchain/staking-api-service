@@ -37,7 +37,7 @@ func createPayload(t *testing.T, r *rand.Rand, netParam *chaincfg.Params, size i
 	for i := 0; i < size; i++ {
 		var txid string
 		if hasInvalid && i < numInvalidUTXOs {
-			randomStr := randomString(r, 10)
+			randomStr := randomString(r, 100)
 			txid = randomStr
 		} else {
 			tx, _, err := generateRandomTx(r)
@@ -87,7 +87,7 @@ func TestVerifyUtxosEndpointNotAvailableIfAssetsConfigNotSet(t *testing.T) {
 
 // Test case 1: Fetching UTXOs return via Ordinal Service
 func FuzzSuccessfullyVerifyUTXOsAssetsViaOrdinalService(f *testing.F) {
-	attachRandomSeedsToFuzzer(f, 10)
+	attachRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		numOfUTXOs := randomPositiveInt(r, 100)
@@ -256,17 +256,16 @@ func TestVerifyUtxosEndpointOrdinalServiceErrorFallbackToUnisat(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to load config: %v", err)
 	}
+
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := randomPositiveInt(r, 10)
+	numOfUTXOs := randomPositiveInt(r, 100)
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		t.Fatalf("Failed to marshal payload: %v", err)
 	}
 
-	// create some ordinal responses that contains inscriptions
 	numOfUTXOsWithAsset := r.Intn(numOfUTXOs)
-
 	var txidsWithAsset []string
 	for i := 0; i < numOfUTXOsWithAsset; i++ {
 		txidsWithAsset = append(txidsWithAsset, payload.UTXOs[i].Txid)
@@ -282,12 +281,18 @@ func TestVerifyUtxosEndpointOrdinalServiceErrorFallbackToUnisat(t *testing.T) {
 	))
 
 	mockUnisat := new(mocks.UnisatClientInterface)
-	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).Return(mockUnisatResponse, nil)
+
+	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
+		Return(mockUnisatResponse, nil)
+
+	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
+		Return([]*unisat.UnisatUTXO{}, nil)
 
 	mockedClients := &clients.Clients{
 		Ordinals: mockOrdinal,
 		Unisat:   mockUnisat,
 	}
+
 	testServer := setupTestServer(t, &TestServerDependency{
 		MockedClients:   mockedClients,
 		ConfigOverrides: cfg,
@@ -302,14 +307,13 @@ func TestVerifyUtxosEndpointOrdinalServiceErrorFallbackToUnisat(t *testing.T) {
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	// decode the response body
+
 	var response handlers.PublicResponse[[]services.SafeUTXOPublic]
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		t.Fatalf("Failed to decode response body: %v", err)
 	}
 
-	// check the response
 	assert.Equal(t, len(payload.UTXOs), len(response.Data))
 
 	unisatUTXOMap := make(map[string]*unisat.UnisatUTXO)
@@ -336,7 +340,7 @@ func TestVerifyUtxosEndpointUnisatServiceErrorReturnError(t *testing.T) {
 		t.Fatalf("Failed to load config: %v", err)
 	}
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := randomPositiveInt(r, 10)
+	numOfUTXOs := randomPositiveInt(r, 100)
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -401,7 +405,7 @@ func TestVerifyUtxosEndpointOrdinalServiceTimeoutFallbackToUnisat(t *testing.T) 
 		t.Fatalf("Failed to load config: %v", err)
 	}
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := randomPositiveInt(r, 10)
+	numOfUTXOs := randomPositiveInt(r, 100)
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -425,7 +429,12 @@ func TestVerifyUtxosEndpointOrdinalServiceTimeoutFallbackToUnisat(t *testing.T) 
 		"request timeout after"))
 
 	mockUnisat := new(mocks.UnisatClientInterface)
-	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).Return(mockUnisatResponse, nil)
+	
+	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
+		Return(mockUnisatResponse, nil)
+
+	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
+		Return([]*unisat.UnisatUTXO{}, nil)
 
 	mockedClients := &clients.Clients{
 		Ordinals: mockOrdinal,
@@ -436,7 +445,6 @@ func TestVerifyUtxosEndpointOrdinalServiceTimeoutFallbackToUnisat(t *testing.T) 
 		MockedClients:   mockedClients,
 		ConfigOverrides: cfg,
 	})
-
 	defer testServer.Close()
 
 	url := testServer.Server.URL + verifyUTXOsPath
@@ -485,7 +493,7 @@ func TestVerifyUtxosEndpointUnisatServiceTimeoutReturnError(t *testing.T) {
 		t.Fatalf("Failed to load config: %v", err)
 	}
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := randomPositiveInt(r, 10)
+	numOfUTXOs := randomPositiveInt(r, 100)
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -549,7 +557,7 @@ func TestVerifyUtxosEndpointPaginationWithOrdinalServiceFailure(t *testing.T) {
 	}
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	numOfUTXOs := 10
+	numOfUTXOs := 100
 	payload := createPayload(t, r, &chaincfg.MainNetParams, numOfUTXOs, false)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -684,11 +692,14 @@ func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testin
 		"response does not contain all requested UTXOs or in the wrong order",
 	))
 
-	mockUnisatResponse := createUnisatServiceResponse(t, r, payload.UTXOs, txidsWithAsset)
+	mockUnisatResponse1 := createUnisatServiceResponse(t, r, payload.UTXOs[:len(payload.UTXOs)/2], txidsWithAsset)
+	mockUnisatResponse2 := createUnisatServiceResponse(t, r, payload.UTXOs[len(payload.UTXOs)/2:], txidsWithAsset)
 
 	mockUnisat := new(mocks.UnisatClientInterface)
 	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
-		Return(mockUnisatResponse, nil)
+		Return(mockUnisatResponse1, nil)
+	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
+		Return(mockUnisatResponse2, nil)
 
 	mockedClients := &clients.Clients{
 		Ordinals: mockOrdinal,
@@ -720,7 +731,7 @@ func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testin
 	assert.Equal(t, numOfUTXOs, len(response.Data), "Response should contain all UTXOs")
 
 	unisatUTXOMap := make(map[string]*unisat.UnisatUTXO)
-	for _, u := range mockUnisatResponse {
+	for _, u := range append(mockUnisatResponse1, mockUnisatResponse2...) {
 		unisatUTXOMap[u.TxId] = u
 	}
 
