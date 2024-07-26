@@ -281,10 +281,8 @@ func TestVerifyUtxosEndpointOrdinalServiceErrorFallbackToUnisat(t *testing.T) {
 	))
 
 	mockUnisat := new(mocks.UnisatClientInterface)
-
 	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
-		Return(mockUnisatResponse, nil)
-
+		Return(mockUnisatResponse, nil).Once()
 	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
 		Return([]*unisat.UnisatUTXO{}, nil)
 
@@ -431,7 +429,7 @@ func TestVerifyUtxosEndpointOrdinalServiceTimeoutFallbackToUnisat(t *testing.T) 
 	mockUnisat := new(mocks.UnisatClientInterface)
 	
 	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
-		Return(mockUnisatResponse, nil)
+		Return(mockUnisatResponse, nil).Once()
 
 	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
 		Return([]*unisat.UnisatUTXO{}, nil)
@@ -692,14 +690,13 @@ func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testin
 		"response does not contain all requested UTXOs or in the wrong order",
 	))
 
-	mockUnisatResponse1 := createUnisatServiceResponse(t, r, payload.UTXOs[:len(payload.UTXOs)/2], txidsWithAsset)
-	mockUnisatResponse2 := createUnisatServiceResponse(t, r, payload.UTXOs[len(payload.UTXOs)/2:], txidsWithAsset)
+	mockUnisatResponse := createUnisatServiceResponse(t, r, payload.UTXOs, txidsWithAsset)
 
 	mockUnisat := new(mocks.UnisatClientInterface)
 	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
-		Return(mockUnisatResponse1, nil)
+		Return(mockUnisatResponse, nil).Once()
 	mockUnisat.On("FetchInscriptionsUtxosByAddress", mock.Anything, mock.Anything, mock.Anything).
-		Return(mockUnisatResponse2, nil)
+		Return(mockUnisatResponse, nil).Once()
 
 	mockedClients := &clients.Clients{
 		Ordinals: mockOrdinal,
@@ -731,7 +728,7 @@ func TestVerifyUtxosEndpointFallbackToUnisatOnOrdinalServiceWrongOrder(t *testin
 	assert.Equal(t, numOfUTXOs, len(response.Data), "Response should contain all UTXOs")
 
 	unisatUTXOMap := make(map[string]*unisat.UnisatUTXO)
-	for _, u := range append(mockUnisatResponse1, mockUnisatResponse2...) {
+	for _, u := range append(mockUnisatResponse) {
 		unisatUTXOMap[u.TxId] = u
 	}
 
