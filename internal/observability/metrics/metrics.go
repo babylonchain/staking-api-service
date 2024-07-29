@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"fmt"
-
 	"net/http"
 	"sync"
 	"time"
@@ -34,8 +33,8 @@ var (
 	queueOperationFailureCounter     *prometheus.CounterVec
 	httpResponseWriteFailureCounter  *prometheus.CounterVec
 	clientRequestDurationHistogram   *prometheus.HistogramVec
-	ordinalServiceErrorCounter       *prometheus.CounterVec
-	unisatServiceErrorCounter        *prometheus.CounterVec
+	httpServiceErrorCounter          *prometheus.CounterVec
+	httpServiceRequestCounter        *prometheus.CounterVec
 )
 
 // Init initializes the metrics package.
@@ -118,20 +117,20 @@ func registerMetrics() {
 		[]string{"baseurl", "method", "path", "status"},
 	)
 
-	ordinalServiceErrorCounter = prometheus.NewCounterVec(
+	httpServiceErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "ordinal_service_error_total",
-			Help: "Total number of errors encountered when using the ordinal service.",
+			Name: "http_service_error_total",
+			Help: "Total number of errors encountered when using the http service.",
 		},
-		[]string{"errorCode", "errorStatusCode"},
+		[]string{"service", "errorCode", "errorStatusCode"},
 	)
 
-	unisatServiceErrorCounter = prometheus.NewCounterVec(
+	httpServiceRequestCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "unisat_service_error_total",
-			Help: "Total number of errors encountered when using the unisat service.",
+			Name: "http_service_request_total",
+			Help: "Total number of requests made to the http service.",
 		},
-		[]string{"errorCode", "errorStatusCode"},
+		[]string{"endpoint"},
 	)
 
 	prometheus.MustRegister(
@@ -141,8 +140,8 @@ func registerMetrics() {
 		queueOperationFailureCounter,
 		httpResponseWriteFailureCounter,
 		clientRequestDurationHistogram,
-		ordinalServiceErrorCounter,
-		unisatServiceErrorCounter,
+		httpServiceErrorCounter,
+		httpServiceRequestCounter,
 	)
 }
 
@@ -171,7 +170,6 @@ func StartEventProcessingDurationTimer(queuename string, attempts int32) func(st
 }
 
 // RecordUnprocessableEntity increments the unprocessable entity counter.
-// This is basically the number of items will show up in the unprocessable entity collection
 func RecordUnprocessableEntity(entity string) {
 	unprocessableEntityCounter.WithLabelValues(entity).Inc()
 }
@@ -200,24 +198,13 @@ func StartClientRequestDurationTimer(baseUrl, method, path string) func(statusCo
 	}
 }
 
-// RecordOrdinalServiceError increments the ordinal service call failure counter.
-func RecordOrdinalServiceError(err *types.Error) {
-	if err == nil {
-		return
-	}
-	errorCode := string(err.ErrorCode)
-	if errorCode == "" {
-		errorCode = "UNKNOWN"
-	}
-	errorStatusCode := fmt.Sprintf("%d", err.StatusCode)
-	if errorStatusCode == "0" {
-		errorStatusCode = "UNKNOWN"
-	}
-	ordinalServiceErrorCounter.WithLabelValues(errorCode, errorStatusCode).Inc()
+// IncrementServiceRequest increments the counter for http requests.
+func IncrementHttpServiceRequest(endpoint string, service string) {
+	httpServiceRequestCounter.WithLabelValues(endpoint, service).Inc()
 }
 
-// RecordUnisatServiceError increments the unisat service call failure counter.
-func RecordUnisatServiceError(err *types.Error) {
+// RecordHttpServiceError increments the service call failure counter.
+func RecordHttpServiceError(service string, err *types.Error) {
 	if err == nil {
 		return
 	}
@@ -229,5 +216,5 @@ func RecordUnisatServiceError(err *types.Error) {
 	if errorStatusCode == "0" {
 		errorStatusCode = "UNKNOWN"
 	}
-	unisatServiceErrorCounter.WithLabelValues(errorCode, errorStatusCode).Inc()
+	httpServiceErrorCounter.WithLabelValues(service, errorCode, errorStatusCode).Inc()
 }

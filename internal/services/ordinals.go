@@ -24,13 +24,13 @@ func (s *Services) VerifyUTXOs(
 		log.Ctx(ctx).Error().Err(err).Msg(
 			"failed to verify ordinals via ordinals service",
 		)
-		metrics.RecordOrdinalServiceError(err)
+		metrics.RecordHttpServiceError("verifyViaOrdinalService", err)
 		unisatResult, err := s.verifyViaUnisatService(ctx, address, utxos)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg(
 				"failed to verify ordinals via unisat service",
 			)
-			metrics.RecordUnisatServiceError(err)
+			metrics.RecordHttpServiceError("verifyViaUnisatService", err)
 			return nil, err
 		}
 		return unisatResult, nil
@@ -70,6 +70,8 @@ func (s *Services) verifyViaOrdinalService(
 func (s *Services) verifyViaUnisatService(
 	ctx context.Context, address string, utxos []types.UTXOIdentifier,
 ) ([]*SafeUTXOPublic, *types.Error) {
+	metrics.IncrementHttpServiceRequest("/v1/ordinals/verify-utxos", "verifyViaUnisatService")
+
 	cursor := uint32(0)
 	var inscriptionsUtxos []*unisat.UnisatUTXO
 	limit := s.cfg.Assets.Unisat.Limit
