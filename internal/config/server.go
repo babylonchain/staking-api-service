@@ -22,6 +22,7 @@ type ServerConfig struct {
 	BTCNet           string        `mapstructure:"btc-net"`
 	LogLevel         string        `mapstructure:"log-level"`
 	MaxContentLength int64         `mapstructure:"max-content-length"`
+	ThrottleLimit    uint          `mapstructure:"throttle-limit"`
 
 	BTCNetParam *chaincfg.Params
 }
