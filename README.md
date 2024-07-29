@@ -19,6 +19,21 @@ The primary infrastructure components include:
 2. RabbitMQ
 3. Redis cache (Work In Progress)
 
+### Infra recommendation
+
+Since the service is public-facing and exposes a set of endpoints, 
+it's crucial to apply additional protection mechanisms in front of the service. 
+Here are some recommendations beyond the basic configurations of request size 
+limit, header limit, request caching, and DDOS protection:
+
+- Request size limit
+- Header limit
+- Request caching
+- Rate limiting
+- DDOS protection mechanism
+- SSL/TLS
+- ... other common API gateway setup for running with microservices.
+
 ### Key Features
 
 - **Asynchronous Communication**: Enables decoupled, non-blocking inter-service 
