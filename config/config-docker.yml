@@ -4,12 +4,14 @@ server:
   write-timeout: 60s
   read-timeout: 60s
   idle-timeout: 60s
-  allowed-origins: [ "*" ]
+  allowed-origins: ["*"]
   log-level: debug
   btc-net: "mainnet"
   max-content-length: 4096
   health-check-interval: 300 # 5 minutes interval
 db:
+  username: root
+  password: example
   address: "mongodb://mongodb:27017"
   db-name: staking-api-service
   max-pagination-limit: 10
@@ -26,3 +28,14 @@ queue:
 metrics:
   host: 0.0.0.0
   port: 2112
+assets:
+  max_utxos: 100
+  ordinals:
+    host: "http://ord-poc.devnet.babylonchain.io"
+    port: 8888
+    timeout: 1000
+  unisat:
+    host: "https://open-api.unisat.io"
+    limit: 100
+    timeout: 1000
+    token: "add your token as ASSETS_UNISAT_TOKEN in environment variables"

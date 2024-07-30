@@ -7,6 +7,7 @@ import (
 	"github.com/babylonchain/staking-api-service/cmd/staking-api-service/cli"
 	"github.com/babylonchain/staking-api-service/cmd/staking-api-service/scripts"
 	"github.com/babylonchain/staking-api-service/internal/api"
+	"github.com/babylonchain/staking-api-service/internal/clients"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db/model"
 	"github.com/babylonchain/staking-api-service/internal/observability/healthcheck"
@@ -59,12 +60,15 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up staking db model")
 	}
-	services, err := services.New(ctx, cfg, params, finalityProviders)
+
+	// initialize clients package which is used to interact with external services
+	clients := clients.New(cfg)
+	services, err := services.New(ctx, cfg, params, finalityProviders, clients)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up staking services layer")
 	}
 	// Start the event queue processing
-	queues := queue.New(&cfg.Queue, services)
+	queues := queue.New(cfg.Queue, services)
 
 	// Check if the replay flag is set
 	if cli.GetReplayFlag() {

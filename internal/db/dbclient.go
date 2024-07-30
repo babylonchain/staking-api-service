@@ -12,7 +12,7 @@ import (
 type Database struct {
 	DbName string
 	Client *mongo.Client
-	cfg    config.DbConfig
+	cfg    *config.DbConfig
 }
 
 type DbResultMap[T any] struct {
@@ -20,8 +20,12 @@ type DbResultMap[T any] struct {
 	PaginationToken string `json:"paginationToken"`
 }
 
-func New(ctx context.Context, cfg config.DbConfig) (*Database, error) {
-	clientOps := options.Client().ApplyURI(cfg.Address)
+func New(ctx context.Context, cfg *config.DbConfig) (*Database, error) {
+	credential := options.Credential{
+		Username: cfg.Username,
+		Password: cfg.Password,
+	}
+	clientOps := options.Client().ApplyURI(cfg.Address).SetAuth(credential)
 	client, err := mongo.Connect(ctx, clientOps)
 	if err != nil {
 		return nil, err

@@ -11,6 +11,8 @@ const (
 )
 
 type DbConfig struct {
+	Username           string `mapstructure:"username"`
+	Password           string `mapstructure:"password"`
 	DbName             string `mapstructure:"db-name"`
 	Address            string `mapstructure:"address"`
 	MaxPaginationLimit int64  `mapstructure:"max-pagination-limit"`
@@ -19,6 +21,14 @@ type DbConfig struct {
 }
 
 func (cfg *DbConfig) Validate() error {
+	if cfg.Username == "" {
+		return fmt.Errorf("missing db username")
+	}
+
+	if cfg.Password == "" {
+		return fmt.Errorf("missing db password")
+	}
+
 	if cfg.Address == "" {
 		return fmt.Errorf("missing db address")
 	}

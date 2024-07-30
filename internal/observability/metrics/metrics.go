@@ -31,7 +31,8 @@ var (
 	unprocessableEntityCounter       *prometheus.CounterVec
 	queueOperationFailureCounter     *prometheus.CounterVec
 	httpResponseWriteFailureCounter  *prometheus.CounterVec
-	serviceCrashCounter							 *prometheus.CounterVec
+	clientRequestDurationHistogram   *prometheus.HistogramVec
+	serviceCrashCounter              *prometheus.CounterVec
 )
 
 // Init initializes the metrics package.
@@ -104,13 +105,22 @@ func registerMetrics() {
 		[]string{"status"},
 	)
 
+	// client requests are the ones sending to other service
+	clientRequestDurationHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "client_request_duration_seconds",
+			Help:    "Histogram of outgoing client request durations in seconds.",
+			Buckets: defaultHistogramBucketsSeconds,
+		},
+		[]string{"baseurl", "method", "path", "status"},
+	)
 	serviceCrashCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "service_crash_total",
 			Help: "",
 		},
 		[]string{"type"},
-	)	
+	)
 
 	prometheus.MustRegister(
 		httpRequestDurationHistogram,
@@ -118,6 +128,7 @@ func registerMetrics() {
 		unprocessableEntityCounter,
 		queueOperationFailureCounter,
 		httpResponseWriteFailureCounter,
+		clientRequestDurationHistogram,
 		serviceCrashCounter,
 	)
 }
@@ -160,6 +171,20 @@ func RecordQueueOperationFailure(operation, queuename string) {
 // RecordHttpResponseWriteFailure increments the http response write failure counter.
 func RecordHttpResponseWriteFailure(statusCode int) {
 	httpResponseWriteFailureCounter.WithLabelValues(fmt.Sprintf("%d", statusCode)).Inc()
+}
+
+// StartClientRequestDurationTimer starts a timer to measure outgoing client request duration.
+func StartClientRequestDurationTimer(baseUrl, method, path string) func(statusCode int) {
+	startTime := time.Now()
+	return func(statusCode int) {
+		duration := time.Since(startTime).Seconds()
+		clientRequestDurationHistogram.WithLabelValues(
+			baseUrl,
+			method,
+			path,
+			fmt.Sprintf("%d", statusCode),
+		).Observe(duration)
+	}
 }
 
 // RecordServiceCrash increments the service crash counter.

@@ -7,8 +7,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http/httptest"
-	"os"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +23,7 @@ import (
 
 	"github.com/babylonchain/staking-api-service/internal/api"
 	"github.com/babylonchain/staking-api-service/internal/api/middlewares"
+	"github.com/babylonchain/staking-api-service/internal/clients"
 	"github.com/babylonchain/staking-api-service/internal/config"
 	"github.com/babylonchain/staking-api-service/internal/db"
 	"github.com/babylonchain/staking-api-service/internal/observability/metrics"
@@ -39,6 +38,7 @@ type TestServerDependency struct {
 	PreInjectEventsHandler  func(queueClient client.QueueClient) error
 	MockedFinalityProviders []types.FinalityProviderDetails
 	MockedGlobalParams      *types.GlobalParams
+	MockedClients           *clients.Clients
 }
 
 type TestServer struct {
@@ -56,10 +56,21 @@ func (ts *TestServer) Close() {
 	ts.channel.Close()
 }
 
-func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
+func loadTestConfig(t *testing.T) *config.Config {
 	cfg, err := config.New("./config/config-test.yml")
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
+	}
+	return cfg
+}
+
+func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
+	var err error
+	var cfg *config.Config
+	if dep != nil && dep.ConfigOverrides != nil {
+		cfg = dep.ConfigOverrides
+	} else {
+		cfg = loadTestConfig(t)
 	}
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
@@ -84,11 +95,14 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 		}
 	}
 
-	if dep != nil && dep.ConfigOverrides != nil {
-		applyConfigOverrides(cfg, dep.ConfigOverrides)
+	var c *clients.Clients
+	if dep != nil && dep.MockedClients != nil {
+		c = dep.MockedClients
+	} else {
+		c = clients.New(cfg)
 	}
 
-	services, err := services.New(context.Background(), cfg, params, fps)
+	services, err := services.New(context.Background(), cfg, params, fps, c)
 	if err != nil {
 		t.Fatalf("Failed to initialize services: %v", err)
 	}
@@ -113,7 +127,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 	r.Use(middlewares.ContentLengthMiddleware(cfg))
 	apiServer.SetupRoutes(r)
 
-	queues, conn, ch, err := setUpTestQueue(&cfg.Queue, services)
+	queues, conn, ch, err := setUpTestQueue(cfg.Queue, services)
 	if err != nil {
 		t.Fatalf("Failed to setup test queue: %v", err)
 	}
@@ -127,25 +141,6 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) *TestServer {
 		Conn:    conn,
 		channel: ch,
 		Config:  cfg,
-	}
-}
-
-// Generic function to apply configuration overrides
-func applyConfigOverrides(defaultCfg *config.Config, overrides *config.Config) {
-	defaultVal := reflect.ValueOf(defaultCfg).Elem()
-	overrideVal := reflect.ValueOf(overrides).Elem()
-
-	for i := 0; i < defaultVal.NumField(); i++ {
-		defaultField := defaultVal.Field(i)
-		overrideField := overrideVal.Field(i)
-
-		if overrideField.IsZero() {
-			continue // Skip fields that are not set
-		}
-
-		if defaultField.CanSet() {
-			defaultField.Set(overrideField)
-		}
 	}
 }
 
@@ -266,7 +261,7 @@ func sendTestMessage[T any](client client.QueueClient, data []T) error {
 	return nil
 }
 
-func directDbConnection(t *testing.T) (*db.Database) {
+func directDbConnection(t *testing.T) *db.Database {
 	cfg, err := config.New("./config/config-test.yml")
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
@@ -294,7 +289,7 @@ func injectDbDocuments[T any](t *testing.T, collectionName string, doc T) {
 
 // Inspect the items in the real database
 func inspectDbDocuments[T any](t *testing.T, collectionName string) ([]T, error) {
-		connection := directDbConnection(t)
+	connection := directDbConnection(t)
 	collection := connection.Client.Database(connection.DbName).Collection(collectionName)
 
 	cursor, err := collection.Find(context.Background(), bson.D{})
@@ -340,24 +335,4 @@ func buildActiveStakingEvent(t *testing.T, numOfEvenet int) []*client.ActiveStak
 		activeStakingEvents = append(activeStakingEvents, activeStakingEvent)
 	}
 	return activeStakingEvents
-}
-
-func createJsonFile(t *testing.T, jsonData []byte) string {
-	// Generate a random file name
-	rand.Seed(time.Now().UnixNano())
-	fileName := fmt.Sprintf("test-%d.json", rand.Intn(1000))
-
-	// Create a temporary file
-	tempFile, err := os.CreateTemp("", fileName)
-	if err != nil {
-		t.Fatalf("error creating temporary file: %v", err)
-	}
-	defer tempFile.Close() // Ensure the file is closed before returning
-
-	// Write the JSON data to the temporary file
-	if _, err := tempFile.Write(jsonData); err != nil {
-		t.Fatalf("error writing to temporary file: %v", err)
-	}
-
-	return tempFile.Name()
 }
